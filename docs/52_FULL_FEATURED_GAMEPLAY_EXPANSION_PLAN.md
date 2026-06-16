@@ -1,5 +1,7 @@
 # 52 — Full Featured Gameplay Expansion Plan
 
+> **Progress:** Visual Gameplay Shell v1 (`docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`) addresses layout, hotspots, NPC cards, case board, rumor trail, founder UI, and branch-before-decision modal. Runtime gameplay contracts remain on `feature/runtime-gameplay-core-v1`.
+
 ## Status
 
 The current WorldMind build is a strong simulation foundation and a playable proof, but it is not yet the full-featured game experience Jonas wants.

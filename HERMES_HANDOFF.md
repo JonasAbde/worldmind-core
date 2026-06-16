@@ -1,3 +1,13 @@
+# Hermes Handoff — WorldMind Visual Gameplay Shell v1
+
+## Status (latest sprint)
+
+**Visual Gameplay Shell v1** on branch `feature/visual-gameplay-shell-v1`: three-column game layout (district map + scene / hotspots + dialogue / NPC + Leno + case board + rumor trail + founder), asset-backed location scenes, clickable hotspot cards, NPC portrait cards, case board tabs with suspect/link redaction, rumor trail UI, live consequence ticker, branch-before-decision modal, extended `validate:web-play`. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
+
+Parallel runtime work: `feature/runtime-gameplay-core-v1` (Leno) owns action outcomes, founder loop contracts, rumor engine — UI graceful-fallbacks for missing deltas.
+
+---
+
 # Hermes Handoff — WorldMind v1.0-rc8 2D district view + phone/Leno UI
 
 ## Status
