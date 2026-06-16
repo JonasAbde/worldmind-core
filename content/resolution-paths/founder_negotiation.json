@@ -1,0 +1,14 @@
+{
+  "id": "founder_negotiation",
+  "label": "Founder Negotiation",
+  "risk": "high",
+  "steps": [
+    "inspect workshop",
+    "pay malik 15",
+    "talk sara"
+  ],
+  "reward": {
+    "xp": 45,
+    "influence": 6
+  }
+}

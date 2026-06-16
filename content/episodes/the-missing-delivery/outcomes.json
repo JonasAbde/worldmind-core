@@ -1,0 +1,29 @@
+{
+  "episodeId": "the-missing-delivery",
+  "outcomes": [
+    {
+      "id": "low_risk_success",
+      "label": "Trust restored",
+      "impact": {
+        "districtTrust": "+",
+        "publicConcern": "-"
+      }
+    },
+    {
+      "id": "truth_revealed",
+      "label": "Facts revealed",
+      "impact": {
+        "evidence": "+",
+        "rumors": "-"
+      }
+    },
+    {
+      "id": "high_authority_resolution",
+      "label": "Systemic intervention",
+      "impact": {
+        "policy": "+",
+        "communityTrust": "variable"
+      }
+    }
+  ]
+}

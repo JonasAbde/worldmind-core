@@ -1,0 +1,40 @@
+{
+  "kind": "incident_pack",
+  "version": 1,
+  "incidents": [
+    {
+      "id": "missing_delivery",
+      "title": "The Missing Delivery",
+      "locationId": "cafe",
+      "riskLevel": "high",
+      "status": "active",
+      "linkedEvidence": [
+        "cafe_delivery_gap",
+        "market_rumor_chain",
+        "rumor_source_nadia"
+      ]
+    },
+    {
+      "id": "noise_complaint_5561",
+      "title": "Noise Complaint #5561",
+      "locationId": "district-square",
+      "riskLevel": "high",
+      "status": "active",
+      "linkedEvidence": [
+        "audio_anomaly_capture",
+        "signal_interference_log"
+      ]
+    },
+    {
+      "id": "ownership_dispute_5562",
+      "title": "Ownership Dispute #5562",
+      "locationId": "workshop",
+      "riskLevel": "high",
+      "status": "active",
+      "linkedEvidence": [
+        "workshop_charter_2019",
+        "corporate_ownership_deed"
+      ]
+    }
+  ]
+}

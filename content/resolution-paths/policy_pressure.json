@@ -1,0 +1,13 @@
+{
+  "id": "policy_pressure",
+  "label": "Policy Pressure",
+  "risk": "high",
+  "steps": [
+    "file incident",
+    "recommend updates",
+    "advocate transparency"
+  ],
+  "reward": {
+    "oversight": 18
+  }
+}

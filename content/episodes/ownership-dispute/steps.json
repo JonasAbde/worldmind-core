@@ -1,0 +1,25 @@
+{
+  "episodeId": "ownership-dispute",
+  "steps": [
+    {
+      "id": "observe",
+      "label": "Observe the area",
+      "command": "look"
+    },
+    {
+      "id": "inspect",
+      "label": "Inspect local evidence",
+      "command": "inspect"
+    },
+    {
+      "id": "talk",
+      "label": "Talk to affected agents",
+      "command": "talk"
+    },
+    {
+      "id": "choose_path",
+      "label": "Choose resolution path",
+      "command": "choose_path"
+    }
+  ]
+}

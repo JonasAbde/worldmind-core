@@ -1,0 +1,47 @@
+{
+  "kind": "worldmind_reviewed_replacement_pack",
+  "version": "v4-reviewed-single-assets",
+  "status": "PARTIAL_APPROVED_REPLACEMENT_PACK",
+  "strategy": "Overlay for QA v3. Replaces weak sliced/chopped visible assets with reviewed single-generated portraits/scenes and clean programmatic UI templates.",
+  "approvedReplacementCoverage": {
+    "characters": [
+      "sara",
+      "malik",
+      "amina",
+      "nadia",
+      "rune",
+      "player"
+    ],
+    "locations": [
+      "cafe",
+      "market",
+      "workshop",
+      "district-square"
+    ],
+    "map": [
+      "new-aarhus-district-map"
+    ],
+    "uiTemplates": [
+      "evidence",
+      "rumor",
+      "incident",
+      "memory",
+      "relationship",
+      "command-buttons",
+      "leno-overlay"
+    ]
+  },
+  "stillMissingTrueSingleGenerated": [
+    "omar",
+    "lina",
+    "yasin",
+    "freja",
+    "elias",
+    "apartment",
+    "harbour-docks",
+    "final audio",
+    "faction logos",
+    "item icons",
+    "badges"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "investigation_and_counter_rumor",
+  "label": "Investigation and Counter-Rumor",
+  "risk": "medium",
+  "steps": [
+    "inspect cafe",
+    "listen_rumors market",
+    "ask rune nadia",
+    "trace_rumor",
+    "counter_rumor"
+  ],
+  "reward": {
+    "xp": 60,
+    "insight": 10
+  }
+}

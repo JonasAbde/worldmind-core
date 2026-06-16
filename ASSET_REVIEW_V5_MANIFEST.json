@@ -1,0 +1,37 @@
+{
+  "kind": "worldmind_reviewed_generation_pass",
+  "version": "v5-procedural-upgrade",
+  "basedOn": {
+    "baseline": "qa-v3-final-placeholders",
+    "overlay": "v4-reviewed-replacements"
+  },
+  "status": "PARTIAL_APPROVED_UPGRADE",
+  "generatedWith": {
+    "script": "tools/generate-missing-assets-v5.ps1",
+    "engine": "System.Drawing + ffmpeg webp sidecars",
+    "approach": "procedural compositing and grading from existing approved high-res sources"
+  },
+  "improvedCoverage": {
+    "characters": [
+      "omar",
+      "lina",
+      "yasin",
+      "freja",
+      "elias"
+    ],
+    "locations": [
+      "apartment-v5-reviewed",
+      "harbour-docks-v5-reviewed"
+    ]
+  },
+  "remainingGaps": [
+    "final audio design pack",
+    "final faction logo art lock",
+    "final item icon art lock",
+    "final badge art lock"
+  ],
+  "notes": [
+    "V5 closes major long-tail character quality gap for founder-demo readiness.",
+    "V5 remains a production-direction step, not final public launch art lock."
+  ]
+}

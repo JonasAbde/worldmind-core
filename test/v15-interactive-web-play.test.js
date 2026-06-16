@@ -104,10 +104,14 @@ test('v1.0-rc5: play-engine resolves "look" through text command parser', async 
 test('v1.0-rc5: web-renderer module exports render functions', async () => {
   const renderer = await import(pathToFileURL(WEB_RENDERER).href);
   assert.equal(typeof renderer.renderWebPage, 'function');
+  assert.equal(typeof renderer.renderTopBar, 'function');
   assert.equal(typeof renderer.renderCommandButtons, 'function');
   assert.equal(typeof renderer.renderDialogueTurn, 'function');
   assert.equal(typeof renderer.renderConsequence, 'function');
   assert.equal(typeof renderer.renderEvidence, 'function');
+  assert.equal(typeof renderer.renderRumorTrail, 'function');
+  assert.equal(typeof renderer.renderFounderPanel, 'function');
+  assert.equal(typeof renderer.renderMajorDecisionPanel, 'function');
   assert.equal(typeof renderer.renderDemoPaths, 'function');
 });
 
@@ -178,6 +182,19 @@ test('v1.0-rc5: play:web includes a text-input command form', async () => {
     assert.ok(html.includes(`data-command="${cmd}"`) || html.includes(`data-cmd="${cmd}"`) || html.includes(`onclick="cmd('${cmd}')"`),
       `expected command button for ${cmd}`);
   }
+});
+
+test('v1.0-rc8: gameplay shell renders hotspots, npc cards, case board, and decisions', async () => {
+  const res = runScript(PLAY_WEB, []);
+  assert.equal(res.status, 0);
+  const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
+  assert.match(html, /wm-topbar/);
+  assert.match(html, /data-hotspot-id=/);
+  assert.match(html, /wm-agent-card/);
+  assert.match(html, /wm-case-board/);
+  assert.match(html, /wm-rumor-trail/);
+  assert.match(html, /wm-ticker/);
+  assert.match(html, /data-major-decision=/);
 });
 
 test('v1.0-rc5: play:web writes a deterministic JSON state file alongside the page', async () => {

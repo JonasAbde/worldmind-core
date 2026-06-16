@@ -1,0 +1,24 @@
+{
+  "kind": "rumor_pack",
+  "version": 1,
+  "rumors": [
+    {
+      "id": "rumor_missing_delivery_blame",
+      "claim": "Sara may have caused the missing delivery herself.",
+      "truthLevel": "false_or_misleading",
+      "sourceEvidenceId": "rumor_source_nadia"
+    },
+    {
+      "id": "rumor_signal_coverup",
+      "claim": "The quay noise is linked to a cover-up after the missing delivery.",
+      "truthLevel": "unverified",
+      "sourceEvidenceId": "signal_interference_log"
+    },
+    {
+      "id": "rumor_workshop_sale",
+      "claim": "The old workshop was sold to a private sponsor.",
+      "truthLevel": "partial",
+      "sourceEvidenceId": "corporate_ownership_deed"
+    }
+  ]
+}

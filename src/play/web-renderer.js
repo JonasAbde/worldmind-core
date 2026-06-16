@@ -31,6 +31,8 @@
  *   escapeHtml(text)              -> safe HTML escape
  */
 import { buildDistrictView } from './district-view.js';
+import { bindAssets } from './assets.js';
+import { buildGameplayShellModel } from './game-shell-model.js';
 
 const SOURCE_DEFINING = /\bnadia\s+is\s+the\s+source\b/i;
 
@@ -69,14 +71,40 @@ export function renderHeader(world) {
 </header>`;
 }
 
-export function renderLocation(world) {
+export function renderTopBar(_world, _payload, shell) {
+  return `<section class="wm-section wm-topbar" id="wm-topbar">
+  <h2>Game Shell</h2>
+  <div class="wm-topbar-grid">
+    <span><strong>Day:</strong> ${escapeHtml(shell?.topbar?.day ?? '?')}</span>
+    <span><strong>Time:</strong> ${escapeHtml(shell?.topbar?.time ?? '?')}</span>
+    <span><strong>Money:</strong> ${escapeHtml(shell?.topbar?.money ?? 0)}</span>
+    <span><strong>Leno:</strong> ${escapeHtml(shell?.topbar?.lenoStatus ?? 'standby')}</span>
+  </div>
+</section>`;
+}
+
+export function renderLocation(world, shell) {
   const player = world?.agents?.player;
   const locId = player?.locationId;
   const loc = locId ? world.locations?.[locId] : null;
   const locName = loc?.name ?? locId ?? 'unknown';
+  const scene = shell?.location?.scene ?? null;
+  const hotspots = shell?.location?.hotspots ?? [];
   return `<section class="wm-section wm-location" id="wm-location">
   <h2>Current Location</h2>
   <p class="wm-location-name">${escapeHtml(locName)}</p>
+  ${scene ? `<div class="wm-location-scene">
+    <img src="${escapeHtml(scene)}" alt="${escapeHtml(locName)} scene" class="wm-scene-img" />
+  </div>` : ''}
+  <h3>Hotspots</h3>
+  <ul class="wm-hotspot-list">${hotspots.map((h) => `
+    <li class="wm-hotspot" data-hotspot-id="${escapeHtml(h.id)}">
+      <strong>${escapeHtml(h.label)}</strong>
+      <span>${escapeHtml(h.preview)}</span>
+      <span>risk ${escapeHtml(h.risk)}</span>
+      <button type="button" data-run-command="${escapeHtml(h.command)}">Run</button>
+    </li>
+  `).join('') || '<li class="wm-empty">No hotspots configured.</li>'}</ul>
   <ul class="wm-agents-here">${(loc?.agentsPresent ?? [])
     .filter((id) => id !== 'player')
     .map((id) => `<li data-agent-id="${escapeHtml(id)}">${escapeHtml(world.agents[id]?.name ?? id)}</li>`)
@@ -84,16 +112,29 @@ export function renderLocation(world) {
 </section>`;
 }
 
-export function renderAgents(world) {
-  const list = Object.values(world?.agents ?? {}).filter((a) => a.id !== 'player');
+export function renderAgents(_world, shell) {
+  const list = shell?.npcCards ?? [];
   return `<section class="wm-section wm-agents" id="wm-agents">
   <h2>Visible Agents</h2>
-  <ul class="wm-agent-list">${list.map((a) => `
+  <ul class="wm-agent-list">${list.map((a) => {
+    const rel = { trust: a.trust ?? 0, suspicion: a.suspicion ?? 0, fear: a.fear ?? 0 };
+    const avatar = a.avatar || `assets/characters/${a.id}/avatar.png`;
+    return `
     <li class="wm-agent" data-agent-id="${escapeHtml(a.id)}">
-      <strong>${escapeHtml(a.name)}</strong>
-      <span class="wm-agent-role">${escapeHtml(a.role ?? '')}</span>
-      <span class="wm-agent-loc">@ ${escapeHtml(world.locations?.[a.locationId]?.name ?? a.locationId ?? '?')}</span>
-    </li>`).join('')}</ul>
+      <div class="wm-agent-card">
+        <img src="${escapeHtml(avatar)}" alt="${escapeHtml(a.name)} avatar" class="wm-agent-avatar" />
+        <div>
+          <strong>${escapeHtml(a.name)}</strong>
+          <span class="wm-agent-role">${escapeHtml(a.role ?? '')}</span>
+          <span class="wm-agent-loc">@ ${escapeHtml(a.locationName ?? '?')}</span>
+          <span class="wm-agent-stats">trust ${escapeHtml(rel.trust)} · suspicion ${escapeHtml(rel.suspicion)} · fear ${escapeHtml(rel.fear)}</span>
+          <div class="wm-agent-actions">
+            ${(a.actions ?? []).map((act) => `<button type="button" data-run-command="${escapeHtml(act.command)}">${escapeHtml(act.label)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    </li>`;
+  }).join('')}</ul>
 </section>`;
 }
 
@@ -162,6 +203,12 @@ export function renderConsequence(consequence) {
   const incident = consequence.incident
     ? `<p>Incident: <strong>${escapeHtml(consequence.incident.title)}</strong> — ${escapeHtml(consequence.incident.status)} ${consequence.incident.resolutionState ? `(${escapeHtml(consequence.incident.resolutionState)})` : ''}</p>`
     : '';
+  const ticker = [
+    `relationships: ${rels ? 'updated' : 'no change'}`,
+    `memories: ${consequence.newMemories >= 0 ? '+' : ''}${consequence.newMemories ?? 0}`,
+    `rumors: ${consequence.newRumors >= 0 ? '+' : ''}${consequence.newRumors ?? 0}`,
+    `money: ${consequence.moneyDelta >= 0 ? '+' : ''}${consequence.moneyDelta ?? 0}`
+  ];
   return `<section class="wm-section wm-consequence" id="wm-consequence">
   <h2>Consequence</h2>
   ${rels ? `<h3>Relationships</h3><ul>${rels}</ul>` : ''}
@@ -169,18 +216,62 @@ export function renderConsequence(consequence) {
   <p>Rumor changes: <strong>${consequence.newRumors >= 0 ? '+' : ''}${consequence.newRumors ?? 0}</strong></p>
   <p>Money: <strong>${consequence.moneyDelta >= 0 ? '+' : ''}${consequence.moneyDelta ?? 0}</strong></p>
   ${incident}
+  <h3>Consequence Ticker</h3>
+  <ul class="wm-ticker">${ticker.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>
 </section>`;
 }
 
 export function renderEvidence(payload) {
   const pk = payload?.playerKnowledge ?? payload?.world?.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [], suspectedCauses: [], unresolvedQuestions: [] };
+  const shell = payload?.gameShell ?? {};
   const guardedSummary = applyLenoGuard(payload?.leno?.summary ?? '', payload);
+  const evidenceCards = (shell?.caseBoard?.evidenceCards ?? pk.evidenceIds ?? []).map((e) => `<li class="wm-case-card"><img src="assets/ui/evidence-card.png" alt="Evidence card" /><span>${escapeHtml(e)}</span></li>`).join('');
+  const rumorCards = (shell?.caseBoard?.rumorCards ?? pk.knownRumorIds ?? []).map((r) => `<li class="wm-case-card"><img src="assets/ui/rumor-card.png" alt="Rumor card" /><span>${escapeHtml(r)}</span></li>`).join('');
   return `<section class="wm-section wm-evidence" id="wm-evidence">
   <h2>Evidence</h2>
   <p><strong>Known facts:</strong> ${(pk.evidenceIds ?? []).map((e) => `<code>${escapeHtml(e)}</code>`).join(' ') || '<em>(none collected yet)</em>'}</p>
   <p><strong>Suspected causes:</strong> ${(pk.suspectedCauses ?? []).join(', ') || '<em>(none)</em>'}</p>
   <p><strong>Unresolved questions:</strong> ${(pk.unresolvedQuestions ?? []).join(', ') || '<em>(none)</em>'}</p>
+  <h3>Case Board</h3>
+  <div class="wm-case-board">
+    <div><h4>Evidence Cards</h4><ul>${evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>'}</ul></div>
+    <div><h4>Rumor Cards</h4><ul>${rumorCards || '<li class="wm-empty">No rumor cards yet.</li>'}</ul></div>
+  </div>
   ${guardedSummary ? `<h3>Leno summary (guarded)</h3><pre>${escapeHtml(guardedSummary)}</pre>` : ''}
+</section>`;
+}
+
+export function renderRumorTrail(payload) {
+  const shell = payload?.gameShell ?? {};
+  const known = shell?.rumorTrail ?? [];
+  return `<section class="wm-section wm-rumors" id="wm-rumor-trail">
+  <h2>Rumor Trail</h2>
+  <ul>${known.map((r) => `<li><code>${escapeHtml(r.id)}</code> · spread risk: ${escapeHtml(r.spreadRisk)} · <button type="button" data-run-command="${escapeHtml(r.traceCommand)}">Trace</button> <button type="button" data-run-command="${escapeHtml(r.counterCommand)}">Counter</button></li>`).join('') || '<li class="wm-empty">No known rumors yet.</li>'}</ul>
+  <p class="wm-hint">Counter-rumor without enough evidence can backfire.</p>
+</section>`;
+}
+
+export function renderFounderPanel(shell) {
+  const unlocked = Boolean(shell?.founder?.unlocked);
+  return `<section class="wm-section wm-founder" id="wm-founder">
+  <h2>Founder/Base</h2>
+  ${unlocked
+    ? `<p>Founder loop unlocked.</p>
+       <ul>
+         <li>First workflow contract available</li>
+         <li>Malik/Sara contract option available</li>
+         <li>Base progress + reputation loop active</li>
+       </ul>`
+    : `<p class="wm-empty">${escapeHtml(shell?.founder?.unlockText ?? 'Resolve The Missing Delivery to unlock founder loop.')}</p>`}
+</section>`;
+}
+
+export function renderMajorDecisionPanel(shell) {
+  const choices = shell?.majorDecisions ?? [];
+  return `<section class="wm-section wm-major-decisions" id="wm-major-decisions">
+  <h2>Major Decisions</h2>
+  <p>Create branch before high-impact choices.</p>
+  <div class="wm-decision-list">${choices.map((c) => `<button type="button" data-major-decision="${c}">${escapeHtml(c)}</button>`).join('')}</div>
 </section>`;
 }
 
@@ -375,6 +466,8 @@ export function renderDemoPaths(paths) {
  */
 export function renderWebPage(payload) {
   const world = payload?.world ?? {};
+  bindAssets(world);
+  const shell = payload?.gameShell ?? buildGameplayShellModel(world, payload);
   const css = payload?.appCss ?? '';
   const js = payload?.appJs ?? '';
   const districtView = payload?.districtView ?? buildDistrictView(world);
@@ -404,10 +497,11 @@ export function renderWebPage(payload) {
 <body class="wm-body">
   <main class="wm-main">
     ${renderHeader(world)}
+    ${renderTopBar(world, payload, shell)}
     <div class="wm-grid">
       <div class="wm-col-left">
-        ${renderLocation(world)}
-        ${renderAgents(world)}
+        ${renderLocation(world, shell)}
+        ${renderAgents(world, shell)}
         ${renderDistrictView(districtView)}
         ${renderCommandButtons()}
         ${renderDemoPaths(payload?.demoPaths ?? [])}
@@ -416,8 +510,11 @@ export function renderWebPage(payload) {
         ${renderDialogueTurn(payload?.dialogue)}
         ${renderConsequence(payload?.consequence)}
         ${renderEvidence(payload)}
+        ${renderRumorTrail(payload)}
         ${renderIncident(world)}
         ${renderLeno(payload)}
+        ${renderFounderPanel(shell)}
+        ${renderMajorDecisionPanel(shell)}
         ${renderPhoneTabs()}
         ${renderEventFeed(payload?.events)}
         ${renderSaves(payload?.saves)}

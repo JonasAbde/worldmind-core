@@ -1,0 +1,56 @@
+{
+  "kind": "evidence_pack",
+  "version": 1,
+  "evidence": [
+    {
+      "id": "cafe_delivery_gap",
+      "type": "observation",
+      "label": "Delivery gap at the cafe",
+      "locationId": "cafe",
+      "reliability": 0.78
+    },
+    {
+      "id": "market_rumor_chain",
+      "type": "rumor_trace",
+      "label": "Rumor chain points away from Sara",
+      "locationId": "market",
+      "reliability": 0.61
+    },
+    {
+      "id": "rumor_source_nadia",
+      "type": "source_evidence",
+      "label": "Evidence identifying Nadia as source",
+      "locationId": "market",
+      "hiddenTruth": true,
+      "reliability": 0.88
+    },
+    {
+      "id": "audio_anomaly_capture",
+      "type": "audio",
+      "label": "Audio anomaly capture",
+      "locationId": "district-square",
+      "reliability": 0.72
+    },
+    {
+      "id": "signal_interference_log",
+      "type": "data",
+      "label": "Signal interference log",
+      "locationId": "district-square",
+      "reliability": 0.64
+    },
+    {
+      "id": "workshop_charter_2019",
+      "type": "document",
+      "label": "Workshop charter 2019",
+      "locationId": "workshop",
+      "reliability": 0.68
+    },
+    {
+      "id": "corporate_ownership_deed",
+      "type": "document",
+      "label": "Corporate ownership deed",
+      "locationId": "workshop",
+      "reliability": 0.81
+    }
+  ]
+}

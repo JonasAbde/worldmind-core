@@ -1,0 +1,26 @@
+{
+  "status": "PASS_WITH_NOTES_FINAL_PLACEHOLDERS",
+  "qaVersion": "v3",
+  "counts": {
+    "totalFiles": 451,
+    "png": 192,
+    "webp": 192,
+    "svg": 12,
+    "json": 27,
+    "audio": 7,
+    "characters": 11,
+    "factions": 6,
+    "items": 15,
+    "badges": 12
+  },
+  "missingRuntimePaths": [],
+  "badImages": [],
+  "badJson": [],
+  "missingWebpSidecars": [],
+  "notes": [
+    "Long-tail character fallback crops replaced with dedicated professional placeholder sheets.",
+    "Faction, inventory, badge, loading-screen and episode-folder placeholders added.",
+    "Audio remains prototype SFX, not final sound design.",
+    "Final launch should still run a human art-direction pass for polish and legal review."
+  ]
+}

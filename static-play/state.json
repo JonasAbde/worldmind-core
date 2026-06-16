@@ -205,7 +205,14 @@
           "mem_00082"
         ],
         "currentIntent": "activate_leno",
-        "secrets": []
+        "secrets": [],
+        "assets": {
+          "portrait": "assets/characters/player/portrait.png",
+          "avatar": "assets/characters/player/avatar.png",
+          "expressionNeutral": "assets/characters/player/expression-neutral.png",
+          "expressionConcerned": "assets/characters/player/expression-concerned.png",
+          "sheet": "assets/characters/player/player-sheet.png"
+        }
       },
       "sara": {
         "id": "sara",
@@ -408,7 +415,14 @@
         "currentIntent": "secure_supply",
         "secrets": [
           "uses_old_logistics_agent_tool"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/sara/portrait.png",
+          "avatar": "assets/characters/sara/avatar.png",
+          "expressionNeutral": "assets/characters/sara/expression-neutral.png",
+          "expressionConcerned": "assets/characters/sara/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "malik": {
         "id": "malik",
@@ -604,7 +618,14 @@
         "currentIntent": "avoid_registry_attention",
         "secrets": [
           "hides_illegal_repair_modules"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/malik/portrait.png",
+          "avatar": "assets/characters/malik/avatar.png",
+          "expressionNeutral": "assets/characters/malik/expression-neutral.png",
+          "expressionConcerned": "assets/characters/malik/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "nadia": {
         "id": "nadia",
@@ -794,7 +815,14 @@
         "currentIntent": "destabilize_rivals",
         "secrets": [
           "started_false_sara_registry_rumor"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/nadia/portrait.png",
+          "avatar": "assets/characters/nadia/avatar.png",
+          "expressionNeutral": "assets/characters/nadia/expression-neutral.png",
+          "expressionConcerned": "assets/characters/nadia/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "omar": {
         "id": "omar",
@@ -975,7 +1003,14 @@
           "mem_00055"
         ],
         "currentIntent": "observe_district",
-        "secrets": []
+        "secrets": [],
+        "assets": {
+          "portrait": "assets/characters/omar/portrait.png",
+          "avatar": "assets/characters/omar/avatar.png",
+          "expressionNeutral": "assets/characters/omar/expression-neutral.png",
+          "expressionConcerned": "assets/characters/omar/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "lina": {
         "id": "lina",
@@ -1159,7 +1194,14 @@
         "currentIntent": "learn_from_world",
         "secrets": [
           "does_not_fully_know_origin"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/lina/portrait.png",
+          "avatar": "assets/characters/lina/avatar.png",
+          "expressionNeutral": "assets/characters/lina/expression-neutral.png",
+          "expressionConcerned": "assets/characters/lina/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "yasin": {
         "id": "yasin",
@@ -1352,7 +1394,14 @@
           "mem_00078"
         ],
         "currentIntent": "watch_prices",
-        "secrets": []
+        "secrets": [],
+        "assets": {
+          "portrait": "assets/characters/yasin/portrait.png",
+          "avatar": "assets/characters/yasin/avatar.png",
+          "expressionNeutral": "assets/characters/yasin/expression-neutral.png",
+          "expressionConcerned": "assets/characters/yasin/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "freja": {
         "id": "freja",
@@ -1537,7 +1586,14 @@
           "mem_00058"
         ],
         "currentIntent": "monitor_reports",
-        "secrets": []
+        "secrets": [],
+        "assets": {
+          "portrait": "assets/characters/freja/portrait.png",
+          "avatar": "assets/characters/freja/avatar.png",
+          "expressionNeutral": "assets/characters/freja/expression-neutral.png",
+          "expressionConcerned": "assets/characters/freja/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "rune": {
         "id": "rune",
@@ -1736,7 +1792,14 @@
         "currentIntent": "find_delivery_work",
         "secrets": [
           "saw_nadia_near_workshop_before_delivery_failure"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/rune/portrait.png",
+          "avatar": "assets/characters/rune/avatar.png",
+          "expressionNeutral": "assets/characters/rune/expression-neutral.png",
+          "expressionConcerned": "assets/characters/rune/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "elias": {
         "id": "elias",
@@ -1916,7 +1979,14 @@
           "mem_00060"
         ],
         "currentIntent": "learn",
-        "secrets": []
+        "secrets": [],
+        "assets": {
+          "portrait": "assets/characters/elias/portrait.png",
+          "avatar": "assets/characters/elias/avatar.png",
+          "expressionNeutral": "assets/characters/elias/expression-neutral.png",
+          "expressionConcerned": "assets/characters/elias/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       },
       "amina": {
         "id": "amina",
@@ -2104,7 +2174,14 @@
         "currentIntent": "support_neighbors",
         "secrets": [
           "helps_free_agents_hide_from_registry"
-        ]
+        ],
+        "assets": {
+          "portrait": "assets/characters/amina/portrait.png",
+          "avatar": "assets/characters/amina/avatar.png",
+          "expressionNeutral": "assets/characters/amina/expression-neutral.png",
+          "expressionConcerned": "assets/characters/amina/expression-concerned.png",
+          "sheet": "assets/characters/npc-portrait-set.png"
+        }
       }
     },
     "locations": {
@@ -2129,7 +2206,12 @@
         ],
         "restrictedActions": [],
         "economyTags": [],
-        "rumorChannels": []
+        "rumorChannels": [],
+        "assets": {
+          "scene": "assets/locations/apartment.png",
+          "card": "assets/locations/cards/apartment-card.png",
+          "icon": "assets/locations/icons/apartment.svg"
+        }
       },
       "cafe": {
         "id": "cafe",
@@ -2165,7 +2247,12 @@
         ],
         "rumorChannels": [
           "cafe_gossip"
-        ]
+        ],
+        "assets": {
+          "scene": "assets/locations/cafe.png",
+          "card": "assets/locations/cards/cafe-card.png",
+          "icon": "assets/locations/icons/cafe.svg"
+        }
       },
       "workshop": {
         "id": "workshop",
@@ -2199,7 +2286,12 @@
         ],
         "rumorChannels": [
           "tech_gossip"
-        ]
+        ],
+        "assets": {
+          "scene": "assets/locations/workshop.png",
+          "card": "assets/locations/cards/workshop-card.png",
+          "icon": "assets/locations/icons/workshop.svg"
+        }
       },
       "market": {
         "id": "market",
@@ -2236,7 +2328,12 @@
         ],
         "rumorChannels": [
           "market_talk"
-        ]
+        ],
+        "assets": {
+          "scene": "assets/locations/market.png",
+          "card": "assets/locations/cards/market-card.png",
+          "icon": "assets/locations/icons/market.svg"
+        }
       }
     },
     "incidents": {
@@ -4605,6 +4702,29 @@
         "amina",
         "elias"
       ]
+    },
+    "assets": {
+      "hero": "assets/hero/worldmind-cover.png",
+      "showcase": "assets/showcase/worldmind-v2-showcase.png",
+      "districtMap": "assets/maps/new-aarhus-district-map.png",
+      "ui": {
+        "hudMemoryPermissions": "assets/ui/hud-memory-permissions.png",
+        "evidenceCard": "assets/ui/evidence-card.png",
+        "rumorCard": "assets/ui/rumor-card.png",
+        "memoryNode": "assets/ui/memory-node.png",
+        "relationshipEdge": "assets/ui/relationship-edge.png",
+        "incidentAlert": "assets/ui/incident-alert.png",
+        "lenoOverlay": "assets/ui/leno-overlay.png",
+        "commandButton": "assets/ui/command-button.png"
+      },
+      "audio": {
+        "uiClick": "assets/audio/ui-click.wav",
+        "evidenceFound": "assets/audio/evidence-found.wav",
+        "rumorSpread": "assets/audio/rumor-spread.wav",
+        "incidentAlert": "assets/audio/incident-alert.wav",
+        "lenoNotification": "assets/audio/leno-notification.wav",
+        "ambientDistrict": "assets/audio/ambient-new-aarhus.mp3"
+      }
     }
   },
   "demoPaths": [

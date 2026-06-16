@@ -1,0 +1,129 @@
+{
+  "kind": "resolution_path_pack",
+  "version": 1,
+  "paths": [
+    {
+      "id": "peaceful_mediation",
+      "label": "Peaceful Mediation",
+      "risk": "low",
+      "steps": [
+        "inspect cafe",
+        "talk sara",
+        "ask amina mediation",
+        "pay malik 5"
+      ],
+      "reward": {
+        "xp": 40,
+        "trust": 8
+      }
+    },
+    {
+      "id": "investigation_and_counter_rumor",
+      "label": "Investigation and Counter-Rumor",
+      "risk": "medium",
+      "steps": [
+        "inspect cafe",
+        "listen_rumors market",
+        "ask rune nadia",
+        "trace_rumor",
+        "counter_rumor"
+      ],
+      "reward": {
+        "xp": 60,
+        "insight": 10
+      }
+    },
+    {
+      "id": "founder_negotiation",
+      "label": "Founder Negotiation",
+      "risk": "high",
+      "steps": [
+        "inspect workshop",
+        "pay malik 15",
+        "talk sara"
+      ],
+      "reward": {
+        "xp": 45,
+        "influence": 6
+      }
+    },
+    {
+      "id": "community_repair",
+      "label": "Community Repair",
+      "risk": "low",
+      "steps": [
+        "brief public",
+        "deploy monitor",
+        "publish findings"
+      ],
+      "reward": {
+        "trust": 12
+      }
+    },
+    {
+      "id": "silent_investigation",
+      "label": "Silent Investigation",
+      "risk": "medium",
+      "steps": [
+        "trace interference",
+        "identify failure",
+        "prepare report"
+      ],
+      "reward": {
+        "insight": 14
+      }
+    },
+    {
+      "id": "policy_pressure",
+      "label": "Policy Pressure",
+      "risk": "high",
+      "steps": [
+        "file incident",
+        "recommend updates",
+        "advocate transparency"
+      ],
+      "reward": {
+        "oversight": 18
+      }
+    },
+    {
+      "id": "community_arbitration",
+      "label": "Community Arbitration",
+      "risk": "low",
+      "steps": [
+        "host town hall",
+        "gather proposals",
+        "draft access rules"
+      ],
+      "reward": {
+        "stability": 10
+      }
+    },
+    {
+      "id": "quiet_investigation",
+      "label": "Quiet Investigation",
+      "risk": "medium",
+      "steps": [
+        "trace ownership",
+        "find discrepancies",
+        "present findings"
+      ],
+      "reward": {
+        "exposure": 12
+      }
+    },
+    {
+      "id": "executive_leverage",
+      "label": "Executive Leverage",
+      "risk": "high",
+      "steps": [
+        "contact authorities",
+        "invoke clauses",
+        "impose conditions"
+      ],
+      "reward": {
+        "policyControl": 16
+      }
+    }
+  ]
+}

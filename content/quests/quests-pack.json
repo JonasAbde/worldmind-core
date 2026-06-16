@@ -1,0 +1,39 @@
+{
+  "kind": "quest_pack",
+  "version": 1,
+  "quests": [
+    {
+      "id": "quest_missing_delivery",
+      "episodeId": "the-missing-delivery",
+      "title": "Resolve The Missing Delivery",
+      "objective": "Determine what happened and restore public confidence.",
+      "resolutionPathIds": [
+        "peaceful_mediation",
+        "investigation_and_counter_rumor",
+        "founder_negotiation"
+      ]
+    },
+    {
+      "id": "quest_noise_along_quay",
+      "episodeId": "noise-along-the-quay",
+      "title": "Restore Signal Integrity",
+      "objective": "Find the cause of the signal noise and reduce public concern.",
+      "resolutionPathIds": [
+        "community_repair",
+        "silent_investigation",
+        "policy_pressure"
+      ]
+    },
+    {
+      "id": "quest_ownership_dispute",
+      "episodeId": "ownership-dispute",
+      "title": "Resolve Ownership Dispute",
+      "objective": "Balance legal ownership, public access, and district stability.",
+      "resolutionPathIds": [
+        "community_arbitration",
+        "quiet_investigation",
+        "executive_leverage"
+      ]
+    }
+  ]
+}
