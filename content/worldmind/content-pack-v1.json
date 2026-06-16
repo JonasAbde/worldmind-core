@@ -21,11 +21,53 @@
     { "id": "nadia", "role": "hidden rumor source", "primaryLocationId": "market", "arc": "must not be revealed without evidence" }
   ],
   "locations": [
-    { "id": "cafe", "mood": "warm, social pressure, public reputation", "gameplayUse": "dialogue, inspection, incident start" },
-    { "id": "market", "mood": "busy, overheard claims, rumor propagation", "gameplayUse": "listen for rumors and trace source" },
-    { "id": "workshop", "mood": "practical, money pressure, alternative delivery", "gameplayUse": "founder/business route" },
-    { "id": "apartment", "mood": "private planning, Leno reflection", "gameplayUse": "safe hub" },
-    { "id": "district_square", "mood": "civic, mediation, public resolution", "gameplayUse": "peaceful route" }
+    {
+      "id": "cafe",
+      "mood": "warm, social pressure, public reputation",
+      "gameplayUse": "dialogue, inspection, incident start",
+      "scene": "assets/locations/cafe.png",
+      "hotspots": [
+        { "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "preview": "Inspect missing delivery crate", "risk": 1 },
+        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "preview": "Inspect low stock indicators", "risk": 1 }
+      ]
+    },
+    {
+      "id": "market",
+      "mood": "busy, overheard claims, rumor propagation",
+      "gameplayUse": "listen for rumors and trace source",
+      "scene": "assets/locations/market.png",
+      "hotspots": [
+        { "id": "market_rumor_corner", "label": "Rumor corner", "command": "listen_rumors market", "preview": "Hear local rumor trail", "risk": 2 }
+      ]
+    },
+    {
+      "id": "workshop",
+      "mood": "practical, money pressure, alternative delivery",
+      "gameplayUse": "founder/business route",
+      "scene": "assets/locations/workshop.png",
+      "hotspots": [
+        { "id": "workshop_repair_bench", "label": "Repair bench", "command": "inspect workshop", "preview": "Inspect repair flow and costs", "risk": 2 },
+        { "id": "courier_route_marker", "label": "Courier route marker", "command": "inspect workshop", "preview": "Inspect route bottlenecks", "risk": 2 }
+      ]
+    },
+    {
+      "id": "apartment",
+      "mood": "private planning, Leno reflection",
+      "gameplayUse": "safe hub",
+      "scene": "assets/locations/apartment.png",
+      "hotspots": [
+        { "id": "registry_kiosk", "label": "Registry kiosk feed", "command": "inspect apartment", "preview": "Inspect registry pressure", "risk": 2 }
+      ]
+    },
+    {
+      "id": "district_square",
+      "mood": "civic, mediation, public resolution",
+      "gameplayUse": "peaceful route",
+      "scene": "assets/locations/district-square.png",
+      "hotspots": [
+        { "id": "district_square_mediator_spot", "label": "Mediator spot", "command": "ask amina mediation", "preview": "Open peaceful resolution path", "risk": 1 }
+      ]
+    }
   ],
   "rumors": [
     {
