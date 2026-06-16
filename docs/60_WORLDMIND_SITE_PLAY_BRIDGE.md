@@ -6,12 +6,18 @@ Repo: `JonasAbde/worldmind-site` (separate from core).
 
 `/play` on the marketing site connects to **worldmind-core** `play-server` using `docs/PLAY_API_CONTRACT.md` — no duplicate gameplay.
 
-## Prerequisites (core — this branch)
+## Prerequisites (core — unified play rc.2)
 
 - [x] `GET /api/state` returns `gameShell`
 - [x] `GET /api/health` returns `apiVersion`
 - [x] CORS via `WM_CORS_ORIGIN`
-- [ ] Merge visual shell branch (rc.2) for richest UI — optional; site can render minimal shell from JSON
+- [x] Visual gameplay shell merged (rc.2) — richest UI from `gameShell`
+- [x] Founder unlock from incident resolution (v22 — all three resolution paths)
+- [x] Founder contract loop + tier promotion (v22)
+- [x] Rumor runtime fields on world rumors (v23)
+- [x] Counter-rumor backfire when evidence is weak (v23.10)
+- [x] Action outcome delta envelope on player commands (v21)
+- [x] `majorDecisionPrompt` on consequential commands (v25)
 
 ## Site tasks
 
@@ -45,6 +51,8 @@ await fetch(`${CORE}/api/command`, {
   body: JSON.stringify({ text: command })
 });
 ```
+
+Merge `result.gameShell`, `result.playerSnapshot`, and optional `result.majorDecisionPrompt` (branch modal before impact).
 
 ### 5. UI options
 
@@ -80,8 +88,17 @@ npm run dev
 # Open http://localhost:5173/play — state loads, command runs
 ```
 
-## Out of scope (wait for Leno runtime)
+Core-only gates before site work:
 
-- Rich `consequence.evidenceDelta` on every command
-- Founder unlock from incident resolution
-- Deep rumor trace/backfire — UI shows shell; runtime fills deltas
+```bash
+npm run validate:play-api
+npm run validate:web-play
+npm test
+```
+
+## Out of scope (wait for Leno runtime / post-rc.2)
+
+- LLM-powered Leno dialogue (evidence guards and summary policy only today)
+- Rich `consequence.evidenceDelta` on every command variant (baseline envelope present; not every path maximally detailed)
+- 3D `visualCues` on `gameShell` (contract slot reserved)
+- Full founder delivery workflow beyond contract loop

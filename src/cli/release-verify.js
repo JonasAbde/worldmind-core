@@ -31,6 +31,7 @@ const STEPS = [
   { name: 'validate:creator',    cmd: 'npm run creator -- validate scenarios/creator-example-district.json' },
   { name: 'validate:leno',       cmd: 'npm run validate:leno' },
   { name: 'demo:play',           cmd: 'npm run demo:play' },
+  { name: 'demo:guided-play',    cmd: 'npm run demo:guided-play' },
   { name: 'audit:worldmind',     cmd: 'npm run audit:worldmind' },
 ];
 

@@ -2,14 +2,24 @@
 
 ## Status (single track — Jonas switches to Leno/Hermes on request)
 
-Branch **`feature/worldmind-unified-play-v1`** (off `master` `02b49f1`):
+Branch **`feature/worldmind-unified-play-v1`** (off `master` `02b49f1`) — **rc.2 candidate** for unified play.
 
-- **Visual Gameplay Shell v1** — three-column game layout, hotspots, case board, rumor trail, founder panel. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
-- **Play API Contract v1** — `docs/PLAY_API_CONTRACT.md`, `GET /api/state` returns `gameShell` + `districtView`, CORS via `WM_CORS_ORIGIN`, `npm run validate:play-api`.
-- **Runtime gameplay contracts** — action outcome envelope (v21), founder loop (v22), rumor runtime fields (v23).
+- **Visual Gameplay Shell v1** — three-column game layout, hotspots, case board, rumor trail, founder panel, branch-before-decision modal. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
+- **Play API Contract v1.0.0** — `docs/PLAY_API_CONTRACT.md`, `GET /api/state` returns `gameShell` + `districtView`, CORS via `WM_CORS_ORIGIN`.
+- **Runtime contracts v21–v25** — action outcome envelope, founder loop + tiers, rumor backfire, Play API boot, `majorDecisionPrompt`. See `docs/61_RC2_UNIFIED_PLAY_RELEASE.md`.
 - **Site bridge spec** — `docs/60_WORLDMIND_SITE_PLAY_BRIDGE.md` (worldmind-site `/play` not in this repo).
 
-Do **not** merge to `master` until `v1.0.0-rc.1` tag on `02b49f1`. Visual + API likely ship as **rc.2**.
+**303/303 tests grønne.** Do **not** merge to `master` until `v1.0.0-rc.1` tag on `02b49f1`; tag unified play as **`v1.0.0-rc.2`** when ready.
+
+### rc.2 verification
+
+```bash
+npm test
+npm run validate:web-play
+npm run validate:play-api
+npm run ci:gate
+npm run play:server
+```
 
 ---
 

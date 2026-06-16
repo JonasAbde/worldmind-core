@@ -35,6 +35,7 @@
     "diff:event-log": "node src/cli/diff-checker.js event-log",
     "play": "node src/cli/play.js",
     "demo:play": "node src/cli/demo-play.js",
+    "demo:guided-play": "node src/cli/demo-guided-play.js",
     "play:web": "node src/cli/play-web.js",
     "play:server": "node src/cli/play-server.js",
     "validate:leno": "node src/cli/validate-leno.js",
