@@ -1,0 +1,17 @@
+{
+  "name": "worldmind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WorldMind MVP v0.1 — living AI world simulation with agents, memory, relationships, rumors, economy, incidents, dialogue and Leno summaries.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/cli/simulate.js --days 7 --dashboard",
+    "simulate": "node src/cli/simulate.js --days 7",
+    "dashboard": "node src/cli/simulate.js --days 7 --dashboard",
+    "test": "node --test",
+    "check": "node src/cli/simulate.js --days 7 --assert"
+  },
+  "keywords": ["ai-agents", "simulation", "emergent-story", "game-engine", "worldmind"],
+  "license": "UNLICENSED"
+}

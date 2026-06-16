@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><title>WorldMind Dashboard</title><style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;background:#101418;color:#e7eef7}
+h1,h2,h3{color:#b8e0ff;margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.card{background:#18212b;border:1px solid #304254;border-radius:14px;padding:16px}
+.metric{background:#0c1117;border:1px solid #243445;border-radius:12px;padding:12px}
+.metric span{display:block;color:#9cb2c8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.metric strong{font-size:18px}
+table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #304254;padding:8px;text-align:left;vertical-align:top}
+code,pre{background:#0c1117;border-radius:10px;padding:12px;display:block;white-space:pre-wrap}
+.pass{color:#9ff2b5}.fail{color:#ffb4b4}.muted{color:#9cb2c8}
+.small{font-size:12px}
+</style></head><body>
+<h1>WorldMind — MVP v0.1 Dashboard</h1>
+<p class="muted">Static snapshot generated from the simulation core. Event log is the source of truth.</p>
+<div class="grid-3"><div class="metric"><span>Day / Time</span><strong>8 / 00:00</strong></div><div class="metric"><span>Agents</span><strong>11</strong></div><div class="metric"><span>Locations</span><strong>4</strong></div><div class="metric"><span>Memories</span><strong>261</strong></div><div class="metric"><span>Rumors</span><strong>1</strong></div><div class="metric"><span>Incidents</span><strong>1</strong></div><div class="metric"><span>Food price</span><strong>20</strong></div><div class="metric"><span>Economy pressure</span><strong>100</strong></div></div>
+<div class="grid" style="margin-top:16px;">
+  <section class="card"><h2>World Overview</h2><pre>{
+  "day": 8,
+  "time": "00:00",
+  "tick": 672,
+  "events": 123,
+  "memories": 261,
+  "rumors": 1,
+  "incidents": 1,
+  "passed": true
+}</pre></section>
+  <section class="card"><h2>Leno Panel</h2><pre>World: New Aarhus District 01, Day 8, 00:00.
+State: 11 agents | 261 memories | 1 rumors | 1 incidents.
+Resolved incident: The Missing Delivery. Known facts: Sara is low on supplies. | Malik refused delivery. | A rumor connects Sara to Registry..
+Resolution path: investigation_and_counter_rumor.
+Evidence level: Nadia is a probable source of the false rumor.
+Recent visible events: Food scarcity increased. Market food price is now 20. / Food scarcity increased. Market food price is now 20. / Daily checkpoint: 11 agents, 251 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 7, 12:00. / Food scarcity increased. Market food price is now 20. / Daily checkpoint: 11 agents, 256 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 7, 18:00. / Food scarcity increased. Market food price is now 20..</pre><h3>Suggested actions</h3><ul><li>Safe: talk to Sara again and inspect the café stock.</li><li>Social: ask Amina to mediate between Sara and Malik.</li><li>Risky: pay Rune for information about Nadia and the workshop.</li></ul></section>
+</div>
+<section class="card"><h2>Agent Profile — Player</h2><table><tbody>
+  <tr><th>Name</th><td>Player</td><th>Role</th><td>Technician / Founder</td></tr>
+  <tr><th>Location</th><td>Player Apartment</td><th>Current intent</th><td>activate_leno</td></tr>
+  <tr><th>Money</th><td>150</td><th>Stress</th><td>10</td></tr>
+  <tr><th>Memories</th><td>54</td><th>Known incidents</th><td>1</td></tr>
+</tbody></table></section>
+<div class="grid" style="margin-top:16px;">
+  <section class="card"><h2>Agent List</h2><table><thead><tr><th>Name</th><th>Role</th><th>Location</th><th>Intent</th><th>Memories</th></tr></thead><tbody><tr><td>Player</td><td>Technician / Founder</td><td>Player Apartment</td><td>activate_leno</td><td>54</td></tr><tr><td>Sara</td><td>Café owner</td><td>Sara's Café</td><td>secure_supply</td><td>47</td></tr><tr><td>Malik</td><td>Mechanic</td><td>Malik's Workshop</td><td>avoid_registry_attention</td><td>6</td></tr><tr><td>Nadia</td><td>Black-market coder</td><td>Market Street</td><td>destabilize_rivals</td><td>6</td></tr><tr><td>Omar</td><td>Ex-Registry investigator</td><td>Sara's Café</td><td>observe_district</td><td>1</td></tr><tr><td>Lina</td><td>Young emergent agent</td><td>Market Street</td><td>learn_from_world</td><td>3</td></tr><tr><td>Yasin</td><td>Market trader</td><td>Market Street</td><td>watch_prices</td><td>46</td></tr><tr><td>Freja</td><td>Registry clerk</td><td>Market Street</td><td>monitor_reports</td><td>4</td></tr><tr><td>Rune</td><td>Delivery worker</td><td>Market Street</td><td>find_delivery_work</td><td>51</td></tr><tr><td>Elias</td><td>Student / tech hobbyist</td><td>Sara's Café</td><td>learn</td><td>1</td></tr><tr><td>Amina</td><td>Community organizer</td><td>Sara's Café</td><td>support_neighbors</td><td>42</td></tr></tbody></table></section>
+  <section class="card"><h2>Location View</h2><table><thead><tr><th>Location</th><th>Type</th><th>Zone</th><th>Agents Present</th><th>Objects</th></tr></thead><tbody><tr><td>Player Apartment</td><td>home</td><td>private</td><td>Player</td><td>leno_core, phone, desk</td></tr><tr><td>Sara's Café</td><td>business</td><td>safe</td><td>Sara, Amina, Elias, Omar</td><td>coffee_machine, cash_register, stock_shelf, tables</td></tr><tr><td>Malik's Workshop</td><td>workshop</td><td>private</td><td>Malik</td><td>tool_wall, repair_bench, delivery_crates, locked_cabinet</td></tr><tr><td>Market Street</td><td>market</td><td>market</td><td>Yasin, Rune, Freja, Nadia, Lina</td><td>food_stall, delivery_board, public_notice, registry_terminal</td></tr></tbody></table></section>
+</div>
+<div class="grid" style="margin-top:16px;">
+  <section class="card"><h2>Rumor Board</h2><table><thead><tr><th>ID</th><th>Claim</th><th>Source</th><th>Truth</th><th>Known By</th></tr></thead><tbody><tr><td>rumor_00001</td><td>Sara may be cooperating with Registry.</td><td>Nadia</td><td>20</td><td>6</td></tr></tbody></table></section>
+  <section class="card"><h2>Relationship Graph</h2><table><thead><tr><th>Target</th><th>Trust</th><th>Suspicion</th><th>Respect</th><th>Affection</th><th>Influence</th></tr></thead><tbody><tr><td>Sara</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Malik</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Nadia</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Omar</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Lina</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Yasin</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Freja</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr><tr><td>Rune</td><td>0</td><td>3</td><td>0</td><td>0</td><td>49.3</td></tr></tbody></table></section>
+</div>
+<div class="grid" style="margin-top:16px;">
+  <section class="card"><h2>Incident View</h2><ul><li><b>The Missing Delivery</b> — resolved. Known facts: Sara is low on supplies. / Malik refused delivery. / A rumor connects Sara to Registry. · Resolution: investigation_and_counter_rumor</li></ul></section>
+  <section class="card"><h2>Save / Timeline View</h2><pre>{
+  "day": 8,
+  "time": "00:00",
+  "tick": 672,
+  "events": 123,
+  "memories": 261,
+  "rumors": 1,
+  "incidents": 1,
+  "passed": true
+}</pre></section>
+</div>
+<section class="card" style="margin-top:16px;"><h2>Eval</h2><pre class="pass">{
+  "agentsActive": true,
+  "locationChanges": 4,
+  "memoryCount": 261,
+  "relationshipChanges": 10,
+  "rumorSpreadCount": 5,
+  "economyChanges": 41,
+  "incidentDetected": true,
+  "possibleQuestResolutions": 6,
+  "agentChangedBehavior": true,
+  "passed": true
+}</pre></section>
+<section class="card" style="margin-top:16px;"><h2>Event Log</h2><table><thead><tr><th>Time</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td>D7 20:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D7 18:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 7, 18:00.</td></tr><tr><td>D7 18:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 256 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D7 16:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D7 12:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 7, 12:00.</td></tr><tr><td>D7 12:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 251 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D7 12:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D7 08:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D7 06:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 7, 06:00.</td></tr><tr><td>D7 06:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 241 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D7 04:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D7 00:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 7, 00:00.</td></tr><tr><td>D7 00:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 236 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D7 00:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 20:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 18:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 6, 18:00.</td></tr><tr><td>D6 18:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 226 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D6 16:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 12:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 6, 12:00.</td></tr><tr><td>D6 12:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 221 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D6 12:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 08:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 06:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 6, 06:00.</td></tr><tr><td>D6 06:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 211 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D6 04:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D6 00:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 6, 00:00.</td></tr><tr><td>D6 00:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 206 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D6 00:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 20:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 18:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 5, 18:00.</td></tr><tr><td>D5 18:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 196 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D5 16:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 12:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 5, 12:00.</td></tr><tr><td>D5 12:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 191 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D5 12:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 08:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 06:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 5, 06:00.</td></tr><tr><td>D5 06:00</td><td>daily_checkpoint</td><td>Daily checkpoint: 11 agents, 181 memories, 1 rumors, 1 incidents.</td></tr><tr><td>D5 04:00</td><td>economy_pressure</td><td>Food scarcity increased. Market food price is now 20.</td></tr><tr><td>D5 00:00</td><td>leno_summary_tick</td><td>World: New Aarhus District 01, Day 5, 00:00.</td></tr></tbody></table></section>
+<p class="small muted">Raw world state: <a href="world-state.json">world-state.json</a></p></body></html>
