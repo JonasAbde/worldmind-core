@@ -80,6 +80,7 @@ export function scenarioToWorldState(scenario) {
     branchParentSnapshotId: scenario.branchParentSnapshotId ?? null,
     branchName: scenario.branchName ?? null,
     branchNote: scenario.branchNote ?? null,
+    currentSnapshotId: scenario.currentSnapshotId ?? null,
     source: scenario.source ?? 'scenario'
   };
 }
@@ -111,6 +112,7 @@ export function serializeWorldState(world, meta = {}) {
     branchParentSnapshotId: meta.branchParentSnapshotId ?? world.branchParentSnapshotId ?? null,
     branchName: meta.branchName ?? world.branchName ?? null,
     branchNote: meta.branchNote ?? world.branchNote ?? null,
+    currentSnapshotId: world.currentSnapshotId ?? null,
     source: meta.source ?? 'snapshot',
     createdAtTick: world.tick
   };

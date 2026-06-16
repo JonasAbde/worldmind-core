@@ -11,6 +11,11 @@
     "start": "node src/cli/simulate.js --days 7 --dashboard",
     "simulate": "node src/cli/simulate.js --days 7",
     "dashboard": "node src/cli/simulate.js --days 7 --dashboard",
+    "saves:list": "node src/cli/simulate.js --list-saves",
+    "saves:branches": "node src/cli/simulate.js --list-branches",
+    "saves:diff": "node src/cli/simulate.js --compare-snapshots",
+    "sim:from-snapshot": "node src/cli/simulate.js --continue-from-snapshot",
+    "sim:branch": "node src/cli/simulate.js --create-branch",
     "test": "node --test",
     "check": "node src/cli/simulate.js --days 7 --assert"
   },
