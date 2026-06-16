@@ -1,22 +1,23 @@
-# Hermes Handoff — WorldMind Unified Play v1 (Cursor track)
+# Hermes Handoff — WorldMind Unified Play v1
 
-## Status (single track — Jonas switches to Leno/Hermes on request)
+## Status (merged to `master` — work directly on default branch)
 
-Branch **`feature/worldmind-unified-play-v1`** (off `master` `02b49f1`) — **rc.2 candidate** for unified play.
+**`master`** @ `3c14255` includes unified play (visual shell + Play API + runtime contracts v21–v26).
 
-- **Visual Gameplay Shell v1** — three-column game layout, hotspots, case board, rumor trail, founder panel, branch-before-decision modal. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
-- **Play API Contract v1.0.0** — `docs/PLAY_API_CONTRACT.md`, `GET /api/state` returns `gameShell` + `districtView`, CORS via `WM_CORS_ORIGIN`.
-- **Runtime contracts v21–v25** — action outcome envelope, founder loop + tiers, rumor backfire, Play API boot, `majorDecisionPrompt`. See `docs/61_RC2_UNIFIED_PLAY_RELEASE.md`.
-- **Site bridge spec** — `docs/60_WORLDMIND_SITE_PLAY_BRIDGE.md` (worldmind-site `/play` not in this repo).
+- **Visual Gameplay Shell v1** — `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`
+- **Play API Contract v1.0.0** — `docs/PLAY_API_CONTRACT.md`, CORS via `WM_CORS_ORIGIN`
+- **Runtime + founder tiers + major decisions** — `docs/61_RC2_UNIFIED_PLAY_RELEASE.md`
+- **Site `/play`** — merged in `worldmind-site` `main` (PR #1)
 
-**303/303 tests grønne.** Do **not** merge to `master` until `v1.0.0-rc.1` tag on `02b49f1`; tag unified play as **`v1.0.0-rc.2`** when ready.
+**303/303 tests grønne.** Work on **`master`** only (no long-lived feature branches unless explicitly requested).
 
-### rc.2 verification
+### Verification
 
 ```bash
 npm test
 npm run validate:web-play
 npm run validate:play-api
+npm run demo:guided-play
 npm run ci:gate
 npm run play:server
 ```
