@@ -25,6 +25,7 @@ const STEPS = [
   { name: 'play:web',   cmd: 'npm run play:web' },
   { name: 'validate:web-play',  cmd: 'npm run validate:web-play' },
   { name: 'validate:play-server', cmd: 'npm run validate:play-server' },
+  { name: 'validate:play-api',    cmd: 'npm run validate:play-api' },
   { name: 'validate:saves-ui',   cmd: 'npm run validate:saves-ui' },
   { name: 'validate:district-ui', cmd: 'npm run validate:district-ui' },
   { name: 'validate:creator',    cmd: 'npm run creator -- validate scenarios/creator-example-district.json' },

@@ -34,14 +34,17 @@ import {
   bootstrapWorld,
   resolveCommand,
   getDemoPaths,
-  parseCommandText,
-  summarizeWorld
+  parseCommandText
 } from '../play/play-engine.js';
 import {
-  buildGameplayShellModel,
   detectMajorDecisionFromCommand,
   buildCommandText
 } from '../play/game-shell-model.js';
+import {
+  PLAY_API_VERSION,
+  buildPlayStatePayload,
+  buildCommandResultPayload
+} from '../play/play-api-payload.js';
 import { openSqliteWorldStore } from '../persistence/sqlite.js';
 import { diffSnapshots, filterEvents } from '../persistence/timeline.js';
 
@@ -49,6 +52,10 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const STATIC_DIR = path.join(REPO, 'static-play');
 const DB_PATH = process.env.WM_DB_PATH || path.join(REPO, 'data/worldmind.sqlite');
 const DEFAULT_SCENARIO = path.join(REPO, 'scenarios/new-aarhus-district-01.json');
+const CORS_ORIGINS = (process.env.WM_CORS_ORIGIN || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 // ---------------------------------------------------------------------------
 // CLI parsing
@@ -185,32 +192,32 @@ function redactWorldState(state) {
 // HTTP helpers
 // ---------------------------------------------------------------------------
 
-function sanitizeCommandResult(result) {
-  if (!result || typeof result !== 'object') return result;
-  const clone = { ...result };
-  if ('world' in clone) {
-    const w = result.world;
-    clone.world = {
-      id: w?.id,
-      tick: w?.tick,
-      day: w?.day,
-      time: w?.time,
-      currentSnapshotId: w?.currentSnapshotId ?? null,
-      branchName: w?.branchName ?? 'main'
-    };
-    clone.playerSnapshot = {
-      money: w?.agents?.player?.stats?.money ?? 0,
-      reputation: w?.agents?.player?.stats?.reputation ?? 0,
-      energy: w?.agents?.player?.stats?.energy ?? 0
-    };
-    clone.founder = w?.founder ?? null;
-    clone.playerKnowledge = w?.playerKnowledge ?? null;
-  }
-  return clone;
+function sanitizeCommandResult(result, world, majorDecisionPrompt) {
+  return buildCommandResultPayload(world, result, { majorDecisionPrompt });
 }
 
-function jsonResponse(res, status, payload) {
+function corsHeaders(req) {
+  if (!CORS_ORIGINS.length) return {};
+  const origin = req.headers.origin;
+  if (!origin) return {};
+  const allowed = CORS_ORIGINS.includes('*') || CORS_ORIGINS.includes(origin);
+  if (!allowed) return {};
+  return {
+    'access-control-allow-origin': CORS_ORIGINS.includes('*') ? '*' : origin,
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+    'vary': 'Origin'
+  };
+}
+
+function applyCors(req, res) {
+  const h = corsHeaders(req);
+  for (const [k, v] of Object.entries(h)) res.setHeader(k, v);
+}
+
+function jsonResponse(req, res, status, payload) {
   const body = JSON.stringify(payload);
+  applyCors(req, res);
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(body),
@@ -272,30 +279,27 @@ function serveStatic(req, res, urlPath) {
 // Handlers
 // ---------------------------------------------------------------------------
 
-async function handleHealth(_req, res) {
-  jsonResponse(res, 200, { ok: true, engine: 'play-engine', version: '1.0-rc7', dbPath: DB_PATH });
+async function handleHealth(req, res) {
+  jsonResponse(req, res, 200, {
+    ok: true,
+    engine: 'play-engine',
+    version: '1.0-rc7',
+    apiVersion: PLAY_API_VERSION,
+    contract: 'docs/PLAY_API_CONTRACT.md',
+    dbPath: DB_PATH
+  });
 }
 
-async function handleState(_req, res) {
+async function handleState(req, res) {
   ensureBoot();
-  const summary = summarizeWorld(world);
-  jsonResponse(res, 200, {
-    ok: true,
-    worldId: world.id,
-    currentSnapshotId: world.currentSnapshotId || null,
-    branchName: world.branchName || 'main',
-    tick: summary.tick ?? world.tick ?? 0,
-    day: summary.day ?? world.day ?? 0,
-    time: summary.time ?? world.time ?? 'morning',
-    sections: summary.sections || summary
-  });
+  jsonResponse(req, res, 200, buildPlayStatePayload(world));
 }
 
 async function handleCommand(req, res) {
   ensureBoot();
   let body;
   try { body = await readBody(req); }
-  catch (err) { return jsonResponse(res, 400, { ok: false, error: err.message }); }
+  catch (err) { return jsonResponse(req, res, 400, { ok: false, error: err.message }); }
   const { command, args = {}, text } = body;
   let cmdName = command;
   let cmdArgs = args;
@@ -304,21 +308,16 @@ async function handleCommand(req, res) {
     cmdName = parsed?.command || null;
     cmdArgs = parsed?.args || {};
   }
-  if (!cmdName) return jsonResponse(res, 400, { ok: false, error: 'command or text required' });
+  if (!cmdName) return jsonResponse(req, res, 400, { ok: false, error: 'command or text required' });
   try {
     const cmdText = typeof text === 'string' ? text.trim() : buildCommandText(cmdName, cmdArgs);
     const result = resolveCommand(world, cmdName, cmdArgs);
     if (Array.isArray(result?.events)) recordEvents(result.events);
-    const sanitized = sanitizeCommandResult(result);
     const decision = detectMajorDecisionFromCommand(cmdText, world.playerKnowledge);
-    if (decision?.branchSuggested) sanitized.majorDecisionPrompt = decision;
-    sanitized.gameShell = buildGameplayShellModel(world, {
-      playerKnowledge: world.playerKnowledge,
-      leno: result.leno
-    });
-    jsonResponse(res, 200, { ok: true, command: cmdName, args: cmdArgs, text: cmdText, result: sanitized });
+    const sanitized = sanitizeCommandResult(result, world, decision?.branchSuggested ? decision : undefined);
+    jsonResponse(req, res, 200, { ok: true, command: cmdName, args: cmdArgs, text: cmdText, result: sanitized });
   } catch (err) {
-    jsonResponse(res, 400, { ok: false, error: String(err?.message || err) });
+    jsonResponse(req, res, 400, { ok: false, error: String(err?.message || err) });
   }
 }
 
@@ -330,7 +329,7 @@ async function handleSave(req, res) {
   const note = body.note || null;
   const meta = store.saveSnapshot(world, { branchName, note });
   recordEvents([{ type: 'snapshot.saved', message: `Saved ${meta.snapshotId} on branch ${branchName}` }]);
-  jsonResponse(res, 200, { ok: true, ...meta });
+  jsonResponse(req, res, 200, { ok: true, ...meta });
 }
 
 async function handleBranchCreate(req, res) {
@@ -339,20 +338,20 @@ async function handleBranchCreate(req, res) {
   try { body = await readBody(req); } catch { /* defaults */ }
   const { name, snapshotId, note = '' } = body;
   if (!name || !snapshotId) {
-    return jsonResponse(res, 400, { ok: false, error: 'name and snapshotId required' });
+    return jsonResponse(req, res, 400, { ok: false, error: 'name and snapshotId required' });
   }
   try {
     const result = store.createTimelineBranch({ snapshotId, name, note });
-    jsonResponse(res, 200, { ok: true, branchId: result.id, ...result });
+    jsonResponse(req, res, 200, { ok: true, branchId: result.id, ...result });
   } catch (err) {
-    jsonResponse(res, 404, { ok: false, error: String(err?.message || err) });
+    jsonResponse(req, res, 404, { ok: false, error: String(err?.message || err) });
   }
 }
 
 async function handleSavesList(_req, res) {
   ensureBoot();
   const rows = store.listSnapshots(world.id);
-  jsonResponse(res, 200, {
+  jsonResponse(req, res, 200, {
     ok: true,
     snapshots: rows.map((r) => ({
       id: r.id,
@@ -384,11 +383,11 @@ async function handleSavesInspect(_req, res, id) {
       : null;
     const loaded = store.loadSnapshot(id);
     const redacted = redactWorldState(loaded);
-    jsonResponse(res, 200, { ok: true, snapshot: { id, state: redacted, redacted: !hasEvidence(loaded) } });
+    jsonResponse(req, res, 200, { ok: true, snapshot: { id, state: redacted, redacted: !hasEvidence(loaded) } });
   } catch (err) {
     const msg = String(err?.message || err);
     const code = msg.includes('not found') ? 404 : 500;
-    jsonResponse(res, code, { ok: false, error: msg });
+    jsonResponse(req, res, code, { ok: false, error: msg });
   }
 }
 
@@ -403,18 +402,18 @@ async function handleSavesRestore(req, res, id) {
       type: 'snapshot.restored',
       message: `Restored ${id} (actor=${body.actor || 'anonymous'}, reason=${body.reason || 'unspecified'})`
     }]);
-    jsonResponse(res, 200, { ok: true, restoredSnapshotId: id, currentSnapshotId: world.currentSnapshotId });
+    jsonResponse(req, res, 200, { ok: true, restoredSnapshotId: id, currentSnapshotId: world.currentSnapshotId });
   } catch (err) {
     const msg = String(err?.message || err);
     const code = msg.includes('not found') ? 404 : 500;
-    jsonResponse(res, code, { ok: false, error: msg });
+    jsonResponse(req, res, code, { ok: false, error: msg });
   }
 }
 
 async function handleBranchesList(_req, res) {
   ensureBoot();
   const rows = store.listTimelineBranches(world.id);
-  jsonResponse(res, 200, {
+  jsonResponse(req, res, 200, {
     ok: true,
     branches: rows.map((b) => ({
       id: b.id,
@@ -436,16 +435,16 @@ async function handleSavesDiff(_req, res, urlObj) {
   ensureBoot();
   const from = urlObj.searchParams.get('from');
   const to = urlObj.searchParams.get('to');
-  if (!from || !to) return jsonResponse(res, 400, { ok: false, error: 'from and to required' });
+  if (!from || !to) return jsonResponse(req, res, 400, { ok: false, error: 'from and to required' });
   try {
     const fromState = store.loadSnapshot(from);
     const toState = store.loadSnapshot(to);
     const diff = diffSnapshots(fromState, toState);
-    jsonResponse(res, 200, { ok: true, from, to, diff });
+    jsonResponse(req, res, 200, { ok: true, from, to, diff });
   } catch (err) {
     const msg = String(err?.message || err);
     const code = msg.includes('not found') ? 404 : 500;
-    jsonResponse(res, code, { ok: false, error: msg });
+    jsonResponse(req, res, code, { ok: false, error: msg });
   }
 }
 
@@ -453,13 +452,13 @@ async function handleEvents(_req, res, urlObj) {
   ensureBoot();
   const since = Number(urlObj.searchParams.get('since') || 0);
   const events = eventLog.slice(since);
-  jsonResponse(res, 200, { ok: true, count: events.length, total: eventLog.length, events });
+  jsonResponse(req, res, 200, { ok: true, count: events.length, total: eventLog.length, events });
 }
 
 async function handleDemoPath(_req, res, name) {
   ensureBoot();
   const paths = getDemoPaths();
-  if (!paths[name]) return jsonResponse(res, 404, { ok: false, error: 'unknown demo path' });
+  if (!paths[name]) return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });
   // Run scripted path on a copy so it doesn't mutate the live world
   const copy = JSON.parse(JSON.stringify(world));
   const result = resolveCommand; // imported
@@ -470,7 +469,7 @@ async function handleDemoPath(_req, res, name) {
   const freshWorld = (await import('../play/play-engine.js')).bootstrapWorld({ scenarioPath: DEFAULT_SCENARIO });
   const steps = runScripted(freshWorld, name);
   recordEvents([{ type: 'demo.path', message: `Ran demo path ${name}` }]);
-  jsonResponse(res, 200, { ok: true, path: name, steps, world: redactWorldState(freshWorld) });
+  jsonResponse(req, res, 200, { ok: true, path: name, steps, world: redactWorldState(freshWorld) });
 }
 
 // ---------------------------------------------------------------------------
@@ -479,6 +478,12 @@ async function handleDemoPath(_req, res, name) {
 
 async function route(req, res, urlPath, urlObj) {
   try {
+    if (req.method === 'OPTIONS') {
+      applyCors(req, res);
+      res.writeHead(204, { ...corsHeaders(req), 'content-length': '0' });
+      res.end();
+      return;
+    }
     if (urlPath === '/api/health') return handleHealth(req, res);
     if (urlPath === '/api/state') return handleState(req, res);
     if (urlPath === '/api/command' && req.method === 'POST') return handleCommand(req, res);
@@ -496,9 +501,9 @@ async function route(req, res, urlPath, urlObj) {
     const mDemo = urlPath.match(/^\/api\/demo\/path\/([\w-]+)$/);
     if (mDemo && req.method === 'GET') return handleDemoPath(req, res, mDemo[1]);
     if (req.method === 'GET') return serveStatic(req, res, urlPath);
-    jsonResponse(res, 404, { ok: false, error: 'not found' });
+    jsonResponse(req, res, 404, { ok: false, error: 'not found' });
   } catch (err) {
-    jsonResponse(res, 500, { ok: false, error: String(err?.message || err) });
+    jsonResponse(req, res, 500, { ok: false, error: String(err?.message || err) });
   }
 }
 

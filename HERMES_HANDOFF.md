@@ -1,3 +1,20 @@
+# Hermes Handoff — WorldMind Play API Contract v1
+
+## Status (parallel track — while Leno finishes runtime)
+
+Branch `feature/play-api-contract-v1` (off `master` `02b49f1`):
+
+- **`docs/PLAY_API_CONTRACT.md`** — stable client contract (`/api/health`, `/api/state`, `/api/command`, `gameShell`)
+- **`src/play/play-api-payload.js`** — `PLAY_API_VERSION`, `buildPlayStatePayload`, `buildCommandResultPayload`
+- **`GET /api/state`** returns `gameShell`, `playerSnapshot`, `districtView`, `apiVersion`
+- **CORS** via `WM_CORS_ORIGIN` for `worldmind-site` `/play`
+- **`docs/60_WORLDMIND_SITE_PLAY_BRIDGE.md`** — site checklist
+- **`npm run validate:play-api`**
+
+Visual shell: PR #1 (`feature/visual-gameplay-shell-v1`) — merge after `v1.0.0-rc.1` + runtime.
+
+---
+
 # Hermes Handoff — WorldMind v1.0-rc8 2D district view + phone/Leno UI
 
 ## Status
