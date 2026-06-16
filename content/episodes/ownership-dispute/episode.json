@@ -1,0 +1,23 @@
+{
+  "id": "ownership-dispute",
+  "title": "Ownership Dispute",
+  "status": "production_placeholder_ready",
+  "district": "new-aarhus-district-01",
+  "themes": [
+    "trust",
+    "evidence",
+    "rumors",
+    "relationships",
+    "economy"
+  ],
+  "requiredSystems": [
+    "dialogue",
+    "evidence",
+    "rumors",
+    "relationships",
+    "Leno",
+    "saves",
+    "branches"
+  ],
+  "artStatus": "qa-v3 placeholder complete; final hand art optional"
+}

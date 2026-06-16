@@ -1,0 +1,13 @@
+{
+  "id": "executive_leverage",
+  "label": "Executive Leverage",
+  "risk": "high",
+  "steps": [
+    "contact authorities",
+    "invoke clauses",
+    "impose conditions"
+  ],
+  "reward": {
+    "policyControl": 16
+  }
+}

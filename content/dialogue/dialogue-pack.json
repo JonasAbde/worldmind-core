@@ -1,0 +1,54 @@
+{
+  "kind": "dialogue_pack",
+  "version": 1,
+  "dialogue": [
+    {
+      "id": "dialogue_sara_help",
+      "agentId": "sara",
+      "topic": "delivery",
+      "tone": "worried",
+      "line": "The community is already feeling the impact. Let's find a solution that works for everyone.",
+      "unlocks": [
+        "cafe_delivery_gap"
+      ]
+    },
+    {
+      "id": "dialogue_rune_nadia",
+      "agentId": "rune",
+      "topic": "nadia",
+      "tone": "cautious",
+      "line": "I heard something, but I'm not sure enough to name a source without proof.",
+      "unlocks": [
+        "market_rumor_chain"
+      ]
+    },
+    {
+      "id": "dialogue_amina_mediation",
+      "agentId": "amina",
+      "topic": "mediation",
+      "tone": "calm",
+      "line": "People aren't angry at the noise. They're angry at the silence.",
+      "unlocks": []
+    },
+    {
+      "id": "dialogue_malik_data",
+      "agentId": "malik",
+      "topic": "signals",
+      "tone": "focused",
+      "line": "The interference isn't random. Something is masking a signal.",
+      "unlocks": [
+        "signal_interference_log"
+      ]
+    },
+    {
+      "id": "dialogue_nadia_economy",
+      "agentId": "nadia",
+      "topic": "market",
+      "tone": "guarded",
+      "line": "Data doesn't lie, but systems do. We build better ones.",
+      "unlocks": [
+        "market_pressure_note"
+      ]
+    }
+  ]
+}

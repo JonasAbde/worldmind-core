@@ -1,0 +1,13 @@
+{
+  "id": "silent_investigation",
+  "label": "Silent Investigation",
+  "risk": "medium",
+  "steps": [
+    "trace interference",
+    "identify failure",
+    "prepare report"
+  ],
+  "reward": {
+    "insight": 14
+  }
+}

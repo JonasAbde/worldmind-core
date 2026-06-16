@@ -1,0 +1,15 @@
+{
+  "id": "peaceful_mediation",
+  "label": "Peaceful Mediation",
+  "risk": "low",
+  "steps": [
+    "inspect cafe",
+    "talk sara",
+    "ask amina mediation",
+    "pay malik 5"
+  ],
+  "reward": {
+    "xp": 40,
+    "trust": 8
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "community_repair",
+  "label": "Community Repair",
+  "risk": "low",
+  "steps": [
+    "brief public",
+    "deploy monitor",
+    "publish findings"
+  ],
+  "reward": {
+    "trust": 12
+  }
+}

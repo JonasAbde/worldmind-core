@@ -1,0 +1,1714 @@
+{
+  "kind": "worldmind_production_asset_pack",
+  "version": "1.0-production-ready",
+  "generatedFrom": "worldmind-game-assets-pack.zip",
+  "scope": [
+    "visual_identity_assets",
+    "game_ui_assets",
+    "world_location_assets",
+    "character_assets",
+    "narrative_content_assets",
+    "audio_placeholders",
+    "webp_sidecars"
+  ],
+  "counts": {
+    "assetFiles": 220,
+    "contentFiles": 50,
+    "pngFiles": 112,
+    "webpFiles": 112,
+    "svgFiles": 6,
+    "jsonFiles": 25,
+    "audioFiles": 7
+  },
+  "requiredPathStatus": {
+    "assets/hero/worldmind-cover.png": true,
+    "assets/concept/new-aarhus-district-01.png": true,
+    "assets/ui/hud-memory-permissions.png": true,
+    "assets/characters/npc-portrait-set.png": true,
+    "assets/showcase/worldmind-v2-showcase.png": true,
+    "assets/ui/icons/worldmind-icon-set.png": true,
+    "assets/ui/buttons/worldmind-command-buttons.png": true,
+    "assets/ui/evidence/evidence-card-template.png": true,
+    "assets/ui/rumors/rumor-card-template.png": true,
+    "assets/ui/memory/memory-node-template.png": true,
+    "assets/ui/relationships/relationship-card-template.png": true,
+    "assets/ui/incidents/incident-alert-template.png": true,
+    "assets/ui/leno-overlay/leno-hologram-card.png": true,
+    "assets/locations/cafe.png": true,
+    "assets/locations/market.png": true,
+    "assets/locations/workshop.png": true,
+    "assets/locations/district-square.png": true,
+    "assets/locations/apartment.png": true,
+    "assets/maps/new-aarhus-district-map.png": true,
+    "assets/characters/sara/portrait.png": true,
+    "assets/characters/sara/avatar.png": true,
+    "assets/characters/sara/expression-neutral.png": true,
+    "assets/characters/sara/expression-worried.png": true,
+    "assets/characters/rune/portrait.png": true,
+    "assets/characters/amina/portrait.png": true,
+    "assets/characters/malik/portrait.png": true,
+    "assets/characters/nadia/portrait.png": true,
+    "assets/characters/player/portrait.png": true,
+    "content/episodes/the-missing-delivery/episode.json": true,
+    "content/dialogue/dialogue-pack.json": true,
+    "content/incidents/incidents-pack.json": true,
+    "content/rumors/rumors-pack.json": true,
+    "content/evidence/evidence-pack.json": true,
+    "content/quests/quests-pack.json": true,
+    "content/resolution-paths/resolution-paths-pack.json": true
+  },
+  "missingRequiredPaths": [],
+  "assetRecords": [
+    {
+      "path": "assets/audio/README.md",
+      "bytes": 353,
+      "sha256": "f3b234837f0b11dd3fdf4e465cf422aeb66eaba5d4e47ef3ff69fbb23453a563",
+      "ext": ".md"
+    },
+    {
+      "path": "assets/audio/ambient-new-aarhus.mp3",
+      "bytes": 96565,
+      "sha256": "b6d56099dae33b4a234babb543c9f994e26719ecc82f88092df933c5199ece9b",
+      "ext": ".mp3"
+    },
+    {
+      "path": "assets/audio/ambient-new-aarhus.wav",
+      "bytes": 1058444,
+      "sha256": "8f9ba79198f76d3406e134917e584c3437b7be240a6de1cb91fa814d26493602",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/audio/evidence-found.wav",
+      "bytes": 39734,
+      "sha256": "342278465f410513116692aa8579ec487a0ca5088c09b89d99fcf93ceac18d17",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/audio/incident-alert.wav",
+      "bytes": 52964,
+      "sha256": "752758fc495e1e229b7bb067aa135a996116b9e69233455fa7c10c611733e30b",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/audio/leno-notification.wav",
+      "bytes": 28268,
+      "sha256": "70c9150f8aa7cb2723f99da1d99658f227ae2dd39c8a9cec5dbf3a882b8d0779",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/audio/rumor-spread.wav",
+      "bytes": 48554,
+      "sha256": "b59f16872175be0a8188ffaa3b6246717807695ecdcbf560329f8f6b64ba7ed5",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/audio/ui-click.wav",
+      "bytes": 10628,
+      "sha256": "6ae5d3e9972dd558a2abd63d977de96e2119a9c6180c1db983cb7905edb6ee66",
+      "ext": ".wav"
+    },
+    {
+      "path": "assets/characters/amina/avatar.png",
+      "bytes": 100878,
+      "sha256": "7baad6669929a1c97242c0a18d3377c15aab327881947eb1d1e0dd23a4dc61f2",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/avatar.webp",
+      "bytes": 11750,
+      "sha256": "7bb3a577e556f28cfadfe8c975fe2cdaa1ee4736cf3876b645cf41e9ba5b54f0",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/character-sheet.png",
+      "bytes": 2119804,
+      "sha256": "1cce6017706f6adb42dd1199fa2b2a9ff98c7c89177004642ed38afabe1450de",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/character-sheet.webp",
+      "bytes": 147604,
+      "sha256": "94f076cc6495b34d103740a5170d2c3f9b1213af91845964a870b455bd3c9a07",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/expression-concerned.png",
+      "bytes": 190907,
+      "sha256": "a9798f0d6913747d5c5b60ac96dde59512eb0262123769d430250fe8459b1a37",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/expression-concerned.webp",
+      "bytes": 20206,
+      "sha256": "e3aadf8a4da2a789c9be198763eb2513c815a8df3e4e0ed8060860029070a147",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/expression-focused.png",
+      "bytes": 192536,
+      "sha256": "fdafc1b79f44e85bf1b4fcf80bd7758ad464a0b1dc94a40771692b0c834dddcb",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/expression-focused.webp",
+      "bytes": 20704,
+      "sha256": "d3ef4051480f53ce4e9b4e0b0b3dd160c951f765424d5ae1bf1ca83f12f2c43e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/expression-neutral.png",
+      "bytes": 198329,
+      "sha256": "91f56faf94cc2e2a46e690271c2d20b92b881a141c9230f12daa5fdc34842253",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/expression-neutral.webp",
+      "bytes": 22660,
+      "sha256": "703226aa0e22a41625aba6dcc91a1fecf55803e9f3ffe8117719cdd7d3365c2b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/expression-worried.png",
+      "bytes": 190907,
+      "sha256": "a9798f0d6913747d5c5b60ac96dde59512eb0262123769d430250fe8459b1a37",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/expression-worried.webp",
+      "bytes": 20206,
+      "sha256": "e3aadf8a4da2a789c9be198763eb2513c815a8df3e4e0ed8060860029070a147",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/amina/portrait.png",
+      "bytes": 600277,
+      "sha256": "80b0c2074570e0e7b3f90db9e0f34b604b4ae95404d6d3516a1455928ed0e125",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/amina/portrait.webp",
+      "bytes": 65954,
+      "sha256": "6a50f7e1b7ff95c536715e23afabf20e869d26b52a32970607a5a8a61a829fc6",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/avatar.png",
+      "bytes": 90454,
+      "sha256": "00db88c6ce02e898fb0cda4f221c495f7145efaed9aee3109fc4a49a76353521",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/avatar.webp",
+      "bytes": 9028,
+      "sha256": "4fafd34b89fb6c722e3c73bb220bc473f7d214665b7b31da5e154de34594b8ad",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/character-sheet.png",
+      "bytes": 2049020,
+      "sha256": "f1eeaeebb2d7d724b3ce8c2c21dd87a965615c368a620ca804e0eecb520412bd",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/character-sheet.webp",
+      "bytes": 153806,
+      "sha256": "1d7deabaa7fdbaef65a91a39b6317067ae979795786d8949cf5e8e4594fa75c9",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/expression-concerned.png",
+      "bytes": 188769,
+      "sha256": "983f9621361406660aed5e04ad3ab3249afc68301d5ba0d8d6ec4b3abb7a7396",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/expression-concerned.webp",
+      "bytes": 24242,
+      "sha256": "45fe4197524f06b3d6e5fc6338d9b40731eb22683145bccfed334f21ee5587ad",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/expression-focused.png",
+      "bytes": 186712,
+      "sha256": "515333adc8b751092ab2fa355533cd37e8f1b7ffd845b4cbb7b89340bca72a25",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/expression-focused.webp",
+      "bytes": 23946,
+      "sha256": "0ca58c0b898b3a5f3a32181f3782f392ebe6210221f07d741d204f970f0e9322",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/expression-neutral.png",
+      "bytes": 179352,
+      "sha256": "bd3a98da24ade14975a3871b2e773ace96aa2b15342d006e1c8895ac7774aad5",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/expression-neutral.webp",
+      "bytes": 21148,
+      "sha256": "cb38c9c5e1636e02bd7ec948b9f2d74f60c179f5e0ef446743569132fbc6abbb",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/expression-worried.png",
+      "bytes": 188769,
+      "sha256": "983f9621361406660aed5e04ad3ab3249afc68301d5ba0d8d6ec4b3abb7a7396",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/expression-worried.webp",
+      "bytes": 24242,
+      "sha256": "45fe4197524f06b3d6e5fc6338d9b40731eb22683145bccfed334f21ee5587ad",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/malik/portrait.png",
+      "bytes": 551645,
+      "sha256": "74d295f27b7f526472db7c0dd9249d619bd919cee18717a8e3166ad83a9ae123",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/malik/portrait.webp",
+      "bytes": 55320,
+      "sha256": "866f306056f2c482ec79f823ad12006fe9026cf5fa71d9950b8761305eaed91b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/avatar.png",
+      "bytes": 73041,
+      "sha256": "bd0a75816e389ac8cf4293a6d784be82bacfcc18519c929a071383deb8f1acb0",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/avatar.webp",
+      "bytes": 5404,
+      "sha256": "36aa0cd15fd82b4e081e262756ce1d7a2f0be4526fc341c8dca2f1aaecaa2d2d",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/character-sheet.png",
+      "bytes": 1950811,
+      "sha256": "2a04d3e0ca64b24d34995bd05255919a3f4ecee59240a837d711368999fe80c9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/character-sheet.webp",
+      "bytes": 123128,
+      "sha256": "7e4c4890ef205687b2ccf25d54fcff0b5281656a7b790f5eea0d0b97944bc163",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/expression-concerned.png",
+      "bytes": 133137,
+      "sha256": "cea5480bca48e7051dfc53c10bc788f890219d9a21ae70a4b17cd79ab5403cbc",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/expression-concerned.webp",
+      "bytes": 8282,
+      "sha256": "688cb52e2e69377c28801b8c5b3ccd1938b27561852a9bbe7ad55ab4927adfc1",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/expression-focused.png",
+      "bytes": 163889,
+      "sha256": "7eff78e8844b9f44429809d51be03820ed711229f916567d7af7580594ec2326",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/expression-focused.webp",
+      "bytes": 15834,
+      "sha256": "a3485a6d19f99e1c811fd6ff0756b3552d9b2d9dee841028ee5cabd7c5137a4c",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/expression-neutral.png",
+      "bytes": 173119,
+      "sha256": "c130e15137c501d416a9e4ca10ade28fe034632c83bbe735c8f4590f68ae3bb9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/expression-neutral.webp",
+      "bytes": 17760,
+      "sha256": "7f0f9580832d1d3f14bb6a57a4f2a938675e521c7ff91f6f327157de83122102",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/expression-worried.png",
+      "bytes": 133137,
+      "sha256": "cea5480bca48e7051dfc53c10bc788f890219d9a21ae70a4b17cd79ab5403cbc",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/expression-worried.webp",
+      "bytes": 8282,
+      "sha256": "688cb52e2e69377c28801b8c5b3ccd1938b27561852a9bbe7ad55ab4927adfc1",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/nadia/portrait.png",
+      "bytes": 536886,
+      "sha256": "15ac6909205d0db98facb8469f4fe5d42395d10c64f01e50fbf14f966bce8d19",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/nadia/portrait.webp",
+      "bytes": 50564,
+      "sha256": "cb9a3058912075ee30abcd08e50163733ba84de990f7a96bc31e9bc702093a5d",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/npc-portrait-set.png",
+      "bytes": 2156728,
+      "sha256": "d0300c29b3d5113e9828acb2533844893de0aa7105d41f37becb82db9cfd087b",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/npc-portrait-set.webp",
+      "bytes": 155784,
+      "sha256": "07d6da0b2201676cbea95504675e03098bb337fff756cb7721e17fd8787580fd",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/avatar.png",
+      "bytes": 70940,
+      "sha256": "9466ffc3c260493caa44b543b373c19a940e4a4345f067d482fb4ad1dbed440c",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/avatar.webp",
+      "bytes": 4750,
+      "sha256": "8830417c7a74de3a56ea245499f63c03b036ebed59435710946afb18ec99bc43",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/character-sheet.png",
+      "bytes": 1891930,
+      "sha256": "c2d0bf098424e5f5de68a33df12af4b8c9d2cc46541d8227ac54dbf1cd7f0842",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/character-sheet.webp",
+      "bytes": 112188,
+      "sha256": "2b89b125cee8fa6928e38bc1a7ede4c78d60e49bedbcdfefccdfa2fc9cdd913b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/expression-concerned.png",
+      "bytes": 136392,
+      "sha256": "e69c6376262fa068e2018b54010402f60fdb07d964342941936203c77a5d0cab",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/expression-concerned.webp",
+      "bytes": 9592,
+      "sha256": "1773cbfefe5f9e494febe0a43229bb63c02083e241a8581981fe62a09926a1ca",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/expression-focused.png",
+      "bytes": 142751,
+      "sha256": "968c422c83ddfa0d03077a53c6ddbf6f7d5610512ecb702dcf54abc63cfe669a",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/expression-focused.webp",
+      "bytes": 11700,
+      "sha256": "074a9cb76dac361798fc064c5e5a0c79b9667093623f78c0e60d4c1a93ef2c50",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/expression-neutral.png",
+      "bytes": 154755,
+      "sha256": "72d703ea14c475c729a0b5c503bef171c199439a45ad743f55c7c2136b489b48",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/expression-neutral.webp",
+      "bytes": 13202,
+      "sha256": "f2d24eed3a2028be2e321d8a80f02ec9e722aa1024052e6dc24ae3dfb72b5fe6",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/expression-worried.png",
+      "bytes": 136392,
+      "sha256": "e69c6376262fa068e2018b54010402f60fdb07d964342941936203c77a5d0cab",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/expression-worried.webp",
+      "bytes": 9592,
+      "sha256": "1773cbfefe5f9e494febe0a43229bb63c02083e241a8581981fe62a09926a1ca",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/player/portrait.png",
+      "bytes": 564382,
+      "sha256": "bf44ca1902d809e549cfbb3301880d1c3fd03f1359bff00653e650bfe7288b92",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/player/portrait.webp",
+      "bytes": 56414,
+      "sha256": "19c9d9cdfb9753af21da958b64772ec11ec77398815acd37d46bfbaa23955118",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/avatar.png",
+      "bytes": 97544,
+      "sha256": "c1b0c6eef0e4abbda235069337d307755ad5708297dc7bf8f8fafec9897a5fa4",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/avatar.webp",
+      "bytes": 11166,
+      "sha256": "9d14fff489587259967644aea7c3af753222aa5996ca4ba3d31857c115b31138",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/character-sheet.png",
+      "bytes": 2070758,
+      "sha256": "c0317e9d5767f1d25c69c3ca7bfe2a6fa80c06662dbc77d6e3b6664243c1c5c6",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/character-sheet.webp",
+      "bytes": 141668,
+      "sha256": "ec1e368e7b6c93ac0d3a19f75baaeb8f08ad1e5f1a0b78cbfc7d22de850e5051",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/expression-concerned.png",
+      "bytes": 181220,
+      "sha256": "081346a4f8dcf0a28292ada5eb66f5e8063c2d077e5672ab078468debed297c9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/expression-concerned.webp",
+      "bytes": 18112,
+      "sha256": "15adef5949e914df5c3b9c6d4de87697ad18df850541c561e0908bdaa7879f89",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/expression-focused.png",
+      "bytes": 182938,
+      "sha256": "b2d2a7fb8dff23b5f3c581735a48ad7c325dd4311f2bd0a18a22d9b78d08015f",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/expression-focused.webp",
+      "bytes": 19050,
+      "sha256": "cdc0b4efde3a3866cc4f03a288d5b3847dfc38796bd7be10a2bc43d15606784b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/expression-neutral.png",
+      "bytes": 184482,
+      "sha256": "baf36d78cd22a827a0431a42a0bc1c4fcdb9b03db799597f311aa0beef33376d",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/expression-neutral.webp",
+      "bytes": 19468,
+      "sha256": "2c535c65b3c40e6628883a8f18e72342f3ddf41e52be6588567137cdfb26725b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/expression-worried.png",
+      "bytes": 181220,
+      "sha256": "081346a4f8dcf0a28292ada5eb66f5e8063c2d077e5672ab078468debed297c9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/expression-worried.webp",
+      "bytes": 18112,
+      "sha256": "15adef5949e914df5c3b9c6d4de87697ad18df850541c561e0908bdaa7879f89",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/rune/portrait.png",
+      "bytes": 579358,
+      "sha256": "37d9cae7599603ab68da1363ea8d538288dda52710a567cdfc9a948dd7b45172",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/rune/portrait.webp",
+      "bytes": 60104,
+      "sha256": "7cf7444d41870926f81937579f1dcb925cd5f0a1d015a5f631c52a6c7234a1eb",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/avatar.png",
+      "bytes": 89628,
+      "sha256": "3f0517fe9c3e514a3097de874d86ce61218df302394fcb96fb011645448dcfe9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/avatar.webp",
+      "bytes": 9594,
+      "sha256": "416b883f4adb6cdd6093cd58384ce79c752d26d7972473a3167d87e8f304ca96",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/character-sheet.png",
+      "bytes": 1954893,
+      "sha256": "22002ba53efe8a417c8124ca686143adcab143c2290a9d7c83097749bff9f38a",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/character-sheet.webp",
+      "bytes": 142198,
+      "sha256": "c41d855751cf98d673855eda71c11ff198e3358dedd2efdef57cb9004786fbac",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/expression-concerned.png",
+      "bytes": 167496,
+      "sha256": "656344e58b394bb6044fa74d09ba647f91f7b3f72ee3a8551286d45e2e86c10b",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/expression-concerned.webp",
+      "bytes": 17760,
+      "sha256": "d02e594a1e2df0d849d3f1ce34ae82eaac82e25ad68adfc2acf4bccc2634789d",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/expression-focused.png",
+      "bytes": 167974,
+      "sha256": "8134acf3cee22f333ec6b08db1a5ff9fca85d127f8ba595fcb65abdc9847e85c",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/expression-focused.webp",
+      "bytes": 18586,
+      "sha256": "f25dfb61c80f2df7ccc23ab404107205d18f806b7ef410a2c79a2922816a8c0a",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/expression-neutral.png",
+      "bytes": 185181,
+      "sha256": "06543f053e0449de65a6f76229880c6dcf63c7de67af419a4b4797e67367b6f0",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/expression-neutral.webp",
+      "bytes": 23122,
+      "sha256": "67a9d083057238612d834373f686875e7e1666b4868e1af0852aefa3ea02d439",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/expression-worried.png",
+      "bytes": 167496,
+      "sha256": "656344e58b394bb6044fa74d09ba647f91f7b3f72ee3a8551286d45e2e86c10b",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/expression-worried.webp",
+      "bytes": 17760,
+      "sha256": "d02e594a1e2df0d849d3f1ce34ae82eaac82e25ad68adfc2acf4bccc2634789d",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/characters/sara/portrait.png",
+      "bytes": 536500,
+      "sha256": "11421b068edba75f43dbd67d7a6a4d6a59e8cd35f7b8a1f49680c44cf82e7c63",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/characters/sara/portrait.webp",
+      "bytes": 51268,
+      "sha256": "b01d46f5fc1733dbeab7e973f50bbff0aeee9ce93dbd164744403dfc68eb4cff",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/concept/new-aarhus-district-01.png",
+      "bytes": 2360974,
+      "sha256": "33c7b4c9927799297d12ef2f3753c18f798ff2cef4270b2f09e824fa45cb4f88",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/concept/new-aarhus-district-01.webp",
+      "bytes": 220186,
+      "sha256": "22b12d7650462afe325a7036b3dcf21fab4474bcd2b33a29d8301f28f02352ba",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/hero/worldmind-cover.png",
+      "bytes": 2408710,
+      "sha256": "94dbedf16cb5ebec896c31b88d9434e2d09184d43c206b6239e7a8a26bcdce73",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/hero/worldmind-cover.webp",
+      "bytes": 215796,
+      "sha256": "c856026f423953088ef89250e22687bd3aaf7f284e7875bef8e5dbbd6e4e2c74",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/apartment.png",
+      "bytes": 2049809,
+      "sha256": "a1d567ab0911a2f3414b8cc60db74b2ebe79774c1ba6eacd7950bb8a96648a08",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/apartment.webp",
+      "bytes": 171834,
+      "sha256": "4647d2b00708ded3b55b85072d566a9a2f094611688684d0e0477234e247f7bb",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cafe.png",
+      "bytes": 2549615,
+      "sha256": "44332ac85bef2a980fe4fe1a8cfd2848f0fff473b466e02c1f9ec74f981f4861",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cafe.webp",
+      "bytes": 243372,
+      "sha256": "58d6f05e0587357591fe67c7381ee60ab80bf7b275d98e8078b2cd3bd8ef4e56",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cards/apartment-card.png",
+      "bytes": 564851,
+      "sha256": "d3373d7a8d9ab3acec0a7ab78e117411c329d803320eae39a443b3c1b3fbda95",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cards/apartment-card.webp",
+      "bytes": 82686,
+      "sha256": "00db343ce0150566f0dc444b3452c5992a83be078d3e8efbd6c69c66c47b25b0",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cards/cafe-card.png",
+      "bytes": 606906,
+      "sha256": "f299bb990bcaef9873e9fc66e2fc0f1550a3b58cf9c9191fdeeadd112d4fcef6",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cards/cafe-card.webp",
+      "bytes": 99540,
+      "sha256": "4469f38405f59f915ce84de49c74acff41f3b8f5d180fa0195a70f264ebcdea9",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cards/district-square-card.png",
+      "bytes": 639140,
+      "sha256": "5b50de498f94b26eeb67d0302d7673204b82199aebbc758df005a0f418f6b77c",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cards/district-square-card.webp",
+      "bytes": 109850,
+      "sha256": "8aae776a14003e74eb0eaa226c93fbfaa0f68ce31f58b188ef0f6a40188c730a",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cards/market-card.png",
+      "bytes": 614362,
+      "sha256": "3e49a65422f9d72fad0478c92e6e0fbc6c80e4eb6cf5a8617d3671e479d19b0e",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cards/market-card.webp",
+      "bytes": 101364,
+      "sha256": "29cb7187ab7fe84663f62ab3d0d33743cd9e80f3307ac404677e539369a73926",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/cards/workshop-card.png",
+      "bytes": 600333,
+      "sha256": "f3d7414fb95125a747c32b7e150910dceecf01ab57408277f4acb412d33eb221",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/cards/workshop-card.webp",
+      "bytes": 94648,
+      "sha256": "5f0811ef85c692caed9f613041afca3bbde00873e7cc684d9f3372b11ec9cf78",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/district-square.png",
+      "bytes": 2633897,
+      "sha256": "eef9375b5b5546c95c1ea6a3953d1503bfc413d5987be121fe24b97310c7482d",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/district-square.webp",
+      "bytes": 263082,
+      "sha256": "d3b6e759aff80ec1163b7bf7287c7ecc943b101e607591608282dc2bd4c0a63b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/district_square.png",
+      "bytes": 2633897,
+      "sha256": "eef9375b5b5546c95c1ea6a3953d1503bfc413d5987be121fe24b97310c7482d",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/district_square.webp",
+      "bytes": 263082,
+      "sha256": "d3b6e759aff80ec1163b7bf7287c7ecc943b101e607591608282dc2bd4c0a63b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/icons/apartment.svg",
+      "bytes": 348,
+      "sha256": "16c9d317d73732ac4042e180a5f2175bb40ed6e51887425f4db0d840fd29c70a",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/icons/cafe.svg",
+      "bytes": 363,
+      "sha256": "3a983f5348abe1d36f9a96e22ae3f626882e7a76c61b4cf9eb325efdf1c9c13d",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/icons/district-square.svg",
+      "bytes": 326,
+      "sha256": "f9b8382f51528c3976d258a9db5e06b358104a3a65f29adc38cac4e6a09f5ddb",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/icons/district_square.svg",
+      "bytes": 326,
+      "sha256": "f9b8382f51528c3976d258a9db5e06b358104a3a65f29adc38cac4e6a09f5ddb",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/icons/market.svg",
+      "bytes": 335,
+      "sha256": "cfaa01642399e7bcbb75900311eac95477a5beda2d9f8e0c84291bbfd582bca9",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/icons/workshop.svg",
+      "bytes": 322,
+      "sha256": "347383054709793c194d07861f4c575b1c68c565b751787964c06b77085b5843",
+      "ext": ".svg"
+    },
+    {
+      "path": "assets/locations/market.png",
+      "bytes": 2500917,
+      "sha256": "560938c629adc81239bca25e47b1cd669e2ddada6a4bd7dab915163849de30e9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/market.webp",
+      "bytes": 238776,
+      "sha256": "dc3f4b185e02ae8b1ac461466d55eed9cf0d468b9631357f0bb8772cb131462b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/locations/workshop.png",
+      "bytes": 2466268,
+      "sha256": "08f01d034a477fa1697a3bdd6deb0e74a11ccc6c82c008538a87d8f0ed456c03",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/locations/workshop.webp",
+      "bytes": 225538,
+      "sha256": "ff5239527cc36caff959a50322cf2cd2a9d747b194d27b547424adf54fe8274b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/maps/new-aarhus-district-map.png",
+      "bytes": 2386384,
+      "sha256": "1ee28f8682d19fb231558e4d1af2d560866ec37af7baa4e540b8c20a322098b9",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/maps/new-aarhus-district-map.webp",
+      "bytes": 191682,
+      "sha256": "a8b8c2187c119d733c739097abf48fe9130bba8f7a0700fc5d06e916f9279046",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/showcase/worldmind-v2-showcase.png",
+      "bytes": 2058928,
+      "sha256": "1734c8a82e268e1356a9fc1f33d058c4fcfa2de111776c8834a5363c9f456c23",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/showcase/worldmind-v2-showcase.webp",
+      "bytes": 187742,
+      "sha256": "0561722dbb40fd5006ace6ad26b10650aae6ec29b543027ed0d9a1d44fcce7d3",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/buttons/button-default.png",
+      "bytes": 23711,
+      "sha256": "9143e36eb9b8462672ed35497e7b23198fa0540bad4b04c12d11334aafea8754",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/buttons/button-default.webp",
+      "bytes": 3090,
+      "sha256": "e2c9c7ebbb3ff68455ff530f2140f36283261570af41bb94e9d2ac6665d7bfa5",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/buttons/button-hover.png",
+      "bytes": 23731,
+      "sha256": "bfb7e903f9032fa84c2de2acfe33dfd911b9809e6700181d31c07a1e5f351521",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/buttons/button-hover.webp",
+      "bytes": 2792,
+      "sha256": "1247b892b62c2e16f305d5fb00b3c4c718c3403372ddb0fb2ceadfd5ecfb1523",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/buttons/worldmind-command-buttons.png",
+      "bytes": 1726839,
+      "sha256": "81c6ea9948e6b9f988b58759a3cbdd964fd69e8d6d23ec0f43b19db388cdbf87",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/buttons/worldmind-command-buttons.webp",
+      "bytes": 133014,
+      "sha256": "52f7205d3b4723ed5c411097044770c638ea2160f8fdd8080e5eb2659e77add8",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/cards/evidence-card.png",
+      "bytes": 184283,
+      "sha256": "770496509c3117dba2bde18e1370fa750fcf660dcee451847abf6e9ff1ed6153",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/cards/evidence-card.webp",
+      "bytes": 16266,
+      "sha256": "936d6d914f1b79e60aec949dd7272eda91e2183868b6ffd8571ab8757932db9e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/cards/incident-card.png",
+      "bytes": 269906,
+      "sha256": "66383f5bed626e152e7006bf8214e7c09041e5bdfa4e29eb9c9fe294d23ef9fe",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/cards/incident-card.webp",
+      "bytes": 25844,
+      "sha256": "237deca3f4a6d652809a9801c5078a48c3a153252abf388b69043dbd84182fc7",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/cards/rumor-card.png",
+      "bytes": 150963,
+      "sha256": "b5886000866a6b1e4098b40c930ce9783d225d88ccf982ce67a1fe0452d08478",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/cards/rumor-card.webp",
+      "bytes": 11642,
+      "sha256": "46f957fa50de2228025538857f6333083f608a48596f0c8e541be5eaa7baa890",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/case-management/worldmind-case-management.png",
+      "bytes": 1789103,
+      "sha256": "72f68bdadfd51ce751d7663d430b0136c7cc1ea85ba51b18d332270f911229d7",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/case-management/worldmind-case-management.webp",
+      "bytes": 132234,
+      "sha256": "72bc11ea22a97a91d187b758226489ed8be672ab6d16ca08b1328ef43cdbbac7",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/evidence-rumor/worldmind-evidence-rumor-system.png",
+      "bytes": 1869762,
+      "sha256": "87d2c6fa639bfc08719cd96f1d88f248ff8c063eb13cc302a7e6ddd6edfbe8c1",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/evidence-rumor/worldmind-evidence-rumor-system.webp",
+      "bytes": 138214,
+      "sha256": "525191ceb9e40c55bfe31c539f3985de6524226e2cdcf4a54f5204ab66431f97",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/evidence/evidence-card-template.png",
+      "bytes": 184283,
+      "sha256": "770496509c3117dba2bde18e1370fa750fcf660dcee451847abf6e9ff1ed6153",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/evidence/evidence-card-template.webp",
+      "bytes": 16266,
+      "sha256": "936d6d914f1b79e60aec949dd7272eda91e2183868b6ffd8571ab8757932db9e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/hud-memory-permissions.png",
+      "bytes": 1669447,
+      "sha256": "78109bd3a5027d982255d243dd1da1c5dd97603daff093899377f04b83510961",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/hud-memory-permissions.webp",
+      "bytes": 104208,
+      "sha256": "7dc0fd82862f88f36f0631578ddac835e9ee690201b1c347813c7464162ef518",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/alert.png",
+      "bytes": 77305,
+      "sha256": "a324fe018a58a0d5b72bccc660c1dea6e8338fdd06a887ce6b35ed040dedc7be",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/alert.webp",
+      "bytes": 7314,
+      "sha256": "a0cf9ffaed4823cb250b7d31cf075b3b4d81fe7e75e51b89b15f0c1a2d9ea776",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/branch.png",
+      "bytes": 79286,
+      "sha256": "c52d354597883f2b6b58bd0878496d2a3cbac38c2ec3539362627d1e7b1604b3",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/branch.webp",
+      "bytes": 8220,
+      "sha256": "83a54e90248ecdd69ebd6f534df9ececc5c1523544675481bd694576f60b678e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/dialogue.png",
+      "bytes": 86499,
+      "sha256": "8e3fc581c660a6cc759c75fa140ea19bc28580701f78f922450ea7ecb1ff0c26",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/dialogue.webp",
+      "bytes": 8996,
+      "sha256": "d9f38d883de75ddb36d08d961461ddada069f401305e7deefe13ad21b344e5c0",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/district.png",
+      "bytes": 75752,
+      "sha256": "159ca6ba57f9ff0133acebc8938552864701dd2e0167e07f7cb76ef37f6cd28c",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/district.webp",
+      "bytes": 8274,
+      "sha256": "e97537a52bccd4dec937d64028f1e847c40edfbaf863a030c6915c6fc83210f5",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/economy.png",
+      "bytes": 74794,
+      "sha256": "4559ba899a6ad8df8b4475283773deabd7ae3c201dc0e1c6af7acf1d147a74ec",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/economy.webp",
+      "bytes": 7648,
+      "sha256": "f057397225ae226db8e978c6d34354acbfa448875d097d964cb30b9911c5d0d6",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/evidence.png",
+      "bytes": 74452,
+      "sha256": "d2d3f6b4359c539d536622c1f67bef4e9668668e956f3fc81365394326d72f7d",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/evidence.webp",
+      "bytes": 7616,
+      "sha256": "3e6c1d6bf5dbcb231706ee85cf6dd9883d8d37dcad721e2bc49357e00ba86c2b",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/export.png",
+      "bytes": 81620,
+      "sha256": "1d625463c537b85c046ebc6d6fbd4726afa35323e03a132af62019d848f6c523",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/export.webp",
+      "bytes": 8826,
+      "sha256": "cc41e3e76ac44fe7af823e7d1f0409dceaa3c64763dcc294da6c44699c7018b5",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/incident.png",
+      "bytes": 83082,
+      "sha256": "cb65e9c387e66830075dc91c39f873baa11c8f6f04c14a72f4691de54edef174",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/incident.webp",
+      "bytes": 8400,
+      "sha256": "ac8dacae895d66acc8e3232f4031761db4c50d409a4a8537d63f905970933c8e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/inspect.png",
+      "bytes": 85881,
+      "sha256": "a4bb006e3cfef31c67c8b8a4151b73acea3b6cce1a96b4b0d800e7354883e514",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/inspect.webp",
+      "bytes": 9332,
+      "sha256": "b89343d72e04152d89ef1c44aa4de0df994056ce97be533b8b2b8fc0f8e0af28",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/leno-assistant.png",
+      "bytes": 83011,
+      "sha256": "bdecb076ab7b0040534b32dae57f1df5a3a1f07e70ee0a0bbb7c585080782d79",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/leno-assistant.webp",
+      "bytes": 9624,
+      "sha256": "c640626f72401e124226996b6cfe1098553134371de88d7bf64bb803f5d95036",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/location.png",
+      "bytes": 86992,
+      "sha256": "4cd7d3b012687b27460a04d8caeafb686e4f719ce9828afaa817e1e22c284176",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/location.webp",
+      "bytes": 10078,
+      "sha256": "a7f5864c02f0bd9c99fd45e492a2b93ed3b8fdbae0fda54cc79632d12d66b61f",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/look.png",
+      "bytes": 91957,
+      "sha256": "aefb910133080195fccd71ad762a70d7c27bf007fe7a8b4d8a2771d692d618b3",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/look.webp",
+      "bytes": 10322,
+      "sha256": "23f1f36a31c1ee70dc232f9624852bc99545dcf7c0008f398f975cc571f227f7",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/map.png",
+      "bytes": 75874,
+      "sha256": "22cf282de0fa397e09521e9025be964c9d36ee26bc0319ccf54cfe9e7bf3d86e",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/map.webp",
+      "bytes": 7846,
+      "sha256": "1ee676f4ccb51847279b0bb750d89aadd79a0d6b8c24890f63da87499351e2ec",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/memory.png",
+      "bytes": 92959,
+      "sha256": "9129f6941d46ddd4952f23f5c130b3bcc1e42450d5ca0813b55b922305417a02",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/memory.webp",
+      "bytes": 10942,
+      "sha256": "391a813b543985ca9374a966ab1b80f0c7e3a15f9654602ebe14945378e87f54",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/move.png",
+      "bytes": 87701,
+      "sha256": "2de4b082ce7ed273b174f9525246be5e79874683a921dd010f80732f0b7b7b00",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/move.webp",
+      "bytes": 9496,
+      "sha256": "c8907268b90d22fc6996dfb35ed81ffe855249f04dd621a54c9b87a4ef55c22c",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/npc.png",
+      "bytes": 85601,
+      "sha256": "3d48b65eaf3ee569de129cb763383d00ef073451e45952789a56e1747ab03352",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/npc.webp",
+      "bytes": 9542,
+      "sha256": "4c542671ef601974c908c39a7ecb6f4fc7ca593d2667bfaa4774f12454aed98a",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/permissions.png",
+      "bytes": 87167,
+      "sha256": "91247d25a09d3d952a8d944e52bf5365894ae9f5a4758cc598e388a03db5ed49",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/permissions.webp",
+      "bytes": 10128,
+      "sha256": "e3dec23de6d621049f79cfb2212b0b5c3afea9342c2131287ccc73d892c8b04f",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/player.png",
+      "bytes": 82541,
+      "sha256": "1f9f381a16af27ee6da04176d5779ad8cebcf4903b3aa7166dd96f74dccb469a",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/player.webp",
+      "bytes": 9066,
+      "sha256": "a553923f6b895b80376a0f4a7f6369b1124229ca29d762d5e3974d197585dfef",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/progress.png",
+      "bytes": 82011,
+      "sha256": "e933289c99ae79cd3662688cc2c7af3cc52ac0f957b6ba23529166dbb2d5aa9b",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/progress.webp",
+      "bytes": 8920,
+      "sha256": "5fffc1f2291d0881f13efa3e40b5e329c180f42e083eca4e8830d5163545f5c3",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/relationship.png",
+      "bytes": 81380,
+      "sha256": "ab8109ef8aaa99241c98b536820837bd3a4107baff918fc61ec28015f510eb82",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/relationship.webp",
+      "bytes": 8716,
+      "sha256": "dce8e878c18185e3cc496e8fca41b32370f583a75fea2a1e684d3b152fad1814",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/rumor.png",
+      "bytes": 79968,
+      "sha256": "d4f55c179a2db201b073a4b0be416937f534ac642479a94cfa8121da442b158f",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/rumor.webp",
+      "bytes": 8438,
+      "sha256": "586fbf41074d797622375507d8f9ee510735bbeec2c1fb27a9a587daad8feb92",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/save.png",
+      "bytes": 76744,
+      "sha256": "3948ac675e8db09fceb8deb0d67bc2ed9321f877c9a0451312ddacf9672b5656",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/save.webp",
+      "bytes": 8004,
+      "sha256": "ea0bff4fc05637433998418234ff87027b6da5bfeb4b93f278e9032f3ecf1996",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/settings.png",
+      "bytes": 78236,
+      "sha256": "ff7de33c76ce10e2f3e3efc5edd4020257ba34d25335dfd30edcbc5ccee5094e",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/settings.webp",
+      "bytes": 8146,
+      "sha256": "d367b6b29356a470c7ea08da718cebfcfde26237b73ee17848f5b4519f4610bb",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/task.png",
+      "bytes": 74829,
+      "sha256": "5664f82097b9f55fbb8ece971ee9a7b61740c2f2b89e2a1f0970875883e0b75d",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/task.webp",
+      "bytes": 7564,
+      "sha256": "40ae609490c66f47d4f68556045400ce760099d6a501a8f9b5549c2a82242153",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/icons/worldmind-icon-set.png",
+      "bytes": 2015645,
+      "sha256": "98980d52e62b851e2e1658b87d26f9761407d5381d4b1075b928ebe9b9f7e752",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/icons/worldmind-icon-set.webp",
+      "bytes": 134864,
+      "sha256": "d0a87fd5c5ffc247cedb4f3118eabce5317580f6da8ccfaced247f33cc0fb917",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/incidents/incident-alert-template.png",
+      "bytes": 269906,
+      "sha256": "66383f5bed626e152e7006bf8214e7c09041e5bdfa4e29eb9c9fe294d23ef9fe",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/incidents/incident-alert-template.webp",
+      "bytes": 25844,
+      "sha256": "237deca3f4a6d652809a9801c5078a48c3a153252abf388b69043dbd84182fc7",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/leno-overlay/leno-hologram-card.png",
+      "bytes": 251613,
+      "sha256": "a5384cf968f824e311ec9811b724938ceba45deca3d5e04a449543b83813d25f",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/leno-overlay/leno-hologram-card.webp",
+      "bytes": 17156,
+      "sha256": "3970503e1f803cbb1f97f2097d69bfc55852fa3a83d3e87ab211dd79328f7377",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/leno-overlay/worldmind-leno-overlay.png",
+      "bytes": 1620002,
+      "sha256": "a54ce44e0023591c4c6965c48173bb8ff9c29ceb0cf929fbf17d08b096606d97",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/leno-overlay/worldmind-leno-overlay.webp",
+      "bytes": 94138,
+      "sha256": "d5222a998af9c856a536553350a534f337e73d16d6964833cac7cc6f97985059",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/memory/memory-node-template.png",
+      "bytes": 177475,
+      "sha256": "924d6d4cd601acd33801543dd6f62dd65d40e1f538b727aa8f1fcbfbc7967ae0",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/memory/memory-node-template.webp",
+      "bytes": 13978,
+      "sha256": "e7eaa9bb54a88d6fdbfea14741eef2178d0f08148b988cf77ce5efed9d3977b3",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/memory/worldmind-memory-network.png",
+      "bytes": 1720811,
+      "sha256": "351e52f9cdaaf97c69a4029abba4eb9ceb4b56b7ec95dfa7c61a7e470c03586b",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/memory/worldmind-memory-network.webp",
+      "bytes": 90602,
+      "sha256": "c838575805964fd73fec668572f1e55c7921e269798e4c90e7986ca55b6a0f5e",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/progression/worldmind-progression-badges.png",
+      "bytes": 1788651,
+      "sha256": "7a9c0554523e69ff27dae294681a6a0c1a02b18b9023da7314e9161a19121002",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/progression/worldmind-progression-badges.webp",
+      "bytes": 111148,
+      "sha256": "5b69737cea109bc8d0221297dc0933debccf3a9a8be412b6c698705de2c453fe",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/relationships/relationship-card-template.png",
+      "bytes": 253787,
+      "sha256": "dcfa0d074dfd44d1da7bbde9cb61dfe4356f27134e102443d1fd2e20dfffb3c6",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/relationships/relationship-card-template.webp",
+      "bytes": 25232,
+      "sha256": "26d29905b9a9bec4856516f8f3cc1a642fd949367e3165d0739d4d210076e6d1",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/relationships/worldmind-relationship-components.png",
+      "bytes": 1777364,
+      "sha256": "7609353c4d72383d6530dbc017a9cb5b53985fd5ea6a40cad7da77321b1538d1",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/relationships/worldmind-relationship-components.webp",
+      "bytes": 124978,
+      "sha256": "ab01fc2ebd879ae53b670cd9aa309ce09d3f7b729992404b52723b2497470d2c",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/rumors/rumor-card-template.png",
+      "bytes": 150963,
+      "sha256": "b5886000866a6b1e4098b40c930ce9783d225d88ccf982ce67a1fe0452d08478",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/rumors/rumor-card-template.webp",
+      "bytes": 11642,
+      "sha256": "46f957fa50de2228025538857f6333083f608a48596f0c8e541be5eaa7baa890",
+      "ext": ".webp"
+    },
+    {
+      "path": "assets/ui/saves/worldmind-save-branch-timeline.png",
+      "bytes": 1840983,
+      "sha256": "44c24c99dc3f3061b5771182e7179f8568a0a97a86be82ca335c25f5680d6156",
+      "ext": ".png"
+    },
+    {
+      "path": "assets/ui/saves/worldmind-save-branch-timeline.webp",
+      "bytes": 126658,
+      "sha256": "23d0b2f9485e16abc9389032bca155ae207dde882126275d3ba939e0f774b9d5",
+      "ext": ".webp"
+    }
+  ],
+  "contentRecords": [
+    {
+      "path": "content/dialogue/README.md",
+      "bytes": 41,
+      "sha256": "914d7d16a0d86b0f9798f73b005fd0f893c5a66dbc7206ae5fce9fcca224ebe0",
+      "ext": ".md"
+    },
+    {
+      "path": "content/dialogue/dialogue-pack.json",
+      "bytes": 1377,
+      "sha256": "ab9badd9e667ecbd2b3d300a1db4700e38099e086d1ee6e3f202d11821879f37",
+      "ext": ".json"
+    },
+    {
+      "path": "content/dialogue/dialogue-system-board.png",
+      "bytes": 1739844,
+      "sha256": "2aa36021a5aa51720bd631b66335cb1253cdaf7ca27cd41d706300244f47ecd7",
+      "ext": ".png"
+    },
+    {
+      "path": "content/dialogue/dialogue-system-board.webp",
+      "bytes": 143178,
+      "sha256": "0cfc30f447d4051706eda0206f5b9498ac339b3374812baf0cb9a8515ced790c",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/episodes/README.md",
+      "bytes": 65,
+      "sha256": "3c88ec0eca8e615f19424a9d6c6e94957a10c72068d87855ad0a2af7d8817053",
+      "ext": ".md"
+    },
+    {
+      "path": "content/episodes/noise-along-the-quay/episode.json",
+      "bytes": 474,
+      "sha256": "bdccb054ace2751401ed6c7fc1521e07ee5b772665d605a27e7d3497829d96d9",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/noise-along-the-quay/outcomes.json",
+      "bytes": 553,
+      "sha256": "c3102ff2c514024f04b9f8320389cef30b19b1140f5786cf4feb5a7a73294678",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/noise-along-the-quay/steps.json",
+      "bytes": 468,
+      "sha256": "c0cd3339df9315d2edcdb5200f3207516b1b39c03aafed2f29ae30be87220091",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/noise-along-the-quay/visual-board.png",
+      "bytes": 1744483,
+      "sha256": "c5e16969c05abfc2806252a0d4c0769c2e9d18f9c82b429211b7f1f76d860efb",
+      "ext": ".png"
+    },
+    {
+      "path": "content/episodes/noise-along-the-quay/visual-board.webp",
+      "bytes": 117042,
+      "sha256": "aa0fa93385626b560353eb0f9d682ed7b92d8323c33f57baaa23ad55d089a819",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/episodes/ownership-dispute/episode.json",
+      "bytes": 500,
+      "sha256": "afaed663259ee6b225daa90e8d4b5f1b67269089c913dfe6a64f694d8decc018",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/ownership-dispute/outcomes.json",
+      "bytes": 550,
+      "sha256": "10f2e8948c44ef17bf00eb34e4aab08d971d67726fec8dcc083d67999bb1f5bb",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/ownership-dispute/steps.json",
+      "bytes": 465,
+      "sha256": "4b0efeb134c18a79ae42d1fc8b4c0abce9e70e6200e0282822f32a0f20170482",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/ownership-dispute/visual-board.png",
+      "bytes": 1750505,
+      "sha256": "add2b64c565ecafa9b3a5598d692d31b9bab05f121f7f303e40ef583537be281",
+      "ext": ".png"
+    },
+    {
+      "path": "content/episodes/ownership-dispute/visual-board.webp",
+      "bytes": 136610,
+      "sha256": "cb4765388d7169c2d28b083cfbbf5f4fc15c1cf0d2e74374dc9a13ca1752c34c",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/episodes/the-missing-delivery/episode.json",
+      "bytes": 491,
+      "sha256": "baab3a90c0a0d4b8adba13f225cf99d745afa82df5f21d9959d0a511331fa5bf",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/the-missing-delivery/outcomes.json",
+      "bytes": 553,
+      "sha256": "2259841f7382af7f0ce3835440a984c57083831460a1204719bfc0af4994d6fd",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/the-missing-delivery/steps.json",
+      "bytes": 468,
+      "sha256": "e84e64d637c362936e942fe25265758a86709b2f8557c32f4c08b934efa05b0b",
+      "ext": ".json"
+    },
+    {
+      "path": "content/episodes/the-missing-delivery/visual-board.png",
+      "bytes": 1789559,
+      "sha256": "e7e28a76e154065c20ca1580caf8d43a22cdce78b4ab55c8cfc3442135942634",
+      "ext": ".png"
+    },
+    {
+      "path": "content/episodes/the-missing-delivery/visual-board.webp",
+      "bytes": 133970,
+      "sha256": "e86ebfba78f7f14acfed727f52c1294ea54eee84fe5b1bfe070910dc771ab46a",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/evidence/README.md",
+      "bytes": 52,
+      "sha256": "a33014040dcf1bfbcd5adf596911722bd5c832f8361e368d624d9ecf798b4155",
+      "ext": ".md"
+    },
+    {
+      "path": "content/evidence/evidence-cards-board.png",
+      "bytes": 1774633,
+      "sha256": "a4c29e99c61776c507fbaa9bed5297006529dbb494cdb44dff3db422f911d2c6",
+      "ext": ".png"
+    },
+    {
+      "path": "content/evidence/evidence-cards-board.webp",
+      "bytes": 123732,
+      "sha256": "18ad3eb1b09ec244c36d426c79a6b448807f8041017bb333609d89c43c1e5dfc",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/evidence/evidence-pack.json",
+      "bytes": 1352,
+      "sha256": "f11aad9e6a868f001cda43b6750fd1ad24e2e818e72c6fee8a3f586cf1b92f5f",
+      "ext": ".json"
+    },
+    {
+      "path": "content/incidents/README.md",
+      "bytes": 48,
+      "sha256": "4b8fa6020cdedef4dfd4b85db702185c6da7d84793841317e7420645523904a6",
+      "ext": ".md"
+    },
+    {
+      "path": "content/incidents/incident-panels-board.png",
+      "bytes": 1742500,
+      "sha256": "e07d6e89b61d4444314f7a468989265f0e6731cd87f07f8a9a5de42c52256926",
+      "ext": ".png"
+    },
+    {
+      "path": "content/incidents/incident-panels-board.webp",
+      "bytes": 112038,
+      "sha256": "11b98495eeaf0e83761eec1811537edb3fe9f49d8805ed702c0774e636561f2e",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/incidents/incidents-pack.json",
+      "bytes": 915,
+      "sha256": "fbcf7b06c7bbbd81d82ff496565576d3b6da5a76b8ad97944418427ff5dd7693",
+      "ext": ".json"
+    },
+    {
+      "path": "content/quests/README.md",
+      "bytes": 42,
+      "sha256": "be621e76794578e87ef66b7a7ba75e5a799e149a1733059087b741f41b2ab189",
+      "ext": ".md"
+    },
+    {
+      "path": "content/quests/quest-objectives-board.png",
+      "bytes": 1904908,
+      "sha256": "d9057d5af5f76ddbdc28c92732b991790e9f8e055ed302cde6317a9fca946d6e",
+      "ext": ".png"
+    },
+    {
+      "path": "content/quests/quest-objectives-board.webp",
+      "bytes": 141412,
+      "sha256": "308538aa729a83d6cc7441cd2954aa90d7d81f03c4833f7ee96401754c809c44",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/quests/quests-pack.json",
+      "bytes": 1114,
+      "sha256": "9460f3c09548ef90301eb05630a3e58c4c41a990544caac7cbbd6395ecc85552",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/README.md",
+      "bytes": 47,
+      "sha256": "e381076a49e3fe7786efff8496f82b3c1fbde76cbdf1c9444515f9842cb94720",
+      "ext": ".md"
+    },
+    {
+      "path": "content/resolution-paths/community_arbitration.json",
+      "bytes": 216,
+      "sha256": "49c71bc88c6effdf9474381cbb4ec8a7300d65304164cb48ab52f6104fe30f9f",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/community_repair.json",
+      "bytes": 196,
+      "sha256": "abb9b767f098357ec67a61c429c78c33484c23f43976ed951c11ab1740cc8a15",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/executive_leverage.json",
+      "bytes": 217,
+      "sha256": "48fa8921d41c2c114e35fd1a8bc6d0588324fa71b638d980b8da051caac821ea",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/founder_negotiation.json",
+      "bytes": 215,
+      "sha256": "958697df07c816ccd69af1c5a79f0b3535750e0c12bed9baf9da1491ef98e833",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/investigation_and_counter_rumor.json",
+      "bytes": 289,
+      "sha256": "a5283eaddeafe2f392df07847840cfcf3cc196a36109d45b5d8c6e7ec0e4ec3b",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/peaceful_mediation.json",
+      "bytes": 230,
+      "sha256": "1a878b57491ee5cb0d9239c00097fb793209cc81ece02b4f4230a30dfdd01364",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/policy_pressure.json",
+      "bytes": 208,
+      "sha256": "2692b2587bdbb3638baf6472e6980b54685686453e4e3854a9c7c6c0bf744c4a",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/quiet_investigation.json",
+      "bytes": 215,
+      "sha256": "19097540d7f47e80cc4e103bdfc2617c52f76829f0c67fa10509a222fedcd23c",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/resolution-paths-pack.json",
+      "bytes": 2580,
+      "sha256": "59d0aac14b81ccfd5a08d9022a20c10d3635d9a6d8485c3f119be3e76f29c232",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/silent_investigation.json",
+      "bytes": 215,
+      "sha256": "624184045271b842f14067664e7c36f8f66c9c7164e220d925fd037608e76c34",
+      "ext": ".json"
+    },
+    {
+      "path": "content/resolution-paths/the-missing-delivery-paths-board.png",
+      "bytes": 1789559,
+      "sha256": "e7e28a76e154065c20ca1580caf8d43a22cdce78b4ab55c8cfc3442135942634",
+      "ext": ".png"
+    },
+    {
+      "path": "content/resolution-paths/the-missing-delivery-paths-board.webp",
+      "bytes": 133970,
+      "sha256": "e86ebfba78f7f14acfed727f52c1294ea54eee84fe5b1bfe070910dc771ab46a",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/rumors/README.md",
+      "bytes": 42,
+      "sha256": "9605872ade4d3035794036228eb3d26a9b11138d9548e08a72de50c246d11adf",
+      "ext": ".md"
+    },
+    {
+      "path": "content/rumors/rumor-system-board.png",
+      "bytes": 1600879,
+      "sha256": "c78474e2fc194e941d63c3dc9d2482708e04b89a9e3a883b318864c875768a36",
+      "ext": ".png"
+    },
+    {
+      "path": "content/rumors/rumor-system-board.webp",
+      "bytes": 114646,
+      "sha256": "e05ae2331235ba0a0e5361a9dd2c1b0a081acdec780ab5d822b72dd9edade80d",
+      "ext": ".webp"
+    },
+    {
+      "path": "content/rumors/rumors-pack.json",
+      "bytes": 694,
+      "sha256": "e5fe61ebea8472645307a4911fbd220a6022b541d805a98c0b606947031a23dd",
+      "ext": ".json"
+    },
+    {
+      "path": "content/worldmind/content-pack-v1.json",
+      "bytes": 341,
+      "sha256": "e62967b7b64617004707b15f6b542bfbfe1c07849bd7c61817bcba49dba8fa4a",
+      "ext": ".json"
+    }
+  ],
+  "notes": [
+    "PNG source files are included for repo compatibility.",
+    "WebP sidecars are included for web performance.",
+    "Character portraits, avatars and expressions were cropped from generated character sheets.",
+    "UI slices were cropped from generated UI sheets.",
+    "Audio files are generated placeholder cues and should be replaced by designed production audio later.",
+    "raw-generated/ is excluded from repo-ready zip but preserved in the original source pack."
+  ],
+  "qaVersion": "v3-final-placeholders",
+  "status": "PASS_WITH_NOTES_FINAL_PLACEHOLDER_LAYER",
+  "addedInQaV3": {
+    "dedicatedLongTailCharacterPlaceholders": [
+      "omar",
+      "lina",
+      "yasin",
+      "freja",
+      "elias"
+    ],
+    "factionLogoCount": 6,
+    "inventoryItemIconCount": 15,
+    "badgeIconCount": 12,
+    "loadingScreenCount": 4,
+    "episodeFolders": [
+      "the-missing-delivery",
+      "noise-along-the-quay",
+      "ownership-dispute"
+    ],
+    "assetPackPreview": "assets/showcase/worldmind-complete-asset-pack-preview.png"
+  }
+}

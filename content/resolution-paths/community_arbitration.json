@@ -1,0 +1,13 @@
+{
+  "id": "community_arbitration",
+  "label": "Community Arbitration",
+  "risk": "low",
+  "steps": [
+    "host town hall",
+    "gather proposals",
+    "draft access rules"
+  ],
+  "reward": {
+    "stability": 10
+  }
+}

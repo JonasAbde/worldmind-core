@@ -1,0 +1,13 @@
+{
+  "id": "quiet_investigation",
+  "label": "Quiet Investigation",
+  "risk": "medium",
+  "steps": [
+    "trace ownership",
+    "find discrepancies",
+    "present findings"
+  ],
+  "reward": {
+    "exposure": 12
+  }
+}
