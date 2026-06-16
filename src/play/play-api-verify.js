@@ -67,6 +67,31 @@ export function assertVisualCuesMesh3d(visualCues) {
   return { ok: problems.length === 0, problems };
 }
 
+/** Assert footprint-aligned collision volumes on district locations (v40+). */
+export function assertVisualCuesCollision(visualCues) {
+  const problems = [];
+  if (!visualCues) {
+    problems.push('visualCues missing');
+    return { ok: false, problems };
+  }
+  for (const loc of visualCues.locations ?? []) {
+    const col = loc.collision;
+    if (!col || (col.shape !== 'box' && col.shape !== 'circle')) {
+      problems.push(`location ${loc.id} collision.shape expected box|circle`);
+    }
+    if (!Array.isArray(col?.halfExtents) || col.halfExtents.length !== 2) {
+      problems.push(`location ${loc.id} collision.halfExtents expected [2]`);
+    }
+    if (typeof col?.radius !== 'number' || col.radius <= 0) {
+      problems.push(`location ${loc.id} collision.radius expected positive number`);
+    }
+    if (!Array.isArray(loc.footprint) || loc.footprint.length !== 3) {
+      problems.push(`location ${loc.id} footprint expected [w,h,d]`);
+    }
+  }
+  return { ok: problems.length === 0, problems };
+}
+
 export function assertWalkAnimation(walkAnimation, expectedFrom, expectedTo) {
   const problems = [];
   if (!walkAnimation) {

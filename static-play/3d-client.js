@@ -3,6 +3,7 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const canvas = document.getElementById('wm-3d-canvas');
 const banner = document.getElementById('wm-3d-banner');
@@ -89,6 +90,9 @@ function clearWorldMeshes() {
 function addPickable(mesh, meta) {
   mesh.userData.pickMeta = meta;
   pickables.set(mesh.uuid, meta);
+  mesh.traverse((child) => {
+    if (child.isMesh) child.userData.pickMeta = meta;
+  });
   worldGroup.add(mesh);
   return mesh;
 }
@@ -124,6 +128,87 @@ function buildEdges(edges) {
 
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
+const gltfLoader = new GLTFLoader();
+const gltfCache = new Map();
+
+function shouldUseGltfBuilding(modelUrl) {
+  return Boolean(modelUrl);
+}
+
+function shouldUseGltfBody(renderMode = 'mesh3d', modelUrl) {
+  return renderMode === 'mesh3d' && Boolean(modelUrl);
+}
+
+function resolveAssetUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
+  return `/${url.replace(/^\//, '')}`;
+}
+
+function loadGltfScene(url) {
+  const resolved = resolveAssetUrl(url);
+  if (!resolved) return Promise.reject(new Error('no model url'));
+  if (gltfCache.has(resolved)) return gltfCache.get(resolved);
+  const promise = new Promise((resolve, reject) => {
+    gltfLoader.load(
+      resolved,
+      (gltf) => {
+        const root = gltf.scene.clone(true);
+        root.traverse((obj) => {
+          if (obj.isMesh) {
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+          }
+        });
+        resolve(root);
+      },
+      undefined,
+      reject
+    );
+  });
+  gltfCache.set(resolved, promise);
+  return promise;
+}
+
+function mountGltfModel(parent, url, onFail) {
+  const slot = new THREE.Group();
+  parent.add(slot);
+  loadGltfScene(url)
+    .then((scene) => {
+      slot.clear();
+      slot.add(scene);
+    })
+    .catch(() => {
+      if (typeof onFail === 'function') onFail(slot);
+    });
+  return slot;
+}
+
+function buildCapsuleBody(parent, color = '#58a6ff', emissive = '#1d4ed8') {
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.35, 0.9, 4, 8),
+    new THREE.MeshStandardMaterial({ color, emissive, emissiveIntensity: 0.25 })
+  );
+  body.position.y = 0.9;
+  body.castShadow = true;
+  parent.add(body);
+  return body;
+}
+
+function buildProceduralBuildingMesh(loc) {
+  const [w, h, d] = loc.scale || [2, 2.5, 2];
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({
+      color: loc.color || '#64748b',
+      emissive: new THREE.Color(loc.emissive || '#000000'),
+      emissiveIntensity: loc.emissiveIntensity ?? 0.1
+    })
+  );
+  mesh.position.y = h / 2;
+  mesh.castShadow = true;
+  return mesh;
+}
 
 function alternateSceneTexturePath(path) {
   if (!path) return null;
@@ -171,27 +256,32 @@ function buildLocations(locations) {
     ring.position.set(px, 0.02, pz);
     worldGroup.add(ring);
 
-    const tex = loadSceneTexture(loc.sceneTexture);
+    const buildingGroup = new THREE.Group();
+    buildingGroup.position.set(px, 0, pz);
     let mesh;
-    if (tex) {
-      mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(BILLBOARD_W, BILLBOARD_H),
-        new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false })
-      );
-      mesh.position.set(px, BILLBOARD_H / 2 + 0.15, pz);
+
+    if (shouldUseGltfBuilding(loc.modelUrl)) {
+      mountGltfModel(buildingGroup, loc.modelUrl, (slot) => {
+        const fallback = buildProceduralBuildingMesh(loc);
+        slot.add(fallback);
+      });
+      mesh = buildingGroup;
     } else {
-      const [w, h, d] = loc.scale || [2, 2.5, 2];
-      mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(w, h, d),
-        new THREE.MeshStandardMaterial({
-          color: loc.color || '#64748b',
-          emissive: new THREE.Color(loc.emissive || '#000000'),
-          emissiveIntensity: loc.emissiveIntensity ?? 0.1
-        })
-      );
-      mesh.position.set(px, h / 2, pz);
+      const tex = loadSceneTexture(loc.sceneTexture);
+      if (tex) {
+        mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(BILLBOARD_W, BILLBOARD_H),
+          new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false })
+        );
+        mesh.position.set(0, BILLBOARD_H / 2 + 0.15, 0);
+      } else {
+        mesh = buildProceduralBuildingMesh(loc);
+        mesh.position.set(0, mesh.position.y, 0);
+      }
+      buildingGroup.add(mesh);
+      mesh = buildingGroup;
     }
-    mesh.castShadow = true;
+
     addPickable(mesh, {
       kind: 'location',
       id: loc.id,
@@ -200,25 +290,34 @@ function buildLocations(locations) {
       description: `${loc.zone} · ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`
     });
 
+    const labelHeight = shouldUseGltfBuilding(loc.modelUrl)
+      ? (loc.footprint?.[1] ?? BILLBOARD_H) + 0.8
+      : BILLBOARD_H + 0.8;
     const label = makeLabel(loc.label + (loc.isPlayerHere ? ' ★' : ''));
-    label.position.set(px, BILLBOARD_H + 0.8, pz);
+    label.position.set(px, labelHeight, pz);
     worldGroup.add(label);
 
     for (const agent of loc.agents || []) {
-      const agentMesh = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.35, 0.9, 4, 8),
-        new THREE.MeshStandardMaterial({ color: '#58a6ff', emissive: '#1d4ed8', emissiveIntensity: 0.25 })
-      );
-      agentMesh.position.set(agent.position[0], agent.position[1], agent.position[2]);
-      agentMesh.castShadow = true;
+      const agentGroup = new THREE.Group();
+      agentGroup.position.set(agent.position[0], agent.position[1], agent.position[2]);
+
+      if (shouldUseGltfBody(agent.renderMode, agent.modelUrl)) {
+        mountGltfModel(agentGroup, agent.modelUrl, (slot) => {
+          buildCapsuleBody(slot);
+        });
+      } else {
+        buildCapsuleBody(agentGroup);
+      }
+
+      agentGroup.castShadow = true;
       const idleKind = agent.idleAnimation === 'turn' ? 'turn' : 'bob';
-      agentMesh.userData.idleBase = {
+      agentGroup.userData.idleBase = {
         y: agent.position[1],
         phase: (agent.id || '').split('').reduce((n, c) => n + c.charCodeAt(0), 0) * 0.17,
         kind: idleKind
       };
-      idleAgentMeshes.push(agentMesh);
-      addPickable(agentMesh, {
+      idleAgentMeshes.push(agentGroup);
+      addPickable(agentGroup, {
         kind: 'agent',
         id: agent.id,
         label: agent.name,
@@ -270,12 +369,14 @@ function buildWalkPlayerMesh() {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.05;
   group.add(ring);
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.28, 0.5, 4, 8),
-    new THREE.MeshStandardMaterial({ color: '#fbbf24', emissive: '#f59e0b', emissiveIntensity: 0.5 })
-  );
-  body.position.y = 0.9;
-  group.add(body);
+  const player = visualCues?.player;
+  if (shouldUseGltfBody(player?.renderMode, player?.modelUrl)) {
+    mountGltfModel(group, player.modelUrl, (slot) => {
+      buildCapsuleBody(slot, '#fbbf24', '#f59e0b');
+    });
+  } else {
+    buildCapsuleBody(group, '#fbbf24', '#f59e0b');
+  }
   return group;
 }
 
@@ -357,12 +458,13 @@ function buildPlayer(player) {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.05;
   staticPlayerGroup.add(ring);
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.28, 0.5, 4, 8),
-    new THREE.MeshStandardMaterial({ color: '#fbbf24', emissive: '#f59e0b', emissiveIntensity: 0.5 })
-  );
-  body.position.y = 0.9;
-  staticPlayerGroup.add(body);
+  if (shouldUseGltfBody(player.renderMode, player.modelUrl)) {
+    mountGltfModel(staticPlayerGroup, player.modelUrl, (slot) => {
+      buildCapsuleBody(slot, '#fbbf24', '#f59e0b');
+    });
+  } else {
+    buildCapsuleBody(staticPlayerGroup, '#fbbf24', '#f59e0b');
+  }
   worldGroup.add(staticPlayerGroup);
 }
 

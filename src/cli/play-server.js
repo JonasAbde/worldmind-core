@@ -308,7 +308,16 @@ function serveStatic(req, res, urlPath) {
     '.gltf': 'model/gltf+json'
   };
   res.writeHead(200, { 'content-type': types[ext] || 'application/octet-stream', 'cache-control': 'no-store' });
-  fs.createReadStream(full).pipe(res);
+  const stream = fs.createReadStream(full);
+  stream.on('error', (err) => {
+    if (!res.headersSent) {
+      res.writeHead(err.code === 'ENOENT' ? 404 : 503);
+      res.end(err.code === 'EBUSY' ? 'asset temporarily locked' : 'asset read failed');
+      return;
+    }
+    res.destroy();
+  });
+  stream.pipe(res);
 }
 
 // ---------------------------------------------------------------------------

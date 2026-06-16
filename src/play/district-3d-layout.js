@@ -11,6 +11,7 @@ import { resolveCharacterFullBodyPath } from './character-fullbody-assets.js';
 import { resolveCharacterModelPath } from './character-model-assets.js';
 import { resolveLocationModelPath } from './location-model-assets.js';
 import { buildWalkGraphFromCues } from './walk-path.js';
+import { buildLocationCollision, presetForLocation } from './building-footprints.js';
 
 const ZONE_STYLES = Object.freeze({
   residential: { color: '#4a6fa5', height: 2.2, emissive: '#1e3a5f' },
@@ -36,6 +37,7 @@ export function build3DVisualCues(world, options = {}) {
 
   const locations = (view.nodes || []).map((node) => {
     const style = ZONE_STYLES[node.zone] || ZONE_STYLES.unknown;
+    const preset = presetForLocation(node.id, node.zone);
     const position = mapDistrictToWorld(node.x, node.y);
     const isPlayerHere = node.id === playerLoc;
     return {
@@ -43,6 +45,9 @@ export function build3DVisualCues(world, options = {}) {
       label: node.name,
       zone: node.zone,
       position,
+      footprint: preset.footprint,
+      buildingStyle: preset.style,
+      collision: buildLocationCollision(node.id, node.zone),
       mesh: 'district_building',
       renderMode: 'mesh3d',
       scale: [style.height * 0.85, style.height, style.height * 0.85],
@@ -187,6 +192,12 @@ export function validate3DVisualCues(cues) {
   for (const loc of cues?.locations || []) {
     if (!Array.isArray(loc.position) || loc.position.length !== 3) {
       errors.push(`location ${loc.id || '?'} missing position[3]`);
+    }
+    const col = loc.collision;
+    if (!col || !Array.isArray(col.halfExtents) || col.halfExtents.length !== 2) {
+      errors.push(`location ${loc.id || '?'} missing collision.halfExtents[2]`);
+    } else if (typeof col.radius !== 'number' || col.radius <= 0) {
+      errors.push(`location ${loc.id || '?'} missing collision.radius`);
     }
   }
   return { ok: errors.length === 0, errors };

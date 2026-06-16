@@ -13,6 +13,7 @@ import { PLAY_API_VERSION } from '../play/play-api-payload.js';
 import {
   assertVisualCuesV4,
   assertVisualCuesMesh3d,
+  assertVisualCuesCollision,
   assertWalkAnimation,
   pickMoveTarget
 } from '../play/play-api-verify.js';
@@ -61,6 +62,10 @@ async function main() {
     const mesh3dCheck = assertVisualCuesMesh3d(state.json.visualCues);
     if (!mesh3dCheck.ok) {
       throw new Error(`visualCues mesh3d: ${mesh3dCheck.problems.join(', ')}`);
+    }
+    const collisionCheck = assertVisualCuesCollision(state.json.visualCues);
+    if (!collisionCheck.ok) {
+      throw new Error(`visualCues collision: ${collisionCheck.problems.join(', ')}`);
     }
     const sampleModel = state.json.visualCues.locations?.find((l) => l.modelUrl)?.modelUrl;
     if (sampleModel) {

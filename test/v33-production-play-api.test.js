@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyPlayApiOnHost } from '../src/cli/validate-play-api.js';
 import {
   assertVisualCuesV4,
+  assertVisualCuesCollision,
   assertWalkAnimation,
   pickMoveTarget
 } from '../src/play/play-api-verify.js';
@@ -47,6 +48,8 @@ test('v33.1 — play-api-verify helpers accept visualCues v4 payload', () => {
   const payload = buildPlayStatePayload(world);
   const check = assertVisualCuesV4(payload.visualCues);
   assert.equal(check.ok, true, check.problems?.join('; '));
+  const collision = assertVisualCuesCollision(payload.visualCues);
+  assert.equal(collision.ok, true, collision.problems?.join('; '));
   assert.equal(payload.visualCues.version, 4);
   assert.ok(payload.visualCues.walkGraph?.nodes?.cafe);
   assert.ok(payload.visualCues.interior?.locationId);
