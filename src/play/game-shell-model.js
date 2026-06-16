@@ -12,8 +12,20 @@
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { CHARACTER_ASSETS, WORLD_ASSETS } from './assets.js';
-import { listFounderContractOffers, founderTierLabel } from './founder-contracts.js';
+import {
+  listFounderContractOffers,
+  founderTierLabel,
+  founderBaseLevelForContracts,
+  FOUNDER_CONTRACT_CATALOG
+} from './founder-contracts.js';
+import { buildQuestProgressView } from './quest-progress.js';
+import {
+  getCapabilities,
+  getNextUnlock,
+  summarizeProgression
+} from './progression.js';
 import { getContentPack, hotspotCommandText } from './content-pack-runtime.js';
+import { lenoSuggestActions } from '../simulation/leno.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -108,12 +120,25 @@ export function buildConsequenceBeat(consequence) {
   };
 }
 
-function buildNpcTopics(agentId) {
+function buildNpcTopics(agentId, rel = {}) {
+  const trust = rel.trust ?? 0;
   const topics = (_pack?.dialogue ?? [])
     .filter((d) => d.agentId === agentId)
+    .filter((d) => trust >= (d.requiredRelationship?.trust ?? 0))
     .map((d) => d.topic)
     .filter(Boolean);
   return topics.length ? topics : ['delivery'];
+}
+
+function buildNpcLockedTopics(agentId, rel = {}) {
+  const trust = rel.trust ?? 0;
+  return (_pack?.dialogue ?? [])
+    .filter((d) => d.agentId === agentId)
+    .filter((d) => trust < (d.requiredRelationship?.trust ?? 0))
+    .map((d) => ({
+      topic: d.topic,
+      minTrust: d.requiredRelationship?.trust ?? 0
+    }));
 }
 
 function buildNpcMood(agent, rel) {
@@ -140,6 +165,7 @@ function buildRumorTrail(world, playerKnowledge = {}) {
       claim,
       spreadRisk: meta.truthLevel === 'false_or_misleading' ? 'high' : 'medium',
       distortion: meta.truthLevel ?? 'unknown',
+      truthLevel: meta.truthLevel ?? 'unknown',
       trustConfidence: traced ? 'medium' : 'low',
       traceState: traced ? 'partial' : 'untraced',
       knownBy: worldRumor?.knownByAgentIds ?? [],
@@ -151,8 +177,85 @@ function buildRumorTrail(world, playerKnowledge = {}) {
   });
 }
 
+const FOUNDER_TIER_MILESTONES = [
+  { level: 0, label: 'Starter runner', contractsRequired: 0 },
+  { level: 1, label: 'District courier', contractsRequired: 3 },
+  { level: 2, label: 'Established operator', contractsRequired: 6 }
+];
+
+function normalizeActiveFounderContract(active) {
+  if (!active || typeof active !== 'object') return null;
+  return {
+    id: active.id ?? null,
+    templateId: active.templateId ?? active.id ?? null,
+    label: active.label ?? active.templateId ?? active.id ?? 'Active contract',
+    customer: active.customer ?? null,
+    payout: active.payout ?? null,
+    upfrontCost: active.upfrontCost ?? 0,
+    reputationGain: active.reputationGain ?? null,
+    status: active.status ?? 'active',
+    deliveryStage: active.status === 'active' ? 'ready_to_deliver' : 'idle'
+  };
+}
+
+function buildFounderDeliveryProgress(founder = {}) {
+  const contractsCompleted = founder.contractsCompleted ?? 0;
+  const baseLevel = founder.baseLevel ?? founderBaseLevelForContracts(contractsCompleted);
+  const active = normalizeActiveFounderContract(founder.activeContract);
+  const nextTier = FOUNDER_TIER_MILESTONES.find((t) => t.level === baseLevel + 1) ?? null;
+  const contractsToNextTier = nextTier
+    ? Math.max(0, nextTier.contractsRequired - contractsCompleted)
+    : 0;
+
+  const tierMilestones = FOUNDER_TIER_MILESTONES.map((tier) => ({
+    id: `tier_${tier.level}`,
+    label: tier.label,
+    level: tier.level,
+    contractsRequired: tier.contractsRequired,
+    reached: baseLevel >= tier.level,
+    current: baseLevel === tier.level
+  }));
+
+  const workflowSteps = active
+    ? [
+        { id: 'accept', label: 'Contract accepted', done: true },
+        { id: 'upfront', label: 'Upfront paid', done: true },
+        { id: 'deliver', label: 'Run delivery', done: false, current: true },
+        { id: 'payout', label: 'Collect payout', done: false }
+      ]
+    : [];
+
+  return {
+    contractsCompleted,
+    baseLevel,
+    nextTierLabel: nextTier?.label ?? null,
+    contractsToNextTier,
+    hasActiveDelivery: Boolean(active),
+    activeTemplateId: active?.templateId ?? null,
+    tierMilestones,
+    workflowSteps
+  };
+}
+
 function buildSuspectCards(playerKnowledge = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const fromPack = _pack?.suspectCards ?? [];
+  if (fromPack.length) {
+    return fromPack.map((entry) => {
+      const required = entry.requiredEvidence ?? [];
+      const locked = required.length > 0 && !required.every((id) => evidenceIds.includes(id));
+      const characterId = entry.characterId ?? entry.id;
+      return {
+        id: characterId,
+        label: entry.label ?? characterId,
+        role: entry.role ?? '',
+        locked,
+        redacted: locked,
+        inspectCommand: locked ? null : (characterId === 'nadia' ? 'ask rune nadia' : `talk ${characterId}`)
+      };
+    });
+  }
+
   const suspects = [
     { id: 'sara', label: 'Sara', role: 'café owner', locked: false },
     { id: 'malik', label: 'Malik', role: 'mechanic', locked: false },
@@ -226,7 +329,7 @@ export function buildCommandText(command, args = {}) {
     case 'ask':
       return args.topic ? `ask ${args.target} ${args.topic}` : `ask ${args.target ?? ''}`;
     case 'inspect':
-      return `inspect ${args.target ?? ''}`;
+      return args.focus ? `inspect ${args.target ?? ''} ${args.focus}`.trim() : `inspect ${args.target ?? ''}`;
     case 'move':
       return `move ${args.target ?? ''}`;
     case 'listen_rumors':
@@ -250,12 +353,15 @@ function normalizeMajorDecisionEntry(d) {
   };
 }
 
-function buildMajorDecisions(playerKnowledge = {}, { includeGated = false } = {}) {
+function buildMajorDecisions(playerKnowledge = {}, { questProgress = null, includeGated = false } = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const resolvedPathId = questProgress?.resolvedPathId ?? null;
+  const pathIds = new Set((_pack?.quests ?? []).flatMap((q) => (q.resolutionPaths ?? []).map((p) => p.id)));
   const fromQuest = _pack?.quests?.flatMap((q) => q.majorDecisions ?? []) ?? [];
   if (fromQuest.length) {
     return fromQuest
       .filter((d) => {
+        if (resolvedPathId && pathIds.has(d.id)) return false;
         if (includeGated) return true;
         const required = d.requiredEvidence ?? [];
         return required.every((id) => evidenceIds.includes(id));
@@ -294,24 +400,24 @@ function formatMajorDecisionPrompt(decision, commandText, reason) {
   };
 }
 
-function findAuthoredMajorDecision(commandText, playerKnowledge, { includeGated = false } = {}) {
+function findAuthoredMajorDecision(commandText, playerKnowledge, { questProgress = null, includeGated = false } = {}) {
   const normalized = String(commandText ?? '').trim().toLowerCase();
   if (!normalized) return null;
-  return buildMajorDecisions(playerKnowledge, { includeGated }).find((d) => {
+  return buildMajorDecisions(playerKnowledge, { questProgress, includeGated }).find((d) => {
     const cmd = String(d.command ?? '').trim().toLowerCase();
     return cmd && normalized === cmd;
   }) ?? null;
 }
 
-function detectConsequentialPayDecision(commandText, playerKnowledge) {
+function detectConsequentialPayDecision(commandText, playerKnowledge, questProgress = null) {
   const normalized = String(commandText ?? '').trim().toLowerCase();
   const payMatch = normalized.match(/^pay\s+(\S+)\s+(\d+(?:\.\d+)?)$/);
   if (!payMatch) return null;
   const amount = Number(payMatch[2]);
   if (!Number.isFinite(amount) || amount < 15) return null;
 
-  const authored = findAuthoredMajorDecision(commandText, playerKnowledge)
-    ?? buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+  const authored = findAuthoredMajorDecision(commandText, playerKnowledge, { questProgress })
+    ?? buildMajorDecisions(playerKnowledge, { questProgress, includeGated: true }).find((d) => {
       const cmd = String(d.command ?? '').trim().toLowerCase();
       return cmd.startsWith('pay ') && Number(cmd.split(/\s+/).pop()) >= 15;
     })
@@ -325,14 +431,14 @@ function detectConsequentialPayDecision(commandText, playerKnowledge) {
   return formatMajorDecisionPrompt(authored, commandText, 'pay_threshold');
 }
 
-function detectConsequentialCounterRumorDecision(commandText, playerKnowledge) {
+function detectConsequentialCounterRumorDecision(commandText, playerKnowledge, questProgress = null) {
   const normalized = String(commandText ?? '').trim().toLowerCase();
   if (!normalized.startsWith('counter_rumor')) return null;
 
-  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge, { questProgress });
   if (exact) return formatMajorDecisionPrompt(exact, commandText, 'counter_rumor');
 
-  const gated = buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+  const gated = buildMajorDecisions(playerKnowledge, { questProgress, includeGated: true }).find((d) => {
     const cmd = String(d.command ?? '').trim().toLowerCase();
     return cmd === 'counter_rumor' || cmd.startsWith('counter_rumor ');
   });
@@ -367,15 +473,15 @@ function detectMajorDecisionFromConsequence(consequence, commandText) {
   );
 }
 
-export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
+export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}, questProgress = null) {
   const normalized = String(commandText ?? '').trim().toLowerCase();
   if (!normalized) return null;
 
-  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge, { questProgress });
   if (exact) return formatMajorDecisionPrompt(exact, commandText, 'authored_decision');
 
-  return detectConsequentialPayDecision(commandText, playerKnowledge)
-    ?? detectConsequentialCounterRumorDecision(commandText, playerKnowledge);
+  return detectConsequentialPayDecision(commandText, playerKnowledge, questProgress)
+    ?? detectConsequentialCounterRumorDecision(commandText, playerKnowledge, questProgress);
 }
 
 /**
@@ -386,10 +492,11 @@ export function resolveMajorDecisionPrompt({
   command,
   args = {},
   playerKnowledge = {},
+  questProgress = null,
   consequence = null
 } = {}) {
   const text = commandText ?? buildCommandText(command, args);
-  const fromCommand = detectMajorDecisionFromCommand(text, playerKnowledge);
+  const fromCommand = detectMajorDecisionFromCommand(text, playerKnowledge, questProgress);
   if (fromCommand?.branchSuggested) return fromCommand;
   return detectMajorDecisionFromConsequence(consequence, text);
 }
@@ -405,7 +512,10 @@ export function buildGameplayShellModel(world, payload = {}) {
   const locEntry = LOCATION_INDEX[playerLocationId] ?? {};
   const player = world?.agents?.player;
   const topicsByAgent = Object.fromEntries(
-    (_pack?.characters ?? []).map((c) => [c.id, buildNpcTopics(c.id)])
+    (_pack?.characters ?? []).map((c) => {
+      const rel = world?.agents?.[c.id]?.relationships?.player ?? {};
+      return [c.id, buildNpcTopics(c.id, rel)];
+    })
   );
 
   const npcCards = Object.values(world?.agents ?? {})
@@ -413,23 +523,30 @@ export function buildGameplayShellModel(world, payload = {}) {
     .map((a) => {
       const rel = a.relationships?.player ?? { trust: 0, suspicion: 0, fear: 0 };
       const assets = CHARACTER_ASSETS[a.id] ?? {};
-      const topics = topicsByAgent[a.id] ?? buildNpcTopics(a.id);
+      const topics = topicsByAgent[a.id] ?? buildNpcTopics(a.id, rel);
+      const lockedTopics = buildNpcLockedTopics(a.id, rel);
       const primaryTopic = topics[0] ?? 'delivery';
+      const atLocation = a.locationId === playerLocationId;
       return {
         id: a.id,
         name: a.name ?? a.id,
         role: a.role ?? '',
         mood: buildNpcMood(a, rel),
+        locationId: a.locationId ?? null,
         locationName: world?.locations?.[a.locationId]?.name ?? a.locationId ?? '?',
+        atPlayerLocation: atLocation,
         avatar: a.assets?.avatar ?? assets.avatar ?? `assets/characters/${a.id}/avatar.png`,
         portrait: a.assets?.portrait ?? assets.portrait ?? `assets/characters/${a.id}/portrait.png`,
         topics,
+        lockedTopics,
         trust: rel.trust ?? 0,
         suspicion: rel.suspicion ?? 0,
         fear: rel.fear ?? 0,
         actions: [
           { label: 'Talk', command: `talk ${a.id}` },
-          { label: `Ask: ${primaryTopic}`, command: `ask ${a.id} ${primaryTopic}` },
+          ...(topics.length
+            ? [{ label: `Ask: ${primaryTopic}`, command: `ask ${a.id} ${primaryTopic}` }]
+            : []),
           { label: 'Offer help', command: `talk ${a.id}` },
           { label: 'Negotiate', command: `pay ${a.id} 5` },
           { label: 'Ask Leno', command: 'ask_leno' },
@@ -439,6 +556,12 @@ export function buildGameplayShellModel(world, payload = {}) {
     });
 
   const rumorTrail = buildRumorTrail(world, playerKnowledge);
+  const questProgress = buildQuestProgressView(world);
+  const lenoSuggestions = (payload?.leno?.suggestions
+    ?? (world?.playerKnowledge
+      ? lenoSuggestActions(world, { incidentId: 'missing_delivery' })
+      : []))
+    .slice(0, 3);
 
   return {
     topbar: {
@@ -461,25 +584,46 @@ export function buildGameplayShellModel(world, payload = {}) {
     npcCards,
     caseBoard: buildCaseBoard(playerKnowledge),
     rumorTrail,
-    founder: {
-      unlocked: founderUnlocked,
-      baseLevel: world?.founder?.baseLevel ?? 0,
-      tierLabel: founderTierLabel(world?.founder?.baseLevel ?? 0),
-      contractsCompleted: world?.founder?.contractsCompleted ?? 0,
-      activeContract: world?.founder?.activeContract ?? null,
-      contracts: listFounderContractOffers(world?.founder ?? {}),
-      reputation: world?.founder?.reputation ?? player?.stats?.reputation ?? 0,
-      money: player?.stats?.money ?? 0,
-      unlockText: founderUnlocked
-        ? 'Founder loop unlocked.'
-        : 'Resolve The Missing Delivery to unlock founder loop.'
+    questProgress,
+    leno: {
+      summary: payload?.leno?.summary ?? null,
+      suggestions: lenoSuggestions
     },
-    majorDecisions: buildMajorDecisions(playerKnowledge),
+    founder: (() => {
+      const founderState = world?.founder ?? {};
+      const baseLevel = founderState.baseLevel ?? founderBaseLevelForContracts(founderState.contractsCompleted ?? 0);
+      const contracts = listFounderContractOffers(founderState);
+      const deliveryProgress = buildFounderDeliveryProgress({ ...founderState, baseLevel });
+      const hasDeliveryContracts = contracts.some((c) => c.isDelivery);
+      return {
+        unlocked: founderUnlocked,
+        baseLevel,
+        tierLabel: founderTierLabel(baseLevel),
+        contractsCompleted: founderState.contractsCompleted ?? 0,
+        activeContract: normalizeActiveFounderContract(founderState.activeContract),
+        contracts,
+        reputation: founderState.reputation ?? player?.stats?.reputation ?? 0,
+        money: player?.stats?.money ?? 0,
+        unlockText: founderUnlocked
+          ? 'Founder loop unlocked.'
+          : 'Resolve The Missing Delivery to unlock founder loop.',
+        deliveryProgress: hasDeliveryContracts ? deliveryProgress : null,
+        catalogSize: FOUNDER_CONTRACT_CATALOG.length
+      };
+    })(),
+    majorDecisions: buildMajorDecisions(playerKnowledge, { questProgress }),
+    progression: {
+      ...summarizeProgression(world?.progression),
+      nextUnlock: getNextUnlock(world?.progression),
+      capabilities: getCapabilities(world?.progression)
+    },
     assets: {
       lenoOverlay: WORLD_ASSETS.ui.lenoOverlay,
       evidenceIcon: WORLD_ASSETS.ui.evidenceCard,
       rumorIcon: WORLD_ASSETS.ui.rumorCard,
-      incidentIcon: WORLD_ASSETS.ui.incidentAlert
+      incidentIcon: WORLD_ASSETS.ui.incidentAlert,
+      commandButton: WORLD_ASSETS.ui.commandButton,
+      founderAction: WORLD_ASSETS.ui.commandButton
     }
   };
 }

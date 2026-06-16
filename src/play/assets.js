@@ -67,13 +67,32 @@ export const CHARACTER_ASSETS = Object.freeze(Object.fromEntries(KNOWN_AGENT_IDS
   }
 ])));
 
+export const MODEL_ASSETS = Object.freeze({
+  locations: {
+    apartment: 'assets/models/locations/apartment.glb',
+    cafe: 'assets/models/locations/cafe.glb',
+    market: 'assets/models/locations/market.glb',
+    workshop: 'assets/models/locations/workshop.glb',
+    district_square: 'assets/models/locations/district_square.glb'
+  },
+  characters: {
+    humanoid: 'assets/models/characters/humanoid.glb'
+  }
+});
+
 export const AUDIO_ASSETS = Object.freeze({
   uiClick: 'assets/audio/ui-click.wav',
   evidenceFound: 'assets/audio/evidence-found.wav',
   rumorSpread: 'assets/audio/rumor-spread.wav',
+  rumorHeard: 'assets/audio/rumor-heard.wav',
   incidentAlert: 'assets/audio/incident-alert.wav',
   lenoNotification: 'assets/audio/leno-notification.wav',
-  ambientDistrict: 'assets/audio/ambient-new-aarhus.mp3'
+  ambientDistrict: 'assets/audio/ambient-new-aarhus.mp3',
+  /** Play command cues — see src/play/audio-cues.js */
+  walkStart: 'assets/audio/walk-start.wav',
+  consequence: 'assets/audio/consequence.wav',
+  levelUp: 'assets/audio/level-up.wav',
+  hotspotInspect: 'assets/audio/hotspot-inspect.wav'
 });
 
 export function getAssetRegistry() {
@@ -82,6 +101,7 @@ export function getAssetRegistry() {
     world: WORLD_ASSETS,
     locations: LOCATION_ASSETS,
     characters: CHARACTER_ASSETS,
+    models: MODEL_ASSETS,
     audio: AUDIO_ASSETS
   };
 }

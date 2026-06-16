@@ -1833,7 +1833,7 @@
       "id": "amina",
       "name": "Amina",
       "role": "Community organizer",
-      "locationId": "cafe",
+      "locationId": "district_square",
       "personality": {
         "warmth": 90,
         "ambition": 50,
@@ -2043,7 +2043,6 @@
       "ownerAgentId": "sara",
       "agentsPresent": [
         "sara",
-        "amina",
         "elias",
         "omar"
       ],
@@ -2140,6 +2139,34 @@
       ],
       "rumorChannels": [
         "market_talk"
+      ]
+    },
+    "district_square": {
+      "id": "district_square",
+      "name": "District Square",
+      "type": "civic",
+      "zoneType": "public",
+      "agentsPresent": [
+        "amina"
+      ],
+      "objects": [
+        "mediation_bench",
+        "community_board",
+        "fountain_terminal"
+      ],
+      "allowedActions": [
+        "talk_to_agent",
+        "inspect_location",
+        "listen_for_rumors",
+        "mediate_conflict"
+      ],
+      "restrictedActions": [],
+      "economyTags": [
+        "civic",
+        "mediation"
+      ],
+      "rumorChannels": [
+        "civic_talk"
       ]
     }
   },

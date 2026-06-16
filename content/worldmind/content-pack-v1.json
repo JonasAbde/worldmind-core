@@ -28,7 +28,7 @@
       "scene": "assets/locations/cafe.png",
       "hotspots": [
         { "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "inspectFocus": "cafe_delivery_crate", "preview": "Inspect missing delivery crate", "description": "A sealed crate with missing shipment tags — Sara's supply gap started here.", "risk": 1, "possibleEvidence": ["cafe_delivery_gap"], "icon": "assets/items/delivery-crate/icon.png" },
-        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "inspectFocus": "cafe_stock_shelf", "preview": "Inspect low stock indicators", "description": "Nearly empty shelves show how the missing delivery hurt the café.", "risk": 1, "possibleEvidence": [] }
+        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "inspectFocus": "cafe_stock_shelf", "preview": "Inspect low stock indicators", "description": "Nearly empty shelves show how the missing delivery hurt the café.", "risk": 1, "possibleEvidence": [], "icon": "assets/items/coffee-supply/icon.png" }
       ]
     },
     {
@@ -37,7 +37,7 @@
       "gameplayUse": "listen for rumors and trace source",
       "scene": "assets/locations/market.png",
       "hotspots": [
-        { "id": "market_rumor_corner", "label": "Rumor corner", "command": "listen_rumors market", "preview": "Hear local rumor trail", "description": "Traders whisper about Sara and the failed delivery.", "risk": 2, "possibleEvidence": ["market_rumor_chain"] }
+        { "id": "market_rumor_corner", "label": "Rumor corner", "command": "listen_rumors market", "preview": "Hear local rumor trail", "description": "Traders whisper about Sara and the failed delivery.", "risk": 2, "possibleEvidence": ["market_rumor_chain"], "icon": "assets/items/community-notes/icon.png" }
       ]
     },
     {
@@ -46,8 +46,8 @@
       "gameplayUse": "founder/business route",
       "scene": "assets/locations/workshop.png",
       "hotspots": [
-        { "id": "workshop_repair_bench", "label": "Repair bench", "command": "inspect workshop", "preview": "Inspect repair flow and costs", "description": "Malik's bench — alternative delivery routes and repair costs.", "risk": 2, "possibleEvidence": [] },
-        { "id": "courier_route_marker", "label": "Courier route marker", "command": "inspect workshop", "preview": "Inspect route bottlenecks", "description": "Route map showing where deliveries stall.", "risk": 2, "possibleEvidence": [] }
+        { "id": "workshop_repair_bench", "label": "Repair bench", "command": "inspect workshop", "preview": "Inspect repair flow and costs", "description": "Malik's bench — alternative delivery routes and repair costs.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/tool-kit/icon.png" },
+        { "id": "courier_route_marker", "label": "Courier route marker", "command": "inspect workshop", "preview": "Inspect route bottlenecks", "description": "Route map showing where deliveries stall.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/courier-bag/icon.png" }
       ]
     },
     {
@@ -56,7 +56,7 @@
       "gameplayUse": "safe hub",
       "scene": "assets/locations/apartment.png",
       "hotspots": [
-        { "id": "registry_kiosk", "label": "Registry kiosk feed", "command": "inspect apartment", "preview": "Inspect registry pressure", "description": "Registry pressure feed — selling information is risky.", "risk": 2, "possibleEvidence": [] }
+        { "id": "registry_kiosk", "label": "Registry kiosk feed", "command": "inspect apartment", "preview": "Inspect registry pressure", "description": "Registry pressure feed — selling information is risky.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/leno-core/icon.png" }
       ]
     },
     {
@@ -65,7 +65,7 @@
       "gameplayUse": "peaceful route",
       "scene": "assets/locations/district-square.png",
       "hotspots": [
-        { "id": "district_square_mediator_spot", "label": "Mediator spot", "command": "ask amina mediation", "preview": "Open peaceful resolution path", "description": "Amina mediates conflicts here without escalating rumors.", "risk": 1, "possibleEvidence": [] }
+        { "id": "district_square_mediator_spot", "label": "Mediator spot", "command": "ask amina mediation", "preview": "Open peaceful resolution path", "description": "Amina mediates conflicts here without escalating rumors.", "risk": 1, "possibleEvidence": [], "icon": "assets/items/community-notes/icon.png" }
       ]
     }
   ],
@@ -82,6 +82,12 @@
     { "id": "market_rumor_chain", "type": "rumor_trace", "label": "Rumor chain points away from Sara", "locationId": "market" },
     { "id": "rumor_source_nadia", "type": "source_evidence", "label": "Evidence identifying Nadia as source", "locationId": "market", "hiddenTruth": true }
   ],
+  "suspectCards": [
+    { "characterId": "sara", "label": "Sara", "role": "café owner" },
+    { "characterId": "malik", "label": "Malik", "role": "delivery worker" },
+    { "characterId": "rune", "label": "Rune", "role": "rumor broker", "requiredEvidence": ["market_rumor_chain"] },
+    { "characterId": "nadia", "label": "Nadia", "role": "hidden rumor source", "requiredEvidence": ["rumor_source_nadia"] }
+  ],
   "caseLinks": [
     { "from": "cafe_delivery_gap", "to": "rumor_missing_delivery_blame", "relation": "contradicts" },
     { "from": "market_rumor_chain", "to": "rumor_missing_delivery_blame", "relation": "traces" },
@@ -89,7 +95,7 @@
   ],
   "dialogue": [
     { "id": "dialogue_sara_help", "agentId": "sara", "topic": "delivery", "tone": "worried", "unlocks": ["cafe_delivery_gap"] },
-    { "id": "dialogue_rune_nadia", "agentId": "rune", "topic": "nadia", "tone": "cautious", "unlocks": ["market_rumor_chain"] },
+    { "id": "dialogue_rune_nadia", "agentId": "rune", "topic": "nadia", "tone": "cautious", "requiredRelationship": { "trust": 2 }, "unlocks": ["market_rumor_chain"] },
     { "id": "dialogue_amina_mediation", "agentId": "amina", "topic": "mediation", "tone": "calm", "unlocks": [] }
   ],
   "quests": [

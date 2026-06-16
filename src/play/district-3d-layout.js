@@ -5,7 +5,12 @@
 
 import { buildDistrictView } from './district-view.js';
 import { buildGameplayShellModel } from './game-shell-model.js';
-import { sceneTexturePathForLocation } from './location-scene-assets.js';
+import { resolveSceneTexturePath, sceneTexturePathForLocation } from './location-scene-assets.js';
+import { resolveCharacterFigurePath } from './character-figure-assets.js';
+import { resolveCharacterFullBodyPath } from './character-fullbody-assets.js';
+import { resolveCharacterModelPath } from './character-model-assets.js';
+import { resolveLocationModelPath } from './location-model-assets.js';
+import { buildWalkGraphFromCues } from './walk-path.js';
 
 const ZONE_STYLES = Object.freeze({
   residential: { color: '#4a6fa5', height: 2.2, emissive: '#1e3a5f' },
@@ -39,6 +44,7 @@ export function build3DVisualCues(world, options = {}) {
       zone: node.zone,
       position,
       mesh: 'district_building',
+      renderMode: 'mesh3d',
       scale: [style.height * 0.85, style.height, style.height * 0.85],
       color: style.color,
       emissive: isPlayerHere ? '#f59e0b' : style.emissive,
@@ -51,6 +57,12 @@ export function build3DVisualCues(world, options = {}) {
           id: agent.id,
           name: agent.name,
           role: agent.role,
+          portrait: agent.asset || null,
+          figureTexture: resolveCharacterFigurePath(agent.id, agent.asset || null),
+          fullBodyTexture: resolveCharacterFullBodyPath(agent.id),
+          modelUrl: resolveCharacterModelPath(agent.id),
+          renderMode: 'mesh3d',
+          idleAnimation: index % 2 === 0 ? 'bob' : 'turn',
           position: mapDistrictToWorld(node.x + offset * 2.5, node.y + 8, 0.9),
           commands: {
             talk: `talk ${agent.id}`,
@@ -76,6 +88,8 @@ export function build3DVisualCues(world, options = {}) {
       id: hotspot.id,
       label: hotspot.label,
       command: hotspot.command,
+      preview: hotspot.preview ?? hotspot.description ?? null,
+      description: hotspot.description ?? hotspot.preview ?? null,
       risk: hotspot.risk ?? 1,
       icon: hotspot.icon ?? null,
       position: [
@@ -91,9 +105,11 @@ export function build3DVisualCues(world, options = {}) {
     const node = nodeById[loc.id];
     const packScene = sceneTexturePathForLocation(loc.id);
     const nodeAsset = node?.asset;
-    loc.sceneTexture = typeof nodeAsset === 'string' && nodeAsset.startsWith('assets/')
+    const rawScene = typeof nodeAsset === 'string' && nodeAsset.startsWith('assets/')
       ? nodeAsset
       : packScene;
+    loc.sceneTexture = resolveSceneTexturePath(rawScene);
+    loc.modelUrl = resolveLocationModelPath(loc.id);
     loc.isPlayerHere = loc.id === playerLoc;
     loc.walkAnchor = loc.position;
     loc.interiorCamera = {
@@ -102,14 +118,33 @@ export function build3DVisualCues(world, options = {}) {
     };
   }
 
-  return {
+  const cues = {
     kind: 'worldmind_3d_visual_cues',
-    version: 2,
+    version: 4,
     playerLocationId: playerLoc,
+    interior: playerLoc
+      ? {
+          locationId: playerLoc,
+          label: shell.location?.name ?? playerLoc,
+          sceneTexture: sceneTexturePathForLocation(playerLoc),
+          hotspots: (shell.location?.hotspots ?? []).map((h) => ({
+            id: h.id,
+            label: h.label,
+            command: h.command,
+            risk: h.risk ?? 1,
+            preview: h.preview ?? h.description ?? null,
+            description: h.description ?? h.preview ?? null
+          }))
+        }
+      : null,
     player: playerNode
       ? {
           position: [playerNode.position[0], 0.1, playerNode.position[2]],
-          locationId: playerLoc
+          locationId: playerLoc,
+          figureTexture: resolveCharacterFigurePath('player'),
+          fullBodyTexture: resolveCharacterFullBodyPath('player'),
+          modelUrl: resolveCharacterModelPath('player'),
+          renderMode: 'mesh3d'
         }
       : null,
     camera: {
@@ -139,6 +174,8 @@ export function build3DVisualCues(world, options = {}) {
       return { from: edge.from, to: edge.to, fromPosition: from.position, toPosition: to.position };
     }).filter(Boolean)
   };
+  cues.walkGraph = buildWalkGraphFromCues(cues);
+  return cues;
 }
 
 export function validate3DVisualCues(cues) {

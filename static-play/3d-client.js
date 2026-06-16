@@ -21,6 +21,15 @@ let visualCues = null;
 let gameShell = null;
 let playerSnapshot = null;
 const pickables = new Map();
+/** Agent meshes with idle bob/turn animation (base pose in userData.idleBase). */
+const idleAgentMeshes = [];
+
+/** Active walk animation from POST /api/command move result. */
+let walkAnimation = null;
+let pendingVisualCues = null;
+let walkStartMs = null;
+let walkPlayerGroup = null;
+let staticPlayerGroup = null;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -61,6 +70,9 @@ function setHud() {
 
 function clearWorldMeshes() {
   pickables.clear();
+  idleAgentMeshes.length = 0;
+  staticPlayerGroup = null;
+  walkPlayerGroup = null;
   while (worldGroup.children.length) {
     const child = worldGroup.children.pop();
     child.traverse((obj) => {
@@ -113,10 +125,30 @@ function buildEdges(edges) {
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
 
-function loadSceneTexture(path) {
+function alternateSceneTexturePath(path) {
+  if (!path) return null;
+  if (path.endsWith('.png')) return path.replace(/\.png$/, '.webp');
+  if (path.endsWith('.webp')) return path.replace(/\.webp$/, '.png');
+  return null;
+}
+
+function loadSceneTexture(path, triedAlt = false) {
   if (!path) return null;
   if (textureCache.has(path)) return textureCache.get(path);
-  const tex = textureLoader.load(path);
+  const tex = textureLoader.load(
+    path,
+    (loaded) => {
+      loaded.colorSpace = THREE.SRGBColorSpace;
+    },
+    undefined,
+    () => {
+      if (triedAlt) return;
+      const alt = alternateSceneTexturePath(path);
+      if (!alt) return;
+      const fallback = loadSceneTexture(alt, true);
+      if (fallback) textureCache.set(path, fallback);
+    }
+  );
   tex.colorSpace = THREE.SRGBColorSpace;
   textureCache.set(path, tex);
   return tex;
@@ -179,6 +211,13 @@ function buildLocations(locations) {
       );
       agentMesh.position.set(agent.position[0], agent.position[1], agent.position[2]);
       agentMesh.castShadow = true;
+      const idleKind = agent.idleAnimation === 'turn' ? 'turn' : 'bob';
+      agentMesh.userData.idleBase = {
+        y: agent.position[1],
+        phase: (agent.id || '').split('').reduce((n, c) => n + c.charCodeAt(0), 0) * 0.17,
+        kind: idleKind
+      };
+      idleAgentMeshes.push(agentMesh);
       addPickable(agentMesh, {
         kind: 'agent',
         id: agent.id,
@@ -190,22 +229,141 @@ function buildLocations(locations) {
   }
 }
 
-function buildPlayer(player) {
-  if (!player?.position) return;
-  const [x, y, z] = player.position;
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function sampleAlongPath(points, easedT) {
+  if (!points.length) return { position: new THREE.Vector3(), index: 0 };
+  if (points.length === 1) return { position: points[0].clone(), index: 0 };
+
+  const segmentLengths = [];
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const len = points[i].distanceTo(points[i + 1]);
+    segmentLengths.push(len);
+    total += len;
+  }
+  if (total <= 0) return { position: points[points.length - 1].clone(), index: points.length - 1 };
+
+  let remaining = easedT * total;
+  for (let i = 0; i < segmentLengths.length; i++) {
+    const segLen = segmentLengths[i];
+    if (remaining <= segLen || i === segmentLengths.length - 1) {
+      const segT = segLen > 0 ? remaining / segLen : 0;
+      return {
+        position: new THREE.Vector3().lerpVectors(points[i], points[i + 1], segT),
+        index: i
+      };
+    }
+    remaining -= segLen;
+  }
+  return { position: points[points.length - 1].clone(), index: points.length - 1 };
+}
+
+function buildWalkPlayerMesh() {
+  const group = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.45, 0.65, 32),
     new THREE.MeshBasicMaterial({ color: '#f59e0b', transparent: true, opacity: 0.9 })
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.set(x, y + 0.05, z);
-  worldGroup.add(ring);
+  ring.position.y = 0.05;
+  group.add(ring);
   const body = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.28, 0.5, 4, 8),
     new THREE.MeshStandardMaterial({ color: '#fbbf24', emissive: '#f59e0b', emissiveIntensity: 0.5 })
   );
-  body.position.set(x, 0.9, z);
-  worldGroup.add(body);
+  body.position.y = 0.9;
+  group.add(body);
+  return group;
+}
+
+function startWalkAnimation(animation, nextCues) {
+  walkAnimation = animation;
+  pendingVisualCues = nextCues;
+  walkStartMs = performance.now();
+  controls.enabled = false;
+
+  if (walkPlayerGroup) {
+    worldGroup.remove(walkPlayerGroup);
+  }
+  walkPlayerGroup = buildWalkPlayerMesh();
+  if (staticPlayerGroup) staticPlayerGroup.visible = false;
+  const start = animation.waypoints[0] || [0, 0.1, 0];
+  walkPlayerGroup.position.set(start[0], start[1] ?? 0.1, start[2]);
+  worldGroup.add(walkPlayerGroup);
+}
+
+function finishWalkAnimation() {
+  walkAnimation = null;
+  walkStartMs = null;
+  controls.enabled = true;
+  if (walkPlayerGroup) {
+    worldGroup.remove(walkPlayerGroup);
+    walkPlayerGroup = null;
+  }
+  if (pendingVisualCues) {
+    applyVisualCues(pendingVisualCues);
+    pendingVisualCues = null;
+  }
+}
+
+function tickWalkAnimation(now) {
+  if (!walkAnimation || walkStartMs === null) return;
+
+  const rawT = Math.min(1, (now - walkStartMs) / walkAnimation.durationMs);
+  const easedT = easeInOutCubic(rawT);
+
+  const pathPoints = walkAnimation.waypoints.map(([x, y, z]) => new THREE.Vector3(x, y ?? 0.1, z));
+  let cameraPoints;
+  if (walkAnimation.cameraWaypoints?.length) {
+    cameraPoints = walkAnimation.cameraWaypoints.map(([x, y, z]) =>
+      new THREE.Vector3(x, y ?? 1.65, z)
+    );
+  } else {
+    cameraPoints = pathPoints.map((point, index) => {
+      const prev = pathPoints[Math.max(index - 1, 0)];
+      const dx = point.x - prev.x;
+      const dz = point.z - prev.z;
+      const len = Math.hypot(dx, dz) || 1;
+      return new THREE.Vector3(point.x - (dx / len) * 4.5, 1.65, point.z - (dz / len) * 4.5);
+    });
+  }
+  const lookAt = walkAnimation.lookAt || walkAnimation.camera?.target || [0, 1.4, 0];
+
+  const { position } = sampleAlongPath(pathPoints, easedT);
+  const { position: camPos } = sampleAlongPath(cameraPoints, easedT);
+
+  if (walkPlayerGroup) walkPlayerGroup.position.copy(position);
+
+  const lookY = THREE.MathUtils.lerp(1.4, lookAt[1], easedT);
+  camera.position.copy(camPos);
+  controls.target.set(position.x, lookY, position.z);
+  camera.lookAt(position.x, lookY, position.z);
+
+  if (rawT >= 1) finishWalkAnimation();
+}
+
+function buildPlayer(player) {
+  if (!player?.position) return;
+  const [x, y, z] = player.position;
+  staticPlayerGroup = new THREE.Group();
+  staticPlayerGroup.position.set(x, y, z);
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.45, 0.65, 32),
+    new THREE.MeshBasicMaterial({ color: '#f59e0b', transparent: true, opacity: 0.9 })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.05;
+  staticPlayerGroup.add(ring);
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.28, 0.5, 4, 8),
+    new THREE.MeshStandardMaterial({ color: '#fbbf24', emissive: '#f59e0b', emissiveIntensity: 0.5 })
+  );
+  body.position.y = 0.9;
+  staticPlayerGroup.add(body);
+  worldGroup.add(staticPlayerGroup);
 }
 
 function buildHotspots(hotspots) {
@@ -324,16 +482,24 @@ async function runCommand(text) {
   const result = res.body.result || {};
   if (result.gameShell) gameShell = result.gameShell;
   if (result.playerSnapshot) playerSnapshot = result.playerSnapshot;
-  if (result.gameShell && visualCues) {
-    const stateRes = await api('GET', '/api/state');
-    if (stateRes.body.visualCues) applyVisualCues(stateRes.body.visualCues);
-  }
   setHud();
+
   const lines = [result.text || res.body.text || 'Done'];
   if (result.consequenceBeat?.summary) lines.push(result.consequenceBeat.summary);
   outputEl.textContent = lines.join('\n\n');
   commandInput.value = '';
   showBanner(`✓ ${cmd}`);
+
+  if (result.walkAnimation?.waypoints?.length) {
+    const stateRes = await api('GET', '/api/state');
+    if (stateRes.body.visualCues) startWalkAnimation(result.walkAnimation, stateRes.body.visualCues);
+    return;
+  }
+
+  if (result.gameShell && visualCues) {
+    const stateRes = await api('GET', '/api/state');
+    if (stateRes.body.visualCues) applyVisualCues(stateRes.body.visualCues);
+  }
 }
 
 function onPointerDown(event) {
@@ -362,9 +528,28 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-function animate() {
+function tickIdleAgentAnimations(now) {
+  const t = (now ?? performance.now()) * 0.001;
+  for (const mesh of idleAgentMeshes) {
+    const base = mesh.userData.idleBase;
+    if (!base) continue;
+    if (base.kind === 'bob' || base.kind === 'turn') {
+      mesh.position.y = base.y + Math.sin(t * 1.6 + base.phase) * 0.07;
+    }
+    if (base.kind === 'turn') {
+      mesh.rotation.y = Math.sin(t * 0.45 + base.phase) * 0.4;
+    } else {
+      mesh.rotation.y = 0;
+    }
+  }
+}
+
+function animate(now) {
   requestAnimationFrame(animate);
-  controls.update();
+  const frameNow = now ?? performance.now();
+  if (walkAnimation) tickWalkAnimation(frameNow);
+  else controls.update();
+  tickIdleAgentAnimations(frameNow);
   renderer.render(scene, camera);
 }
 

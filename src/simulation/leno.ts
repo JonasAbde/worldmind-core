@@ -37,13 +37,13 @@ export function lenoSummarize(world: WorldState, options: { scope?: 'world' | 'a
   const incident = activeIncidents[0] ?? resolvedIncidents[resolvedIncidents.length - 1];
   if (incident) {
     const statusLabel = incident.status === 'active' ? 'Active incident' : 'Resolved incident';
-    lines.push(`${statusLabel}: ${incident.title}. Known facts: ${incident.knownFacts.join(' | ')}.`);
+    lines.push(`${statusLabel}: ${incident.title}. Known facts: ${(incident.knownFacts ?? []).join(' | ') || 'none'}.`);
     if (incident.status === 'resolved') {
       lines.push(`Resolution path: ${incident.resolutionState}.`);
     }
     // Hidden truth must NEVER be revealed without player evidence. The only
     // way Leno is allowed to name a source is via an explicit evidenceId.
-    if (world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
+    if ((world.playerKnowledge?.evidenceIds ?? []).includes('rumor_source_nadia')) {
       lines.push('Evidence level: Nadia is a probable source of the false rumor.');
     } else {
       lines.push('Evidence level: there is not enough proof to name the source yet. Nadia may be relevant, but that remains speculation.');
@@ -59,12 +59,25 @@ export function lenoSummarize(world: WorldState, options: { scope?: 'world' | 'a
 export function lenoSuggestActions(world: WorldState, options: { incidentId?: string } = {}): string[] {
   const { incidentId = 'missing_delivery' } = options;
   const incident = world.incidents[incidentId];
-  if (!incident) return ['Inspect Sara\u2019s Caf\u00e9.', 'Talk to Sara.', 'Listen for rumors at Market Street.'];
-  return [
-    'Safe: talk to Sara again and inspect the caf\u00e9 stock.',
-    'Social: ask Amina to mediate between Sara and Malik.',
-    'Risky: pay Rune for information about Nadia and the workshop.'
-  ];
+  const pk = world.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [] };
+  const evidence = pk.evidenceIds ?? [];
+  const knownRumors = pk.knownRumorIds ?? [];
+  const suggestions: string[] = [];
+
+  if (!incident) {
+    return ['inspect cafe', 'talk sara', 'listen_rumors market'];
+  }
+
+  if (!evidence.includes('cafe_delivery_gap')) suggestions.push('inspect cafe');
+  if (!knownRumors.length) suggestions.push('listen_rumors market');
+  if (!evidence.includes('rune_statement_nadia_workshop')) suggestions.push('ask rune nadia');
+  if (knownRumors.length && !evidence.includes('rumor_source_nadia')) suggestions.push('trace_rumor');
+  if (evidence.includes('rumor_source_nadia') && incident.status === 'active') suggestions.push('counter_rumor');
+  if (incident.status === 'active') suggestions.push('ask amina mediation');
+  suggestions.push('talk sara');
+
+  const unique = [...new Set(suggestions)];
+  return unique.length ? unique : ['inspect cafe', 'talk sara', 'listen_rumors market'];
 }
 
 /**

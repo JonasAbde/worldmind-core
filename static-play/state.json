@@ -1981,7 +1981,7 @@
         "id": "amina",
         "name": "Amina",
         "role": "Community organizer",
-        "locationId": "cafe",
+        "locationId": "district_square",
         "personality": {
           "warmth": 90,
           "ambition": 50,
@@ -2208,7 +2208,6 @@
         "ownerAgentId": "sara",
         "agentsPresent": [
           "sara",
-          "amina",
           "elias",
           "omar"
         ],
@@ -2320,6 +2319,39 @@
           "scene": "assets/locations/market.png",
           "card": "assets/locations/cards/market-card.png",
           "icon": "assets/locations/icons/market.svg"
+        }
+      },
+      "district_square": {
+        "id": "district_square",
+        "name": "District Square",
+        "type": "civic",
+        "zoneType": "public",
+        "agentsPresent": [
+          "amina"
+        ],
+        "objects": [
+          "mediation_bench",
+          "community_board",
+          "fountain_terminal"
+        ],
+        "allowedActions": [
+          "talk_to_agent",
+          "inspect_location",
+          "listen_for_rumors",
+          "mediate_conflict"
+        ],
+        "restrictedActions": [],
+        "economyTags": [
+          "civic",
+          "mediation"
+        ],
+        "rumorChannels": [
+          "civic_talk"
+        ],
+        "assets": {
+          "scene": "assets/locations/district-square.png",
+          "card": "assets/locations/cards/district-square-card.png",
+          "icon": "assets/locations/icons/district-square.svg"
         }
       }
     },
@@ -4694,9 +4726,14 @@
         "uiClick": "assets/audio/ui-click.wav",
         "evidenceFound": "assets/audio/evidence-found.wav",
         "rumorSpread": "assets/audio/rumor-spread.wav",
+        "rumorHeard": "assets/audio/rumor-heard.wav",
         "incidentAlert": "assets/audio/incident-alert.wav",
         "lenoNotification": "assets/audio/leno-notification.wav",
-        "ambientDistrict": "assets/audio/ambient-new-aarhus.mp3"
+        "ambientDistrict": "assets/audio/ambient-new-aarhus.mp3",
+        "walkStart": "assets/audio/walk-start.wav",
+        "consequence": "assets/audio/consequence.wav",
+        "levelUp": "assets/audio/level-up.wav",
+        "hotspotInspect": "assets/audio/hotspot-inspect.wav"
       }
     }
   },

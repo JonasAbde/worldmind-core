@@ -155,12 +155,22 @@ export function traceRumor(world: WorldRuntime, rumorId: string, options: TraceR
   const { actorId = 'player', evidenceStrength = 0 } = options;
   const rumor = world.rumors[rumorId];
   if (!rumor) throw new Error(`Rumor not found: ${rumorId}`);
-  const canRevealSource = evidenceStrength >= 75 || world.playerKnowledge.evidenceIds.includes('rune_statement_nadia_workshop');
+  const evidenceIds = world.playerKnowledge.evidenceIds;
+  const hasRumorChain = evidenceIds.includes('market_rumor_chain');
+  const hasRuneLead = evidenceIds.includes('rune_statement_nadia_workshop');
+  const canRevealSource =
+    (hasRumorChain && evidenceStrength >= 50) ||
+    hasRuneLead ||
+    evidenceStrength >= 75;
   const description = canRevealSource
     ? `Trace found probable rumor source: ${world.agents[rumor.sourceAgentId]?.name ?? rumor.sourceAgentId}.`
     : 'Trace found weak pattern but not enough evidence to identify a source.';
-  if (canRevealSource && !world.playerKnowledge.evidenceIds.includes(`rumor_source_${rumor.sourceAgentId}`)) {
-    world.playerKnowledge.evidenceIds.push(`rumor_source_${rumor.sourceAgentId}`);
+  if (canRevealSource) {
+    const sourceEvidenceId = `rumor_source_${rumor.sourceAgentId}`;
+    if (!evidenceIds.includes(sourceEvidenceId)) evidenceIds.push(sourceEvidenceId);
+    if (rumor.sourceAgentId === 'nadia' && !evidenceIds.includes('rumor_source_nadia')) {
+      evidenceIds.push('rumor_source_nadia');
+    }
   }
   return world.addEvent({
     type: 'rumor_traced',

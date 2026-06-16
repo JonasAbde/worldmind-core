@@ -102,3 +102,22 @@ Validator checks: 11 legacy section labels, runtime markers, 10 visual shell `da
 **SHIP for guided demo** with `play:server` on desktop — visuals, hotspots, case board, and branch modal are demo-ready.
 
 **DO NOT SHIP** as full founder product until runtime gameplay core merges (founder loop, delivery contract outcomes, rumor engine contracts).
+
+## Branding frame (worldmind-site)
+
+Production play portals wrap content in **`PlayBrandFrame`** — full-viewport vignette + Nordic cyberpunk border (`play-brand-frame` CSS class, aligned with static-dashboard depth). **`PlayBrandedHeader`** renders `gameShell.topbar` (world, day, time, money, branch) plus core engine version from `/api/health`.
+
+Used on `/play` (2D portal) and `/play/3d`. The core static shell (`static-play/index.html` via `play-web.js`) uses a similar game skin in `APP_CSS` but does not mount the React frame components.
+
+## Case board asset icons
+
+`buildGameplayShellModel()` attaches **`gameShell.assets`** — stable UI icon paths from `WORLD_ASSETS.ui` in `src/play/assets.js`:
+
+| Field | Path | UI use |
+|-------|------|--------|
+| `evidenceIcon` | `assets/ui/evidence-card.png` | Evidence cards in case board |
+| `rumorIcon` | `assets/ui/rumor-card.png` | Rumor cards + rumor trail rows |
+| `incidentIcon` | `assets/ui/incident-alert.png` | Incident / alert affordances |
+| `lenoOverlay` | `assets/ui/leno-overlay.png` | Leno panel backdrop |
+
+Site **`CaseBoardPanel`** and **`RumorTrailPanel`** resolve these with `assetUrl()` from `src/lib/play-api.ts`. Hotspot `icon` fields in the content pack are separate (per-hotspot overlays on location scenes). Static play HTML renders case board text without icons unless `gameShell.assets` is present in live state.

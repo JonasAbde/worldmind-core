@@ -29,6 +29,15 @@ for (const cmd of ALL_COMMANDS) {
       cmd === 'talk' ? { target: 'sara', message: 'hello' } :
       cmd === 'pay' ? { target: 'malik', amount: 5 } :
       cmd === 'trace_rumor' || cmd === 'counter_rumor' ? { rumor: Object.keys(world.rumors||{})[0] || 'none' } : {};
+    if (cmd === 'trace_rumor' || cmd === 'counter_rumor') {
+      resolveCommand(world, 'listen_rumors', { target: 'market' });
+      const rumorId = Object.keys(world.rumors || {})[0];
+      if (!rumorId) { assert.fail('no rumor created'); return; }
+      const result = resolveCommand(world, cmd, cmd === 'counter_rumor' ? { rumor: rumorId, message: 'counter' } : { rumor: rumorId });
+      assert.equal(result.ok, true, `ok should be true for ${cmd}: ${result.error}`);
+      assert(result.world !== undefined, 'world should be returned');
+      return;
+    }
     const result = resolveCommand(world, cmd, args);
     assert.equal(result.ok, true, `ok should be true for ${cmd}: ${result.error}`);
     assert(result.world !== undefined, 'world should be returned');

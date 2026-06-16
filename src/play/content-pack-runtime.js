@@ -58,6 +58,10 @@ export function dialogueUnlocksFor(agentId, topic) {
   return dialogueEntryFor(agentId, topic)?.unlocks ?? [];
 }
 
+export function dialogueMinTrust(agentId, topic) {
+  return dialogueEntryFor(agentId, topic)?.requiredRelationship?.trust ?? 0;
+}
+
 export function hotspotById(hotspotId) {
   const pack = getContentPack();
   if (!pack?.locations || !hotspotId) return null;
@@ -92,6 +96,26 @@ export function inspectPackRewards(locationId, focus) {
     findingText: hotspot.description ?? hotspot.preview ?? null,
     hotspotId: hotspot.id
   };
+}
+
+/** Add pack-authored rumor ids heard at a location into playerKnowledge. */
+export function syncPackRumorsAtLocation(world, locationId) {
+  const pack = getContentPack();
+  const pk = ensurePlayerKnowledge(world);
+  const granted = [];
+  for (const rumor of pack?.rumors ?? []) {
+    const linkedAtLocation = (pack.caseLinks ?? []).some((link) => {
+      if (link.to !== rumor.id) return false;
+      const evidence = (pack.evidence ?? []).find((e) => e.id === link.from);
+      return evidence?.locationId === locationId;
+    });
+    if (locationId !== 'market' || !linkedAtLocation) continue;
+    if (!pk.knownRumorIds.includes(rumor.id)) {
+      pk.knownRumorIds.push(rumor.id);
+      granted.push(rumor.id);
+    }
+  }
+  return granted;
 }
 
 /** Build inspect command with hotspot focus for shell hotspots. */

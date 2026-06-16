@@ -18,7 +18,7 @@
  *
  * Result envelope (resolveCommand):
  *   { ok, kind, text, world, dialogue?, consequence?, evidence?,
- *     majorDecisionPrompt?, error?, snapshot? }
+ *     audioCues?, majorDecisionPrompt?, error?, snapshot? }
  */
 
 import path from 'node:path';
@@ -41,9 +41,20 @@ import { buildCommandText, resolveMajorDecisionPrompt } from './game-shell-model
 import {
   dialogueEntryFor,
   dialogueUnlocksFor,
+  dialogueMinTrust,
   grantEvidence,
-  inspectPackRewards
+  inspectPackRewards,
+  syncPackRumorsAtLocation
 } from './content-pack-runtime.js';
+import { recordQuestStep } from './quest-progress.js';
+import {
+  awardProgression,
+  createInitialProgression,
+  hasCapability,
+  summarizeProgression
+} from './progression.js';
+import { buildWalkAnimation } from './walk-path.js';
+import { attachAudioCues } from './audio-cues.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,6 +126,10 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
       contractsCompleted: 0,
       activeContract: null
     };
+  }
+
+  if (!world.progression) {
+    world.progression = createInitialProgression();
   }
 
   return world;
@@ -305,10 +320,50 @@ function attachMajorDecisionPrompt(result, command, effectiveArgs) {
     command,
     args: effectiveArgs,
     playerKnowledge: result.world?.playerKnowledge ?? {},
+    questProgress: result.world?.questProgress ?? null,
     consequence: result.consequence ?? null
   });
   if (!prompt?.branchSuggested) return result;
   return { ...result, majorDecisionPrompt: prompt };
+}
+
+function attachQuestProgress(result, command, effectiveArgs) {
+  if (!result?.ok || !result.world) return result;
+  const commandText = buildCommandText(command, effectiveArgs);
+  const progress = recordQuestStep(result.world, commandText);
+  if (!progress.matched && !progress.pathCompleted) return result;
+
+  const next = { ...result };
+  if (progress.pathCompleted) {
+    const reward = progress.pathCompleted.reward;
+    const rewardNote = reward?.badge ? ` Badge: ${reward.badge}.` : '';
+    next.text = `${result.text}\n\nQuest resolved: ${progress.pathCompleted.label}.${rewardNote}`;
+    next.questResolution = progress.pathCompleted;
+    syncFounderAvailability(result.world);
+  }
+  if (progress.matched && progress.step && !progress.pathCompleted) {
+    next.questStepCompleted = progress.step;
+  }
+  return next;
+}
+
+function attachProgression(result, command, effectiveArgs) {
+  if (!result?.ok || !result.world) return result;
+  if (!result.world.progression) {
+    result.world.progression = createInitialProgression();
+  }
+  const commandText = buildCommandText(command, effectiveArgs);
+  const { progression, delta } = awardProgression(
+    result.world.progression,
+    result,
+    commandText
+  );
+  result.world.progression = progression;
+  return {
+    ...result,
+    progression: summarizeProgression(progression),
+    progressionDelta: delta
+  };
 }
 
 function resolveCommandCore(world, command, effectiveArgs) {
@@ -340,12 +395,15 @@ function resolveCommandCore(world, command, effectiveArgs) {
       case 'move': {
         const targetLoc = resolveLocation(world, effectiveArgs.target);
         if (!targetLoc) return { ok: false, kind: 'error', error: `unknown location: ${effectiveArgs.target}` };
+        const fromLocationId = world.agents?.player?.locationId ?? null;
         const before = snapshotForDelta(world);
         const ev = executeAction(world, {
           actorId, actionId: 'move_to_location', targetLocationId: targetLoc
         });
+        const toLocationId = world.agents?.player?.locationId ?? null;
+        const walkAnimation = buildWalkAnimation(world, fromLocationId, toLocationId);
         const consequence = diffConsequence(world, before, actorId, ev);
-        return { ok: true, kind: 'move', command, text: ev.description, consequence, world };
+        return { ok: true, kind: 'move', command, text: ev.description, consequence, walkAnimation, world };
       }
       case 'talk': {
         const targetId = resolveAgent(world, effectiveArgs.target);
@@ -374,6 +432,15 @@ function resolveCommandCore(world, command, effectiveArgs) {
         const targetId = resolveAgent(world, effectiveArgs.target);
         if (!targetId) return { ok: false, kind: 'error', error: `unknown agent: ${effectiveArgs.target}` };
         const topic = effectiveArgs.topic || 'delivery';
+        const minTrust = dialogueMinTrust(targetId, topic);
+        const trust = world.agents[targetId]?.relationships?.player?.trust ?? 0;
+        if (trust < minTrust) {
+          return {
+            ok: false,
+            kind: 'error',
+            error: `${world.agents[targetId].name} won't discuss "${topic}" yet (need trust ${minTrust}, have ${trust}).`
+          };
+        }
         const before = snapshotForDelta(world);
         const ev = executeAction(world, {
           actorId, actionId: 'ask_about_topic', targetAgentId: targetId,
@@ -441,7 +508,10 @@ function resolveCommandCore(world, command, effectiveArgs) {
           actorId, actionId: 'listen_for_rumors', targetLocationId: targetLoc
         });
         const rumorIds = ev.payload?.rumorIds || [];
-        if (targetLoc === 'market') grantEvidence(world, ['market_rumor_chain']);
+        if (targetLoc === 'market') {
+          grantEvidence(world, ['market_rumor_chain']);
+          syncPackRumorsAtLocation(world, 'market');
+        }
         const locName = world.locations[targetLoc]?.name ?? effectiveArgs.target;
         return {
           ok: true, kind: 'rumors', command,
@@ -463,6 +533,10 @@ function resolveCommandCore(world, command, effectiveArgs) {
         const ev = executeAction(world, {
           actorId, actionId: 'trace_rumor', rumorId, evidenceStrength: 80
         });
+        const pk = world.playerKnowledge?.evidenceIds ?? [];
+        if (pk.includes('market_rumor_chain')) {
+          grantEvidence(world, ['rumor_source_nadia']);
+        }
         return {
           ok: true, kind: 'rumors', command,
           text: ev.description,
@@ -471,6 +545,13 @@ function resolveCommandCore(world, command, effectiveArgs) {
         };
       }
       case 'counter_rumor': {
+        if (!hasCapability(world.progression, 'counter_rumor')) {
+          return {
+            ok: false,
+            kind: 'error',
+            error: 'Counter rumor unlocks at Street Listener (level 2) or after tracing rumors.'
+          };
+        }
         const rumorId = resolveRumor(world, effectiveArgs.rumor);
         if (!rumorId) return { ok: false, kind: 'error', error: `unknown rumor: ${effectiveArgs.rumor}` };
         const before = snapshotForDelta(world);
@@ -527,12 +608,25 @@ function resolveCommandCore(world, command, effectiveArgs) {
         if (!template) {
           return { ok: false, kind: 'error', error: `unknown or locked founder contract: ${effectiveArgs.contract ?? effectiveArgs.id ?? '(none)'}` };
         }
+        const playerStats = world.agents?.player?.stats;
+        const upfrontCost = template.upfrontCost ?? 0;
+        const money = playerStats?.money ?? 0;
+        if (upfrontCost > 0 && money < upfrontCost) {
+          return {
+            ok: false,
+            kind: 'error',
+            error: `need ${upfrontCost} money to start contract (have ${money})`
+          };
+        }
+        if (upfrontCost > 0 && playerStats) {
+          playerStats.money = money - upfrontCost;
+        }
         founder.activeContract = createActiveFounderContract(template, world.tick ?? 0);
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: `Founder workflow started: ${template.label} for ${template.customer}.`,
+          text: `Founder workflow started: ${template.label} for ${template.customer}. Upfront cost: ${upfrontCost}. Deliver with run_delivery_contract.`,
           contract: founder.activeContract,
           consequence: diffConsequence(world, before, actorId, {
             type: 'founder.contract_started',
@@ -654,8 +748,20 @@ export function resolveCommand(world, commandOrText, args = {}) {
     command = parsed.command;
     effectiveArgs = { ...parsed.args, ...args };
   }
-  return attachMajorDecisionPrompt(
-    resolveCommandCore(world, command, effectiveArgs),
+  return attachAudioCues(
+    attachProgression(
+      attachQuestProgress(
+        attachMajorDecisionPrompt(
+          resolveCommandCore(world, command, effectiveArgs),
+          command,
+          effectiveArgs
+        ),
+        command,
+        effectiveArgs
+      ),
+      command,
+      effectiveArgs
+    ),
     command,
     effectiveArgs
   );

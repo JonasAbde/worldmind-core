@@ -101,6 +101,8 @@ Response:
     "text": "...",
     "dialogue": { "...": "optional" },
     "consequence": { "...": "optional deltas" },
+    "consequenceBeat": { "categories": [], "bullets": [], "summary": "..." },
+    "walkAnimation": { "...": "present on successful move; null if same location" },
     "leno": { "summary": "...", "suggestions": [] },
     "world": { "id": "...", "day": 2, "time": "...", "tick": 97, "branchName": "main" },
     "playerSnapshot": { "money": 150, "reputation": 0, "energy": 90 },
@@ -120,13 +122,17 @@ Built by `buildGameplayShellModel()` from world state + `content/worldmind/conte
 
 | Field | Purpose |
 |-------|---------|
-| `topbar` | day, time, money, lenoStatus |
-| `location` | `id`, `scene` (asset path), `hotspots[]` |
-| `npcCards[]` | id, name, role, avatar, trust/suspicion/fear, `actions[]` |
-| `caseBoard` | evidenceCards, rumorCards, links, unresolvedQuestions |
-| `rumorTrail[]` | id, spreadRisk, traceCommand, counterCommand |
+| `topbar` | worldName, day, time, money, reputation, energy, branchName, lenoStatus |
+| `location` | `id`, `name`, `mood`, `scene` (asset path), `hotspots[]` |
+| `npcCards[]` | id, name, role, avatar, portrait, trust/suspicion/fear, `actions[]`, topics |
+| `caseBoard` | evidenceCards, rumorCards, suspectCards, links, unresolvedQuestions |
+| `rumorTrail[]` | id, claim, truthLevel, traceCommand, counterCommand |
+| `questProgress` | questId, title, objective, paths[], incidentStatus |
 | `founder` | unlocked, baseLevel, tierLabel, contracts[], contractsCompleted, activeContract, reputation, money, unlockText |
-| `majorDecisions[]` | id, label, command, branchSuggested |
+| `progression` | level, title, xp, nextLevelAt, xpToNext, capabilities[], badges[], districtInfluence, nextUnlock |
+| `assets` | UI icon paths for case board and Leno overlay (see below) |
+| `leno` | summary, suggestions[] |
+| `majorDecisions[]` | id, label, command, branchSuggested, requiredEvidence[] |
 
 ### Hotspot object
 
@@ -140,7 +146,42 @@ Built by `buildGameplayShellModel()` from world state + `content/worldmind/conte
 }
 ```
 
-Visual shell branch adds `description`, `possibleEvidence[]`, `icon`.
+Visual shell branch adds `description`, `possibleEvidence[]`, `icon`, `overlayPosition`.
+
+### `gameShell.assets` (UI icons)
+
+Stable paths from `WORLD_ASSETS.ui` in `src/play/assets.js`. Site portals resolve via `assetUrl()`; static shell may omit until present.
+
+```json
+"assets": {
+  "lenoOverlay": "assets/ui/leno-overlay.png",
+  "evidenceIcon": "assets/ui/evidence-card.png",
+  "rumorIcon": "assets/ui/rumor-card.png",
+  "incidentIcon": "assets/ui/incident-alert.png"
+}
+```
+
+Used by worldmind-site `CaseBoardPanel` and `RumorTrailPanel` beside card labels. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
+
+### `gameShell.progression`
+
+Derived from `world.progression` via `summarizeProgression()` / `getNextUnlock()` in `src/play/progression.js`.
+
+```json
+"progression": {
+  "level": 1,
+  "title": "Observer",
+  "xp": 24,
+  "nextLevelAt": 50,
+  "xpToNext": 26,
+  "districtInfluence": 0,
+  "badges": [],
+  "capabilities": [{ "id": "counter_rumor", "label": "Counter rumor", "unlocked": false }],
+  "nextUnlock": { "type": "level", "level": 2, "title": "Street Listener", "xpRequired": 26 }
+}
+```
+
+Command results may include a `progression` delta envelope on `result.consequence`; the refreshed `gameShell.progression` is authoritative for UI.
 
 ### NPC card action
 
@@ -171,28 +212,151 @@ Do **not** embed `play-engine` in site. Do **not** mutate world in browser.
 
 ## `visualCues` (3D clients — v1.0.0+)
 
-Implemented in `src/play/district-3d-layout.js`. Returned on `GET /api/state` as `visualCues`.
+Implemented in `src/play/district-3d-layout.js` + `src/play/walk-path.js`. Returned on `GET /api/state` as `visualCues`.
+
+**Version 4** (current) adds `walkGraph`, `interior`, world-space `hotspots`, per-location `interiorCamera` / `walkAnchor`, and agent `idleAnimation`.
+
+**3D mesh assets (v39+):** locations, agents, and player include `renderMode: "mesh3d"` and optional `modelUrl` (glTF/GLB under `assets/models/`). See `docs/64_3D_PROCEDURAL_ASSET_KIT.md`. `sceneTexture` / `figureTexture` remain as hologram accents; gameplay geometry is 3D.
+
+| Top-level field | Purpose |
+|-----------------|---------|
+| `kind` | Always `worldmind_3d_visual_cues` |
+| `version` | `4` |
+| `playerLocationId` | Current district node id |
+| `interior` | Player's current location interior (scene + hotspot commands); `null` if unknown |
+| `walkGraph` | `{ nodes: Record<id, { walkAnchor, position }>, edges: [{ from, to }] }` |
+| `player` | `{ position, locationId, figureTexture, modelUrl, renderMode }` — ground-level player marker |
+| `camera` | Orbit target, distance clamps, `walkEye` / `walkTarget` for follow cam |
+| `environment` | fog, ground/grid colours, ambient/sun intensity |
+| `locations[]` | District buildings (see below) |
+| `hotspots[]` | World-space inspect points near player location |
+| `edges[]` | `{ from, to, fromPosition, toPosition }` for line rendering |
+
+### Location object
+
+```json
+{
+  "id": "cafe",
+  "label": "Café",
+  "zone": "social",
+  "position": [-2.28, 0, 0],
+  "mesh": "district_building",
+  "scale": [2.38, 2.8, 2.38],
+  "color": "#c97b3d",
+  "emissive": "#f59e0b",
+  "emissiveIntensity": 0.45,
+  "command": "move cafe",
+  "renderMode": "mesh3d",
+  "modelUrl": "assets/models/locations/cafe.glb",
+  "sceneTexture": "assets/locations/cafe.png",
+  "isPlayerHere": true,
+  "walkAnchor": [-2.28, 0, 0],
+  "interiorCamera": { "eye": [-2.28, 1.65, 4.5], "target": [-2.28, 1.4, 0] },
+  "incidentActive": false,
+  "agents": [{
+    "id": "sara",
+    "name": "Sara",
+    "role": "café owner",
+    "portrait": "assets/characters/sara/portrait.png",
+    "figureTexture": "assets/characters/sara/portrait.png",
+    "fullBodyTexture": "assets/characters/sara/fullbody.png",
+    "modelUrl": "assets/models/characters/humanoid.glb",
+    "renderMode": "mesh3d",
+    "idleAnimation": "bob",
+    "position": [-1.5, 0.9, 3],
+    "commands": { "talk": "talk sara", "ask": "ask sara delivery", "pay": "pay sara 5", "leno": "ask_leno" }
+  }]
+}
+```
+
+`idleAnimation` is `'bob'` or `'turn'` (alternating by agent index). `sceneTexture` prefers content-pack location asset, else `sceneTexturePathForLocation(id)`.
+
+### Interior object
+
+Same hotspot commands as `gameShell.location.hotspots`, flattened for 2D overlay clients:
+
+```json
+"interior": {
+  "locationId": "cafe",
+  "label": "Café",
+  "sceneTexture": "assets/locations/cafe.png",
+  "hotspots": [{ "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "risk": 1, "preview": "..." }]
+}
+```
+
+### World hotspot object
+
+```json
+{ "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "risk": 1, "icon": null, "position": [0.8, 0.75, 2.1] }
+```
+
+### Minimal boot example
 
 ```json
 "visualCues": {
   "kind": "worldmind_3d_visual_cues",
-  "version": 1,
+  "version": 4,
   "playerLocationId": "cafe",
-  "camera": { "target": [0, 1.5, 0], "distance": 16 },
-  "locations": [{ "id": "cafe", "position": [0,0,0], "scale": [2.5,3,2.5], "command": "move cafe", "agents": [] }],
+  "interior": { "locationId": "cafe", "label": "Café", "sceneTexture": "assets/locations/cafe.png", "hotspots": [] },
+  "walkGraph": {
+    "nodes": { "cafe": { "walkAnchor": [0, 0, 0], "position": [0, 0, 0] } },
+    "edges": [{ "from": "cafe", "to": "market" }]
+  },
+  "player": { "position": [0, 0.1, 0], "locationId": "cafe" },
+  "camera": { "target": [0, 1.5, 0], "distance": 16, "minDistance": 4, "maxDistance": 32, "polarAngle": 0.55, "walkEye": [0, 1.65, 4.5], "walkTarget": [0, 1.4, 0] },
+  "environment": { "fogColor": "#0a0e14", "fogNear": 18, "fogFar": 42, "groundColor": "#0d1117", "gridColor": "#1f2937", "ambientIntensity": 0.55, "sunIntensity": 1.1 },
+  "locations": [],
   "hotspots": [],
-  "edges": []
+  "edges": [{ "from": "cafe", "to": "market", "fromPosition": [0,0,0], "toPosition": [3,0,2] }]
 }
 ```
 
-Clients: `static-play/3d.html`, worldmind-site `/play/3d`. See `docs/62_3D_PLAY_CLIENT_V1.md`.
+### `walkAnimation` on move
+
+Built by `buildWalkAnimation()` in `src/play/walk-path.js`. Successful `POST /api/command` with `move <location>` includes `result.walkAnimation` when the player changes district (`null` for same-location moves or failed moves).
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `kind` | `'worldmind_walk_animation'` | Discriminator |
+| `version` | `1` | |
+| `from` / `to` | string | Location ids |
+| `path` | `string[]` | BFS node ids over `walkGraph.edges` |
+| `waypoints` | `number[][]` | `[x, y, z][]` with arc segments (Y ≈ 0.1 + arc) |
+| `durationMs` | number | 400–8000, distance × 320 ms/unit |
+| `camera` | `{ eye: number[], target: number[] }` | Final follow camera behind destination |
+
+```json
+"walkAnimation": {
+  "kind": "worldmind_walk_animation",
+  "version": 1,
+  "from": "cafe",
+  "to": "market",
+  "path": ["cafe", "market"],
+  "waypoints": [[0, 0.1, 0], [0.5, 0.3, 0.4]],
+  "durationMs": 640,
+  "camera": { "eye": [0, 1.65, -4], "target": [0, 1.4, 0] }
+}
+```
+
+**Client contract:** animate locally from `waypoints`, then apply refreshed `visualCues` from `GET /api/state`. Optional legacy fields (`cameraWaypoints`, `lookAt`) are client-side derivations only — server emits `camera` at destination.
+
+Clients: `static-play/3d-client.js`, worldmind-site `/play/3d`. TypeScript types in `worldmind-site/src/lib/play-api.ts`. See `docs/62_3D_PLAY_CLIENT_V1.md`.
 
 ## Verification
 
+`npm run validate:play-api` (`src/cli/validate-play-api.js`) asserts:
+
+- `GET /api/health` → `apiVersion` matches `PLAY_API_VERSION`
+- `GET /api/state` → `gameShell` (location, npcCards, caseBoard, founder.tierLabel), `playerSnapshot`, `districtView`
+- `visualCues` v4 — `walkGraph` (≥4 nodes, ≥3 edges), `interior.locationId`, `interior.hotspots`, world `hotspots`
+- Redaction — no `hiddenCause`, agent secrets, or unguarded Nadia source phrase
+- `POST /api/command` move → `result.walkAnimation` with ≥2 waypoints, `durationMs` ≥ 400
+
 ```bash
 npm run validate:play-api
+WORLDMIND_CORE_URL=https://core.example.com npm run verify:production-play
 npm run play:server -- --port 8080
-curl -s http://127.0.0.1:8080/api/state | jq .gameShell.location
+curl -s http://127.0.0.1:8080/api/state | jq .visualCues.version
 ```
 
 ## Related docs

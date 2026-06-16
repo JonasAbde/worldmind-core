@@ -18,7 +18,7 @@ test('scenario loader validates and loads the canonical New Aarhus District 01 s
   const world = initializeScenario({ scenarioPath: canonicalScenarioPath });
   assert.equal(world.name, 'New Aarhus District 01');
   assert.equal(Object.keys(world.agents).length, 11);
-  assert.equal(Object.keys(world.locations).length, 4);
+  assert.equal(Object.keys(world.locations).length, 5);
   assert.ok(Object.values(world.memories).some(m => m.agentId === 'nadia' && m.visibility === 'secret'));
 });
 

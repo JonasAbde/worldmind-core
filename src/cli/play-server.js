@@ -49,8 +49,8 @@ import { openSqliteWorldStore } from '../persistence/sqlite.js';
 import { diffSnapshots, filterEvents } from '../persistence/timeline.js';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const STATIC_DIR = path.join(REPO, 'static-play');
-const ASSETS_DIR = path.join(REPO, 'assets');
+const STATIC_DIR = path.resolve(path.join(REPO, 'static-play'));
+const ASSETS_DIR = path.resolve(path.join(REPO, 'assets'));
 const DB_PATH = process.env.WM_DB_PATH || path.join(REPO, 'data/worldmind.sqlite');
 const DEFAULT_SCENARIO = path.join(REPO, 'scenarios/new-aarhus-district-01.json');
 const CORS_ORIGINS = (process.env.WM_CORS_ORIGIN || '')
@@ -253,24 +253,44 @@ function readBody(req) {
   });
 }
 
+function isPathInside(baseDir, targetPath) {
+  const rel = path.relative(path.resolve(baseDir), path.resolve(targetPath));
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
 function serveStatic(req, res, urlPath) {
-  let rel = urlPath === '/' ? '/index.html' : urlPath;
-  rel = path.normalize(rel).replace(/^([./\\])+/, '');
-  let full = path.join(STATIC_DIR, rel);
-  if (!full.startsWith(STATIC_DIR)) {
-    res.writeHead(403); res.end('forbidden'); return;
+  // Normalize URL segments to POSIX before path.join — on Windows, mixing
+  // backslashes in rel paths would break the assets/ → ASSETS_DIR fallback.
+  const relPosix = (urlPath === '/' ? 'index.html' : urlPath.replace(/^\//, ''))
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/');
+  if (!relPosix || relPosix.includes('..')) {
+    res.writeHead(403);
+    res.end('forbidden');
+    return;
   }
+  const staticFull = path.resolve(STATIC_DIR, ...relPosix.split('/'));
+  if (!isPathInside(STATIC_DIR, staticFull)) {
+    res.writeHead(403);
+    res.end('forbidden');
+    return;
+  }
+  let full = staticFull;
   if (!fs.existsSync(full) || !fs.statSync(full).isFile()) {
-    if (rel.startsWith('assets/')) {
-      const assetRel = rel.slice('assets/'.length);
-      const assetFull = path.join(ASSETS_DIR, assetRel);
-      if (assetFull.startsWith(ASSETS_DIR) && fs.existsSync(assetFull) && fs.statSync(assetFull).isFile()) {
+    if (relPosix.startsWith('assets/')) {
+      const assetRel = relPosix.slice('assets/'.length);
+      const assetFull = path.resolve(ASSETS_DIR, ...assetRel.split('/'));
+      if (isPathInside(ASSETS_DIR, assetFull) && fs.existsSync(assetFull) && fs.statSync(assetFull).isFile()) {
         full = assetFull;
       } else {
-        res.writeHead(404); res.end('not found'); return;
+        res.writeHead(404);
+        res.end('not found');
+        return;
       }
     } else {
-      res.writeHead(404); res.end('not found'); return;
+      res.writeHead(404);
+      res.end('not found');
+      return;
     }
   }
   const ext = path.extname(full).toLowerCase();
@@ -283,7 +303,9 @@ function serveStatic(req, res, urlPath) {
     '.png': 'image/png',
     '.webp': 'image/webp',
     '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg'
+    '.jpeg': 'image/jpeg',
+    '.glb': 'model/gltf-binary',
+    '.gltf': 'model/gltf+json'
   };
   res.writeHead(200, { 'content-type': types[ext] || 'application/octet-stream', 'cache-control': 'no-store' });
   fs.createReadStream(full).pipe(res);

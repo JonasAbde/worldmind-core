@@ -26,9 +26,21 @@ export const COMMAND_XP = Object.freeze({
   rumors: 14,
   transaction: 12,
   leno: 6,
+  founder: 15,
+  quest: 30,
   persistence: 3,
   error: 0,
   quit: 0
+});
+
+/** Soft capability gates — satisfied by level OR unlock flag. */
+export const CAPABILITIES = Object.freeze({
+  counter_rumor: {
+    id: 'counter_rumor',
+    label: 'Counter rumor',
+    requiresLevel: 2,
+    requiresUnlock: 'rumor_trace_basic'
+  }
 });
 
 export function createInitialProgression() {
@@ -75,7 +87,7 @@ function getBadgesForResult(result) {
 export function awardProgression(progression, result, commandText = '') {
   const state = progression || createInitialProgression();
   const beforeLevel = state.level;
-  const kind = result?.ok ? result.kind : 'error';
+  const kind = result?.ok ? (result.questResolution ? 'quest' : result.kind) : 'error';
   const baseXp = COMMAND_XP[kind] ?? 2;
   const evidenceBonus = result?.dialogue?.evidenceIds?.length ? result.dialogue.evidenceIds.length * 5 : 0;
   const consequenceBonus = result?.consequence?.newMemories > 0 ? 4 : 0;
@@ -125,6 +137,44 @@ export function awardProgression(progression, result, commandText = '') {
       badges: getBadgesForResult(result)
     }
   };
+}
+
+export function hasCapability(progression, capabilityId) {
+  const cap = CAPABILITIES[capabilityId];
+  if (!cap) return true;
+  const state = progression || createInitialProgression();
+  if (state.level >= (cap.requiresLevel ?? 1)) return true;
+  if (cap.requiresUnlock && state.unlockedSkills.includes(cap.requiresUnlock)) return true;
+  return false;
+}
+
+export function getCapabilities(progression) {
+  const state = progression || createInitialProgression();
+  return Object.entries(CAPABILITIES).map(([id, cap]) => ({
+    id,
+    label: cap.label,
+    unlocked: hasCapability(state, id),
+    requiresLevel: cap.requiresLevel ?? null,
+    requiresUnlock: cap.requiresUnlock ?? null
+  }));
+}
+
+export function getNextUnlock(progression) {
+  const summary = summarizeProgression(progression);
+  const nextLevel = LEVELS.find((l) => l.minXp > summary.xp) ?? null;
+  const lockedCap = getCapabilities(progression).find((c) => !c.unlocked) ?? null;
+  if (nextLevel) {
+    return {
+      type: 'level',
+      level: nextLevel.level,
+      title: nextLevel.title,
+      xpRequired: summary.xpToNext,
+      capability: lockedCap
+    };
+  }
+  return lockedCap
+    ? { type: 'capability', capability: lockedCap, xpRequired: 0 }
+    : { type: null, level: null, title: null, xpRequired: 0, capability: null };
 }
 
 export function summarizeProgression(progression) {

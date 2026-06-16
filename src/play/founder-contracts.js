@@ -9,6 +9,7 @@ export const FOUNDER_CONTRACT_CATALOG = [
     customer: 'Sara',
     minBaseLevel: 0,
     payout: 25,
+    upfrontCost: 8,
     reputationGain: 3,
     stockImpact: -4,
     energyCost: 6
@@ -19,6 +20,7 @@ export const FOUNDER_CONTRACT_CATALOG = [
     customer: 'Market vendors',
     minBaseLevel: 1,
     payout: 35,
+    upfrontCost: 12,
     reputationGain: 4,
     stockImpact: -5,
     energyCost: 7
@@ -29,6 +31,7 @@ export const FOUNDER_CONTRACT_CATALOG = [
     customer: 'Workshop',
     minBaseLevel: 2,
     payout: 50,
+    upfrontCost: 18,
     reputationGain: 6,
     stockImpact: -6,
     energyCost: 8
@@ -62,8 +65,13 @@ export function listFounderContractOffers(founder = {}) {
       label: template.label,
       customer: template.customer,
       payout: template.payout,
+      upfrontCost: template.upfrontCost ?? 0,
       reputationGain: template.reputationGain,
       minBaseLevel: template.minBaseLevel,
+      tierLabel: founderTierLabel(template.minBaseLevel),
+      tierRequired: template.minBaseLevel,
+      locked: status === 'locked',
+      isDelivery: template.id.startsWith('delivery_'),
       status
     };
   });
@@ -85,6 +93,7 @@ export function createActiveFounderContract(template, worldTick = 0) {
     label: template.label,
     customer: template.customer,
     payout: template.payout,
+    upfrontCost: template.upfrontCost ?? 0,
     reputationGain: template.reputationGain,
     stockImpact: template.stockImpact,
     energyCost: template.energyCost,
