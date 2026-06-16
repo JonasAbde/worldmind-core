@@ -1,0 +1,45 @@
+{
+  "kind": "scenario",
+  "id": "creator_example",
+  "name": "Creator Example District",
+  "worldId": null,
+  "worldName": "Creator Example",
+  "agents": [
+    {
+      "id": "creator_example_agent",
+      "kind": "agent",
+      "name": "Example NPC",
+      "role": "citizen",
+      "personality": "neutral",
+      "goals": ["live peacefully"],
+      "skills": [],
+      "permissions": ["talk", "move", "inspect"],
+      "location": "loc_example",
+      "relationships": {}
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_example",
+      "kind": "location",
+      "name": "Example Place",
+      "zoneType": "residential",
+      "vibe": "quiet",
+      "owner": null,
+      "allowedActions": ["look", "talk", "inspect"],
+      "agentsPresent": ["creator_example_agent"]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident_example",
+      "kind": "incident",
+      "title": "Example Mini-Incident",
+      "visibleProblem": "Something seems off",
+      "evidence": ["evidence_example_01"],
+      "resolutions": ["observe"],
+      "risks": [1],
+      "private": { "hiddenCause": "Example hidden cause (kept private)" }
+    }
+  ]
+}

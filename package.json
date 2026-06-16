@@ -43,7 +43,10 @@
     "validate:play-server": "node src/cli/validate-saves-ui.js",
     "validate:saves-ui": "node src/cli/validate-saves-ui.js",
     "validate:district-ui": "node src/cli/validate-district-ui.js",
-    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json && node src/cli/validate.js branch scenarios/branch-v06-canonical.json && node src/cli/validate.js dashboard static-dashboard && node src/cli/validate.js action && node src/cli/validate.js risk --strict && node src/cli/validate.js state && node src/cli/validate-event-log.js && node src/cli/validate-leno.js && node src/cli/diff-checker.js canonical --scenario scenarios/new-aarhus-district-01.json && node src/cli/diff-checker.js event-log && node src/cli/demo-play.js && node src/cli/validate-game-foundation.js && node src/cli/play-web.js && node src/cli/validate-web-play.js && node src/cli/validate-saves-ui.js --skip-server && node src/cli/validate-district-ui.js",
+    "validate:creator": "node src/cli/creator.js validate",
+    "creator": "node src/cli/creator.js",
+    "creator:scenario": "node src/cli/creator.js scenario",
+    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json && node src/cli/validate.js branch scenarios/branch-v06-canonical.json && node src/cli/validate.js dashboard static-dashboard && node src/cli/validate.js action && node src/cli/validate.js risk --strict && node src/cli/validate.js state && node src/cli/validate-event-log.js && node src/cli/validate-leno.js && node src/cli/diff-checker.js canonical --scenario scenarios/new-aarhus-district-01.json && node src/cli/diff-checker.js event-log && node src/cli/demo-play.js && node src/cli/validate-game-foundation.js && node src/cli/play-web.js && node src/cli/validate-web-play.js && node src/cli/validate-saves-ui.js --skip-server && node src/cli/validate-district-ui.js --skip-server && node src/cli/creator.js validate scenarios/creator-example-district.json",
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check": "npm run typecheck && node src/cli/simulate.js --days 7 --assert"

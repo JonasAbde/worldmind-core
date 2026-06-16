@@ -303,6 +303,7 @@ export function renderPhoneTabs() {
       <button type="button" data-phone-tab="saves">Saves</button>
       <button type="button" data-phone-tab="branches">Branches</button>
       <button type="button" data-phone-tab="leno">Leno</button>
+      <button type="button" data-phone-tab="creator">Creator</button>
     </div>
     <div class="wm-phone-content" data-phone-content>
       <div data-phone-pane="messages" class="wm-phone-pane">Messages panel</div>
@@ -313,11 +314,34 @@ export function renderPhoneTabs() {
       <div data-phone-pane="saves" class="wm-phone-pane">Saves panel</div>
       <div data-phone-pane="branches" class="wm-phone-pane">Branches panel</div>
       <div data-phone-pane="leno" class="wm-phone-pane">Leno panel</div>
+      <div data-phone-pane="creator" class="wm-phone-pane">
+        <h3>Creator Agent Form</h3>
+        <form class="creator-agent-form" data-creator-agent-form>
+          <input type="text" placeholder="Agent name" data-agent-name />
+          <input type="text" placeholder="Role" data-agent-role />
+          <button type="submit">Generate Agent</button>
+        </form>
+        <h3>Creator Location Form</h3>
+        <form class="creator-location-form" data-creator-location-form>
+          <input type="text" placeholder="Location name" data-loc-name />
+          <input type="text" placeholder="Zone type" data-loc-zone />
+          <button type="submit">Generate Location</button>
+        </form>
+        <h3>Creator Incident Form</h3>
+        <form class="creator-incident-form" data-creator-incident-form>
+          <input type="text" placeholder="Incident title" data-inc-title />
+          <input type="text" placeholder="Visible problem" data-inc-problem />
+          <button type="submit">Generate Incident</button>
+        </form>
+        <pre data-creator-preview></pre>
+        <button type="button" data-validate-creator>Validate</button>
+        <button type="button" data-export-scenario>Export Scenario</button>
+      </div>
     </div>
-  </section>`;
-}
+      </section>`;
+    }
 
-/** Event Feed — live event ticker */
+    /** Event Feed — live event ticker */
 export function renderEventFeed(events) {
   const rows = (events ?? []).slice(-12).reverse().map((e) => {
     const time = `${e.day ?? '?'}d ${e.time ?? ''}`;
