@@ -1,5 +1,5 @@
-import * as THREE from "https://unpkg.com/three@0.166.1/build/three.module.js";
-import { OrbitControls } from "https://unpkg.com/three@0.166.1/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const LOCATION_LAYOUT = {
   apartment: { x: -10, z: -8, color: 0x38475d },
@@ -71,7 +71,10 @@ async function runCommand(text) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     });
-    const outcome = res?.result?.summary || res?.result?.dialogue || "Command executed.";
+    const raw = res?.result?.summary || res?.result?.text || res?.result?.dialogue;
+    const outcome = typeof raw === "string"
+      ? raw
+      : raw?.text || raw?.lines?.join("\n") || "Command executed.";
     appendLog(String(outcome));
     if (text.startsWith("move ")) {
       const loc = text.replace("move ", "").trim();
@@ -143,8 +146,20 @@ function renderHUD() {
     buttons.push(makeButton(`Talk ${selectedAgentId}`, () => runCommand(`talk ${selectedAgentId}`)));
     buttons.push(makeButton(`Ask ${selectedAgentId} delivery`, () => runCommand(`ask ${selectedAgentId} delivery`)));
     buttons.push(makeButton(`Pay ${selectedAgentId} 5`, () => runCommand(`pay ${selectedAgentId} 5`)));
+  } else {
+    const here = gameState.locations[playerLoc]?.agentsPresent || [];
+    for (const agentId of here) {
+      if (agentId === "player") continue;
+      buttons.push(makeButton(`Talk ${agentId}`, () => runCommand(`talk ${agentId}`)));
+    }
   }
   buttons.push(makeButton("Ask Leno", () => runCommand("ask_leno")));
+  for (const [id, loc] of Object.entries(gameState.locations)) {
+    buttons.push(makeButton(`Go: ${loc.name}`, () => {
+      selectedLocationId = id;
+      runCommand(`move ${id}`);
+    }));
+  }
   actionsEl.replaceChildren(...buttons);
 }
 
