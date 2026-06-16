@@ -214,9 +214,11 @@ Do **not** embed `play-engine` in site. Do **not** mutate world in browser.
 
 Implemented in `src/play/district-3d-layout.js` + `src/play/walk-path.js`. Returned on `GET /api/state` as `visualCues`.
 
-**Version 4** (current) adds `walkGraph`, `interior`, world-space `hotspots`, per-location `interiorCamera` / `walkAnchor`, and agent `idleAnimation`.
+**Version 4** (current) adds `walkGraph`, `interior`, world-space `hotspots`, per-location `interiorCamera` / `walkAnchor`, agent `idleAnimation`, and **building collision** (`footprint`, `buildingStyle`, `collision`).
 
 **3D mesh assets (v39+):** locations, agents, and player include `renderMode: "mesh3d"` and optional `modelUrl` (glTF/GLB under `assets/models/`). See `docs/64_3D_PROCEDURAL_ASSET_KIT.md`. `sceneTexture` / `figureTexture` remain as hologram accents; gameplay geometry is 3D.
+
+**Building collision (v40+):** each `locations[]` entry includes `footprint: [w,h,d]`, `buildingStyle`, and `collision: { shape, footprint, halfExtents, radius, currentLocationRadius }` from `src/play/building-footprints.js` (mirrored in site `building-footprints.ts`). Site `/play/3d` uses these for WASD locomotion; static `3d-client.js` uses them for label height only.
 
 | Top-level field | Purpose |
 |-----------------|---------|
@@ -249,6 +251,15 @@ Implemented in `src/play/district-3d-layout.js` + `src/play/walk-path.js`. Retur
   "renderMode": "mesh3d",
   "modelUrl": "assets/models/locations/cafe.glb",
   "sceneTexture": "assets/locations/cafe.png",
+  "footprint": [3.6, 2.4, 3.0],
+  "buildingStyle": "cafe",
+  "collision": {
+    "shape": "box",
+    "footprint": [3.6, 3.0],
+    "halfExtents": [2.15, 1.85],
+    "radius": 2.84,
+    "currentLocationRadius": 0.85
+  },
   "isPlayerHere": true,
   "walkAnchor": [-2.28, 0, 0],
   "interiorCamera": { "eye": [-2.28, 1.65, 4.5], "target": [-2.28, 1.4, 0] },
@@ -349,6 +360,8 @@ Clients: `static-play/3d-client.js`, worldmind-site `/play/3d`. TypeScript types
 - `GET /api/health` → `apiVersion` matches `PLAY_API_VERSION`
 - `GET /api/state` → `gameShell` (location, npcCards, caseBoard, founder.tierLabel), `playerSnapshot`, `districtView`
 - `visualCues` v4 — `walkGraph` (≥4 nodes, ≥3 edges), `interior.locationId`, `interior.hotspots`, world `hotspots`
+- `visualCues` mesh3d (v39+) — `renderMode: mesh3d`, `modelUrl` on locations/agents/player when GLB baked
+- `visualCues` collision (v40+) — `footprint`, `buildingStyle`, `collision.halfExtents` + `radius` on every location
 - Redaction — no `hiddenCause`, agent secrets, or unguarded Nadia source phrase
 - `POST /api/command` move → `result.walkAnimation` with ≥2 waypoints, `durationMs` ≥ 400
 

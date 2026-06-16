@@ -1,7 +1,7 @@
 # 64 — 3D Procedural + glTF Asset Kit v2
 
 > **Status:** Shipped in site `/play/3d`  
-> **Related:** `docs/63_3D_CLIENT_TECH_STACK_RESEARCH.md`, `docs/62_3D_PLAY_CLIENT_V1.md`
+> **Related:** `docs/63_3D_CLIENT_TECH_STACK_RESEARCH.md`, `docs/62_3D_PLAY_CLIENT_V1.md`, `docs/PLAY_API_CONTRACT.md`
 
 ## Formål
 
@@ -27,12 +27,17 @@ Deliver **real 3D geometry** in the browser district: baked **glTF/GLB** models 
 - `agents[].modelUrl` — shared `assets/models/characters/humanoid.glb`
 - `agents[].renderMode` — `mesh3d`
 - `agents[].figureTexture` — portrait hologram accent
+- `locations[].collision` — box/circle volumes aligned to `footprint` (v40+); mirrored in site `building-collision.ts`
+- `locations[].footprint` — `[width, height, depth]` world units from `building-footprints.js`
+- `locations[].buildingStyle` — `residential` | `cafe` | `market` | `industrial` | `civic`
+
+Shared render helpers: `src/play/embodied-3d-render.js` (core) and `src/lib/embodied-3d-render.ts` (site). Static `static-play/3d-client.js` inlines the same `shouldUseGltfBuilding` / `shouldUseGltfBody` gates.
 
 ## Bake pipeline
 
 ```bash
 cd worldmind-site && npm run bake:3d-models   # writes GLB into ../Project Worldmind/assets/models/
-cd worldmind-core && npm test                 # v39 model paths + visualCues
+cd worldmind-core && npm test                 # v39 GLB + v40 collision + visualCues
 ```
 
 ## Roadmap
@@ -52,7 +57,8 @@ Nordic cyberpunk diorama: readable 3D silhouettes, emissive trims, portrait holo
 
 ```bash
 cd worldmind-site && npm run build && npm test
-cd worldmind-core && npm test   # v39 GLB + v28 visualCues
+cd worldmind-core && npm test   # v39 GLB + v40 collision + v28 visualCues
+npm run validate:play-api       # health + state + mesh3d + collision + move
 ```
 
 Open `/play/3d` — buildings are glTF volumes; characters are 3D meshes with floating portraits.

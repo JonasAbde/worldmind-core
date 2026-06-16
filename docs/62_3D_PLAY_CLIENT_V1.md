@@ -11,7 +11,7 @@
 |-------|---------|
 | `src/play/district-3d-layout.js` | `build3DVisualCues(world)` — district buildings, agents, hotspots, camera, **visualCues v4** |
 | `src/play/walk-path.js` | BFS over `walkGraph`, arc waypoints, `buildWalkAnimation()` for move commands |
-| `src/play/play-api-verify.js` | Shared assertions (`assertVisualCuesV4`, `assertWalkAnimation`) |
+| `src/play/play-api-verify.js` | Shared assertions (`assertVisualCuesV4`, `assertVisualCuesMesh3d`, `assertVisualCuesCollision`, `assertWalkAnimation`) |
 | `GET /api/state` → `visualCues` | Boot payload for any 3D client (version **4**) |
 | `POST /api/command` move → `walkAnimation` | Client-ready path + follow camera on successful district travel |
 | `static-play/3d.html` + `3d-client.js` | Standalone Three.js client (CDN, no core npm deps) |
@@ -147,6 +147,7 @@ npm run dev
 | **v1** | District diorama, click-to-act, Play API wired | ✅ |
 | **v1.1** | visualCues v4, scene billboards, walk animation, walkGraph, idle NPCs, player marker, world hotspots | ✅ |
 | **v2** | Site interior overlay, district route mini-map, progression HUD, branded frame, walk/orbit camera toggle | ✅ (site) |
+| **v2.1** | Site WASD locomotion with building collision volumes from `visualCues.collision` | ✅ (site) |
 | **v3** | Full NPC animation rigs, 3D interior rooms, audio | Planned |
 | **v4** | Seamless district traversal, day/night, persistent camera saves | Planned |
 
@@ -161,4 +162,4 @@ npm run play:server
 # open /3d.html or site /play/3d
 ```
 
-See also `docs/PLAY_API_CONTRACT.md` for full `visualCues` and `gameShell` schemas, and `docs/63_3D_CLIENT_TECH_STACK_RESEARCH.md` for stack evolution, reference-game patterns, and movement/camera non-negotiables.
+See also `docs/PLAY_API_CONTRACT.md` for full `visualCues` and `gameShell` schemas, `docs/64_3D_PROCEDURAL_ASSET_KIT.md` for mesh3d assets and collision footprints, and `docs/63_3D_CLIENT_TECH_STACK_RESEARCH.md` for stack evolution, reference-game patterns, and movement/camera non-negotiables.
