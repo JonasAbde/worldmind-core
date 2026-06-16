@@ -1,0 +1,86 @@
+{
+  "kind": "worldmind_content_pack",
+  "version": 1,
+  "id": "new-aarhus-content-pack-v1",
+  "title": "New Aarhus District 01 — Foundation Content Pack",
+  "worldId": "new_aarhus_district_01",
+  "episodes": [
+    {
+      "id": "episode_missing_delivery",
+      "title": "The Missing Delivery",
+      "description": "A small district incident where rumors, trust, money, evidence, and mediation can all resolve the same problem.",
+      "questIds": ["quest_missing_delivery"],
+      "startingLocationId": "cafe"
+    }
+  ],
+  "characters": [
+    { "id": "sara", "role": "cafe owner", "primaryLocationId": "cafe", "arc": "needs help restoring trust after the delivery incident" },
+    { "id": "malik", "role": "delivery worker", "primaryLocationId": "workshop", "arc": "money pressure and reputation risk" },
+    { "id": "rune", "role": "rumor broker", "primaryLocationId": "market", "arc": "knows fragments, not the full truth" },
+    { "id": "amina", "role": "mediator", "primaryLocationId": "district_square", "arc": "can resolve conflict peacefully" },
+    { "id": "nadia", "role": "hidden rumor source", "primaryLocationId": "market", "arc": "must not be revealed without evidence" }
+  ],
+  "locations": [
+    { "id": "cafe", "mood": "warm, social pressure, public reputation", "gameplayUse": "dialogue, inspection, incident start" },
+    { "id": "market", "mood": "busy, overheard claims, rumor propagation", "gameplayUse": "listen for rumors and trace source" },
+    { "id": "workshop", "mood": "practical, money pressure, alternative delivery", "gameplayUse": "founder/business route" },
+    { "id": "apartment", "mood": "private planning, Leno reflection", "gameplayUse": "safe hub" },
+    { "id": "district_square", "mood": "civic, mediation, public resolution", "gameplayUse": "peaceful route" }
+  ],
+  "rumors": [
+    {
+      "id": "rumor_missing_delivery_blame",
+      "claim": "Sara may have caused the missing delivery herself.",
+      "truthLevel": "false_or_misleading",
+      "hiddenSourceEvidenceId": "rumor_source_nadia"
+    }
+  ],
+  "evidence": [
+    { "id": "cafe_delivery_gap", "type": "observation", "label": "Delivery gap at the cafe", "locationId": "cafe" },
+    { "id": "market_rumor_chain", "type": "rumor_trace", "label": "Rumor chain points away from Sara", "locationId": "market" },
+    { "id": "rumor_source_nadia", "type": "source_evidence", "label": "Evidence identifying Nadia as source", "locationId": "market", "hiddenTruth": true }
+  ],
+  "dialogue": [
+    { "id": "dialogue_sara_help", "agentId": "sara", "topic": "delivery", "tone": "worried", "unlocks": ["cafe_delivery_gap"] },
+    { "id": "dialogue_rune_nadia", "agentId": "rune", "topic": "nadia", "tone": "cautious", "unlocks": ["market_rumor_chain"] },
+    { "id": "dialogue_amina_mediation", "agentId": "amina", "topic": "mediation", "tone": "calm", "unlocks": [] }
+  ],
+  "quests": [
+    {
+      "id": "quest_missing_delivery",
+      "title": "The Missing Delivery",
+      "incidentId": "missing_delivery",
+      "objective": "Resolve the delivery incident without leaking hidden truth before evidence exists.",
+      "resolutionPaths": [
+        {
+          "id": "peaceful_mediation",
+          "label": "Peaceful mediation",
+          "steps": ["inspect cafe", "talk sara", "ask amina mediation", "pay malik 5"],
+          "reward": { "xp": 40, "districtInfluence": 8, "badge": "mediator" }
+        },
+        {
+          "id": "investigation_and_counter_rumor",
+          "label": "Investigation and counter-rumor",
+          "steps": ["inspect cafe", "listen_rumors market", "ask rune nadia", "trace_rumor", "counter_rumor"],
+          "reward": { "xp": 60, "districtInfluence": 10, "badge": "truth-tracer" }
+        },
+        {
+          "id": "founder_negotiation",
+          "label": "Founder/business negotiation",
+          "steps": ["inspect workshop", "pay malik 15", "talk sara"],
+          "reward": { "xp": 45, "districtInfluence": 6, "badge": "district-investor" }
+        }
+      ]
+    }
+  ],
+  "assetBindings": [
+    { "entityType": "world", "entityId": "new_aarhus_district_01", "assetPath": "assets/showcase/worldmind-v2-showcase.png" },
+    { "entityType": "location", "entityId": "cafe", "assetPath": "assets/locations/cafe.png" },
+    { "entityType": "location", "entityId": "market", "assetPath": "assets/locations/market.png" },
+    { "entityType": "location", "entityId": "workshop", "assetPath": "assets/locations/workshop.png" },
+    { "entityType": "character", "entityId": "sara", "assetPath": "assets/characters/sara/portrait.png" },
+    { "entityType": "character", "entityId": "malik", "assetPath": "assets/characters/malik/portrait.png" },
+    { "entityType": "character", "entityId": "rune", "assetPath": "assets/characters/rune/portrait.png" },
+    { "entityType": "ui", "entityId": "memory_permissions_hud", "assetPath": "assets/ui/hud-memory-permissions.png" }
+  ]
+}
