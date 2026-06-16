@@ -32,10 +32,10 @@ import { fileURLToPath } from 'node:url';
 import {
   bootstrapWorld,
   resolveCommand,
-  runScriptedPath,
   getDemoPaths
 } from '../play/play-engine.js';
 import { renderWebPage } from '../play/web-renderer.js';
+import { buildGameplayShellModel } from '../play/game-shell-model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -362,6 +362,7 @@ function main() {
     dialogue: initial.kind === 'look' ? null : initial.dialogue,
     consequence: initial.consequence ?? null,
     leno: lenoResult.leno ?? null,
+    gameShell: buildGameplayShellModel(world, { leno: lenoResult.leno, playerKnowledge: world.playerKnowledge }),
     saves: [],
     branches: [],
     demoPaths: getDemoPaths(),

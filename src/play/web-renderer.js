@@ -32,6 +32,7 @@
  */
 import { buildDistrictView } from './district-view.js';
 import { bindAssets } from './assets.js';
+import { buildGameplayShellModel } from './game-shell-model.js';
 
 const SOURCE_DEFINING = /\bnadia\s+is\s+the\s+source\b/i;
 
@@ -70,58 +71,25 @@ export function renderHeader(world) {
 </header>`;
 }
 
-export function renderTopBar(world, payload) {
-  const money = world?.agents?.player?.stats?.money ?? 0;
-  const lenoReady = payload?.leno?.summary ? 'online' : 'standby';
+export function renderTopBar(_world, _payload, shell) {
   return `<section class="wm-section wm-topbar" id="wm-topbar">
   <h2>Game Shell</h2>
   <div class="wm-topbar-grid">
-    <span><strong>Day:</strong> ${escapeHtml(world?.day ?? '?')}</span>
-    <span><strong>Time:</strong> ${escapeHtml(world?.time ?? '?')}</span>
-    <span><strong>Money:</strong> ${escapeHtml(money)}</span>
-    <span><strong>Leno:</strong> ${escapeHtml(lenoReady)}</span>
+    <span><strong>Day:</strong> ${escapeHtml(shell?.topbar?.day ?? '?')}</span>
+    <span><strong>Time:</strong> ${escapeHtml(shell?.topbar?.time ?? '?')}</span>
+    <span><strong>Money:</strong> ${escapeHtml(shell?.topbar?.money ?? 0)}</span>
+    <span><strong>Leno:</strong> ${escapeHtml(shell?.topbar?.lenoStatus ?? 'standby')}</span>
   </div>
 </section>`;
 }
 
-function locationScenePath(locId) {
-  const map = {
-    cafe: 'assets/locations/cafe.png',
-    market: 'assets/locations/market.png',
-    workshop: 'assets/locations/workshop.png',
-    apartment: 'assets/locations/apartment.png',
-    district_square: 'assets/locations/district-square.png'
-  };
-  return map[locId] ?? null;
-}
-
-function hotspotModel(locId) {
-  const base = {
-    cafe: [
-      { id: 'cafe_delivery_crate', label: 'Delivery crate', command: 'inspect cafe', preview: 'Inspect missing delivery crate', risk: 1 },
-      { id: 'cafe_stock_shelf', label: 'Stock shelf', command: 'inspect cafe', preview: 'Inspect low stock indicators', risk: 1 }
-    ],
-    market: [
-      { id: 'market_rumor_corner', label: 'Rumor corner', command: 'listen_rumors market', preview: 'Hear local rumor trail', risk: 2 }
-    ],
-    workshop: [
-      { id: 'workshop_repair_bench', label: 'Repair bench', command: 'inspect workshop', preview: 'Inspect repair flow and costs', risk: 2 },
-      { id: 'courier_route_marker', label: 'Courier route marker', command: 'inspect workshop', preview: 'Inspect route bottlenecks', risk: 2 }
-    ],
-    apartment: [
-      { id: 'registry_kiosk', label: 'Registry kiosk feed', command: 'inspect apartment', preview: 'Inspect registry pressure', risk: 2 }
-    ]
-  };
-  return base[locId] ?? [];
-}
-
-export function renderLocation(world) {
+export function renderLocation(world, shell) {
   const player = world?.agents?.player;
   const locId = player?.locationId;
   const loc = locId ? world.locations?.[locId] : null;
   const locName = loc?.name ?? locId ?? 'unknown';
-  const scene = locationScenePath(locId);
-  const hotspots = hotspotModel(locId);
+  const scene = shell?.location?.scene ?? null;
+  const hotspots = shell?.location?.hotspots ?? [];
   return `<section class="wm-section wm-location" id="wm-location">
   <h2>Current Location</h2>
   <p class="wm-location-name">${escapeHtml(locName)}</p>
@@ -144,13 +112,13 @@ export function renderLocation(world) {
 </section>`;
 }
 
-export function renderAgents(world) {
-  const list = Object.values(world?.agents ?? {}).filter((a) => a.id !== 'player');
+export function renderAgents(_world, shell) {
+  const list = shell?.npcCards ?? [];
   return `<section class="wm-section wm-agents" id="wm-agents">
   <h2>Visible Agents</h2>
   <ul class="wm-agent-list">${list.map((a) => {
-    const rel = a?.relationships?.player ?? { trust: 0, suspicion: 0, fear: 0 };
-    const avatar = a?.assets?.avatar || `assets/characters/${a.id}/avatar.png`;
+    const rel = { trust: a.trust ?? 0, suspicion: a.suspicion ?? 0, fear: a.fear ?? 0 };
+    const avatar = a.avatar || `assets/characters/${a.id}/avatar.png`;
     return `
     <li class="wm-agent" data-agent-id="${escapeHtml(a.id)}">
       <div class="wm-agent-card">
@@ -158,13 +126,10 @@ export function renderAgents(world) {
         <div>
           <strong>${escapeHtml(a.name)}</strong>
           <span class="wm-agent-role">${escapeHtml(a.role ?? '')}</span>
-          <span class="wm-agent-loc">@ ${escapeHtml(world.locations?.[a.locationId]?.name ?? a.locationId ?? '?')}</span>
+          <span class="wm-agent-loc">@ ${escapeHtml(a.locationName ?? '?')}</span>
           <span class="wm-agent-stats">trust ${escapeHtml(rel.trust)} · suspicion ${escapeHtml(rel.suspicion)} · fear ${escapeHtml(rel.fear)}</span>
           <div class="wm-agent-actions">
-            <button type="button" data-run-command="talk ${escapeHtml(a.id)}">Talk</button>
-            <button type="button" data-run-command="ask ${escapeHtml(a.id)} delivery">Ask</button>
-            <button type="button" data-run-command="ask_leno">Ask Leno</button>
-            <button type="button" data-run-command="pay ${escapeHtml(a.id)} 5">Negotiate</button>
+            ${(a.actions ?? []).map((act) => `<button type="button" data-run-command="${escapeHtml(act.command)}">${escapeHtml(act.label)}</button>`).join('')}
           </div>
         </div>
       </div>
@@ -258,9 +223,10 @@ export function renderConsequence(consequence) {
 
 export function renderEvidence(payload) {
   const pk = payload?.playerKnowledge ?? payload?.world?.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [], suspectedCauses: [], unresolvedQuestions: [] };
+  const shell = payload?.gameShell ?? {};
   const guardedSummary = applyLenoGuard(payload?.leno?.summary ?? '', payload);
-  const evidenceCards = (pk.evidenceIds ?? []).map((e) => `<li class="wm-case-card"><img src="assets/ui/evidence-card.png" alt="Evidence card" /><span>${escapeHtml(e)}</span></li>`).join('');
-  const rumorCards = (pk.knownRumorIds ?? []).map((r) => `<li class="wm-case-card"><img src="assets/ui/rumor-card.png" alt="Rumor card" /><span>${escapeHtml(r)}</span></li>`).join('');
+  const evidenceCards = (shell?.caseBoard?.evidenceCards ?? pk.evidenceIds ?? []).map((e) => `<li class="wm-case-card"><img src="assets/ui/evidence-card.png" alt="Evidence card" /><span>${escapeHtml(e)}</span></li>`).join('');
+  const rumorCards = (shell?.caseBoard?.rumorCards ?? pk.knownRumorIds ?? []).map((r) => `<li class="wm-case-card"><img src="assets/ui/rumor-card.png" alt="Rumor card" /><span>${escapeHtml(r)}</span></li>`).join('');
   return `<section class="wm-section wm-evidence" id="wm-evidence">
   <h2>Evidence</h2>
   <p><strong>Known facts:</strong> ${(pk.evidenceIds ?? []).map((e) => `<code>${escapeHtml(e)}</code>`).join(' ') || '<em>(none collected yet)</em>'}</p>
@@ -276,18 +242,17 @@ export function renderEvidence(payload) {
 }
 
 export function renderRumorTrail(payload) {
-  const pk = payload?.playerKnowledge ?? payload?.world?.playerKnowledge ?? {};
-  const known = pk.knownRumorIds ?? [];
+  const shell = payload?.gameShell ?? {};
+  const known = shell?.rumorTrail ?? [];
   return `<section class="wm-section wm-rumors" id="wm-rumor-trail">
   <h2>Rumor Trail</h2>
-  <ul>${known.map((id) => `<li><code>${escapeHtml(id)}</code> · spread risk: medium · <button type="button" data-run-command="trace_rumor ${escapeHtml(id)}">Trace</button> <button type="button" data-run-command="counter_rumor ${escapeHtml(id)}">Counter</button></li>`).join('') || '<li class="wm-empty">No known rumors yet.</li>'}</ul>
+  <ul>${known.map((r) => `<li><code>${escapeHtml(r.id)}</code> · spread risk: ${escapeHtml(r.spreadRisk)} · <button type="button" data-run-command="${escapeHtml(r.traceCommand)}">Trace</button> <button type="button" data-run-command="${escapeHtml(r.counterCommand)}">Counter</button></li>`).join('') || '<li class="wm-empty">No known rumors yet.</li>'}</ul>
   <p class="wm-hint">Counter-rumor without enough evidence can backfire.</p>
 </section>`;
 }
 
-export function renderFounderPanel(world) {
-  const incident = Object.values(world?.incidents ?? {}).find((i) => i.id === 'missing_delivery');
-  const unlocked = Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation');
+export function renderFounderPanel(shell) {
+  const unlocked = Boolean(shell?.founder?.unlocked);
   return `<section class="wm-section wm-founder" id="wm-founder">
   <h2>Founder/Base</h2>
   ${unlocked
@@ -297,18 +262,12 @@ export function renderFounderPanel(world) {
          <li>Malik/Sara contract option available</li>
          <li>Base progress + reputation loop active</li>
        </ul>`
-    : '<p class="wm-empty">Resolve The Missing Delivery to unlock founder loop.</p>'}
+    : `<p class="wm-empty">${escapeHtml(shell?.founder?.unlockText ?? 'Resolve The Missing Delivery to unlock founder loop.')}</p>`}
 </section>`;
 }
 
-export function renderMajorDecisionPanel() {
-  const choices = [
-    'expose_nadia',
-    'protect_sara_privately',
-    'sell_info_registry',
-    'negotiate_malik',
-    'start_delivery_workflow'
-  ];
+export function renderMajorDecisionPanel(shell) {
+  const choices = shell?.majorDecisions ?? [];
   return `<section class="wm-section wm-major-decisions" id="wm-major-decisions">
   <h2>Major Decisions</h2>
   <p>Create branch before high-impact choices.</p>
@@ -508,6 +467,7 @@ export function renderDemoPaths(paths) {
 export function renderWebPage(payload) {
   const world = payload?.world ?? {};
   bindAssets(world);
+  const shell = payload?.gameShell ?? buildGameplayShellModel(world, payload);
   const css = payload?.appCss ?? '';
   const js = payload?.appJs ?? '';
   const districtView = payload?.districtView ?? buildDistrictView(world);
@@ -537,11 +497,11 @@ export function renderWebPage(payload) {
 <body class="wm-body">
   <main class="wm-main">
     ${renderHeader(world)}
-    ${renderTopBar(world, payload)}
+    ${renderTopBar(world, payload, shell)}
     <div class="wm-grid">
       <div class="wm-col-left">
-        ${renderLocation(world)}
-        ${renderAgents(world)}
+        ${renderLocation(world, shell)}
+        ${renderAgents(world, shell)}
         ${renderDistrictView(districtView)}
         ${renderCommandButtons()}
         ${renderDemoPaths(payload?.demoPaths ?? [])}
@@ -553,8 +513,8 @@ export function renderWebPage(payload) {
         ${renderRumorTrail(payload)}
         ${renderIncident(world)}
         ${renderLeno(payload)}
-        ${renderFounderPanel(world)}
-        ${renderMajorDecisionPanel()}
+        ${renderFounderPanel(shell)}
+        ${renderMajorDecisionPanel(shell)}
         ${renderPhoneTabs()}
         ${renderEventFeed(payload?.events)}
         ${renderSaves(payload?.saves)}
