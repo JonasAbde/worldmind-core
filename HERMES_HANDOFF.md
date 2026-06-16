@@ -1,10 +1,23 @@
-# Hermes Handoff — WorldMind v0.8 strict invariants
+# Hermes Handoff — WorldMind v1.0-rc1 typed payload
 
 ## Status
 
-WorldMind runtime er nu fuld TypeScript (`strict: true` + `strictNullChecks: true`) med 89/89 tests grønne og en 10-trins `ci:gate`. Event Log er fortsat sandheden, og vi har nu en automatisk gate der hævder det.
+WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters er migreret til typed `payload`-felter, og `validate:event-log` kører nu i **strict mode** som default. 116/116 tests grønne, 12-trins `ci:gate`. Canonical 7-dages sim producerer **0 violations / 123 events** (var 108 i v0.9).
 
-## What is built (v0.9)
+## What is built (v1.0-rc1)
+
+Building on v0.9's per-event-type schema:
+
+- **`src/simulation/leno.ts`** (udvidet): ny `lenoTickPayload(world, summary)` helper der producerer typed payload for `leno_summary_tick` events. Eksponerer `includeHiddenCause: boolean` (evidence gate) og `hiddenCause: string | null` (nullsafe).
+- **`src/simulation/sim.ts`** (udvidet): `daily_checkpoint` payload bruger nu `agentCount`/`memoryCount`/`rumorCount`/`incidentCount` (var `agents`/`memories`/`rumors`/`incidents`); `leno_summary_tick` kalder `lenoTickPayload`; `delivery_restored` får `fromLocationId`/`toLocationId` payload.
+- **`src/simulation/economy.ts`** (udvidet): `economy_pressure` emitter sætter `payload.foodPrice` + `scarcity` + `foodPriceIndex` + `stockLevel`.
+- **`src/simulation/relationships.ts`** (udvidet): `relationship_changed` emitter sætter `payload.sourceAgentId`/`targetAgentId`/`reason`/`numericImpact`.
+- **`src/simulation/incidents.ts`** (udvidet): `incident_resolved` emitter sætter `payload.incidentId`/`resolutionId`/`resolvedAtTick`.
+- **`src/cli/validate-event-log.js`** (udvidet): default mode er nu **strict** (v0.9 havde `soft` default). `--soft` flag bevaret som escape hatch.
+- **`test/v10-typed-payload.test.js`** (ny): 16 nye tests for alle 9 typed event-emitters + strict mode ci:gate smoke.
+- **`docs/40_TYPED_PAYLOAD_MIGRATION.md`** (ny): per-type migration spec, Leno evidence gate dokumentation.
+
+## What is built (v0.9) — recapped
 
 Building on v0.8's strict invariants:
 
@@ -113,7 +126,9 @@ npm run diff:event-log
 | `v06-authoritative-ts.test.js` | 7 |
 | `v07-strict-runtime.test.js` | 12 |
 | `v08-strict-invariants.test.js` | 14 |
-| **Total** | **89** |
+|| `v09-per-event-schemas.test.js` | 11 |
+|| `v10-typed-payload.test.js` | 16 |
+|| **Total** | **116** |
 
 ## Non-negotiables (bæret fra v0.7)
 
@@ -124,10 +139,9 @@ npm run diff:event-log
 - Add tests for every new core mechanic.
 - Risk 4/5 actions are forbidden in MVP (now enforced by `validate:risk`).
 
-## Næste skridt (v0.9 kandidater)
+## Næste skridt (v1.0-rc2 kandidater)
 
-1. Tighten `noUncheckedIndexedAccess` modul-for-modul med eksplicitte lookup-typer.
-2. Tilføj `validate:risk --strict` der også tjekker at alle Risk 1-3 actions har korrekt permission/actor-routing.
-3. Tilføj `validate:state` CLI der verificerer canonical state-shape (alle keys fra WorldState er til stede).
-4. Udvid `diff:event-log` med tolerance-vindue for stochastic content (e.g. timestamp deltas i dialoog).
-5. Tilføj per-event-type schema-validator (`validateEvent('world_started')`, `validateEvent('rumor_spread')`, etc.) i stedet for én generisk.
+1. **Save browser + timeline UX** — `worldmind saves list` / `inspect` / `restore` CLI; branch/origin kæde-visning; snapshot inspector uden restore.
+2. **`validate:leno` CLI** — auditerer Leno's prompt/model policy + evidence-guard end-to-end.
+3. **Tighten `noUncheckedIndexedAccess`** modul-for-modul med eksplicitte lookup-typer.
+4. **Udvid `diff:event-log`** med tolerance-vindue for stochastic content (e.g. timestamp deltas i dialoog).

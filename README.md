@@ -1,4 +1,4 @@
-# WorldMind v0.8 strict invariants
+# WorldMind v1.0-rc1 typed payload
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -36,6 +36,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v0.7** all 9 simulation modules migrated to `.ts` with `strict: true` default.
 - **v0.8** `strictNullChecks: true` + `utils.ts` + `validate:risk` + `validate:event-log` + `diff:event-log` (10-step `ci:gate`, 89/89 tests).
 - **v0.9** per-event-type payload validators + `validate:state` + `validate:risk --strict` (12-step `ci:gate`, 100/100 tests).
+- **v1.0-rc1** all 9 event-emitters migrated to typed `payload` fields; `validate:event-log` flipped to **strict mode** as default; canonical 7-day run: **0 violations / 123 events** (var 108 i v0.9); Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate; 116/116 tests grønne.
 
 ## Kør projektet
 
@@ -109,5 +110,6 @@ Læs i denne rækkefølge:
 10. `docs/37_RISK_VALIDATION.md` (v0.8)
 11. `docs/38_PER_EVENT_TYPE_SCHEMAS.md` (v0.9)
 12. `docs/39_STATE_VALIDATOR_AND_RISK_AUDIT.md` (v0.9)
+13. `docs/40_TYPED_PAYLOAD_MIGRATION.md` (v1.0-rc1)
 13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`

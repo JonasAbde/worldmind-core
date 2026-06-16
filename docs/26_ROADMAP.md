@@ -61,9 +61,16 @@
 - `validate:risk --strict` mode that audits actionId ↔ `PERMISSIONS.X` mapping.
 - 100/100 tests grøn; `ci:gate` expanded to 12 steps.
 
-## Planned sprints
+### v0.9 — Per-event-type schema + state validator + risk audit  ✅
 
-### v1.0 — Playable vertical slice
+### v1.0-rc1 — Typed payload migration  *(current)*
+- 9 event-emitters migrated to typed `payload` fields
+- `validate:event-log` flipped to **strict mode** as default (was soft)
+- Canonical 7-day run: **0 violations / 123 events** (var 108 i v0.9)
+- Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate
+- 116/116 tests grønne, ci:gate 12/12 grønne
+
+### v1.0-rc2 — Save browser + timeline UX  *(næste)*
 - React dashboard (optional companion).
 - Authoring tools (creator mode v0.1).
 - 2D district view.

@@ -214,7 +214,7 @@ describe('v0.9: validate:event-log now uses per-type schema', () => {
     // Soft mode (the default) reports the per-type tally but does not
     // block the gate. The strict mode is opt-in and the unit tests
     // exercise the validator directly with synthetic events.
-    assert.equal(last.perTypeValidation.mode, 'soft', 'default mode is soft (canonical run uses consequences[] not payload)');
+    assert.equal(last.perTypeValidation.mode, 'strict', 'default mode is now strict (v1.0-rc1: all event-emitters populate typed payload)');
   });
 });
 

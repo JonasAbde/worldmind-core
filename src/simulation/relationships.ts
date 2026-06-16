@@ -60,7 +60,8 @@ export function applyRelationshipImpact(
     visibleToAgentIds: [sourceAgentId],
     causes: sourceEventId ? [sourceEventId] : [],
     consequences: [{ type: 'relationship_impact', sourceAgentId, targetAgentId, impact }],
-    importance: Math.max(2, Math.min(5, Math.ceil(numericImpact / 15)))
+    importance: Math.max(2, Math.min(5, Math.ceil(numericImpact / 15))),
+    payload: { sourceAgentId, targetAgentId, reason, numericImpact }
   });
   world.relationshipEvents.push({
     id: event.id,

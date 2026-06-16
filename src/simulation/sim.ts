@@ -16,7 +16,7 @@ import { spreadRumorTo, propagateRumors } from './rumors.ts';
 import { applyRelationshipImpact, decayRelationships } from './relationships.ts';
 import { updateEconomy } from './economy.ts';
 import { detectIncidents } from './incidents.ts';
-import { lenoSummarize } from './leno.ts';
+import { lenoSummarize, lenoTickPayload } from './leno.ts';
 import { loadScenarioFile } from './scenario-loader.ts';
 import type { ScenarioContract } from '../contracts/types.ts';
 import type { WorldRuntime } from './state.ts';
@@ -116,7 +116,7 @@ export function tickWorld(world: WorldRuntime): WorldRuntime {
     if (rumorId) executeAction(world, { actorId: 'player', actionId: ACTIONS.COUNTER_RUMOR, rumorId, counterClaim: 'Sara was not working with Registry; the rumor was planted.', evidenceStrength: 80 });
     applyRelationshipImpact(world, 'malik', 'sara', { trust: 20, suspicion: -35 }, 'evidence weakened false rumor');
     applyRelationshipImpact(world, 'sara', 'player', { trust: 25, respect: 10, debt: 20, tags: ['trusted', 'saved_me'] }, 'player helped with supply crisis');
-    const e = world.addEvent({ type: 'delivery_restored', locationId: 'cafe', actorIds: ['player', 'sara', 'malik'], description: 'The delivery relationship between Sara and Malik was partially restored.', public: true, visibleToAgentIds: Object.keys(world.agents), importance: 4 });
+    const e = world.addEvent({ type: 'delivery_restored', locationId: 'cafe', actorIds: ['player', 'sara', 'malik'], description: 'The delivery relationship between Sara and Malik was partially restored.', public: true, visibleToAgentIds: Object.keys(world.agents), importance: 4, payload: { fromLocationId: 'market', toLocationId: 'cafe' } });
     processEventMemory(world, e);
     const incident = world.incidents.missing_delivery;
     if (incident) {
@@ -134,13 +134,16 @@ export function tickWorld(world: WorldRuntime): WorldRuntime {
       visibleToAgentIds: Object.keys(world.agents),
       importance: 2,
       payload: {
-        agents: Object.keys(world.agents).length,
-        memories: Object.keys(world.memories).length,
-        rumors: Object.keys(world.rumors).length,
-        incidents: Object.keys(world.incidents).length
+        agentCount: Object.keys(world.agents).length,
+        memoryCount: Object.keys(world.memories).length,
+        rumorCount: Object.keys(world.rumors).length,
+        incidentCount: Object.keys(world.incidents).length
       }
     });
-    world.addEvent({ type: 'leno_summary_tick', locationId: 'apartment', actorIds: ['player'], description: lenoSummarize(world).split('\n')[0], public: false, visibleToAgentIds: ['player'], importance: 2 });
+    const summary = lenoSummarize(world);
+    const summaryLine = summary.split('\n')[0];
+    const lenoPayload = lenoTickPayload(world, summary);
+    world.addEvent({ type: 'leno_summary_tick', locationId: 'apartment', actorIds: ['player'], description: summaryLine, public: false, visibleToAgentIds: ['player'], importance: 2, payload: lenoPayload });
   }
   decayRelationships(world);
   world.advanceTick();

@@ -66,6 +66,7 @@ export function resolveIncident(world: WorldRuntime, incidentId: string, resolut
     visibleToAgentIds: Object.keys(world.agents),
     causes: [],
     consequences: [{ type: 'incident_resolved', incidentId, resolutionId }],
-    importance: 5
+    importance: 5,
+    payload: { incidentId, resolutionId, resolvedAtTick: world.tick }
   });
 }

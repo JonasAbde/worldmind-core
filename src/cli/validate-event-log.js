@@ -107,12 +107,13 @@ function main() {
     }
   }
 
-  // Invariant 8 (v0.9): per-event-type payload validation. Each event
-  // type has its own required payload fields. We tally failures as a
-  // soft warning so the existing canonical run (which uses
-  // `consequences` arrays for many event types) still passes. The
-  // strict mode is opt-in via --strict and fails hard on any
-  // per-type failure.
+  // v1.0-rc1: per-event-type payload validation is now STRICT by
+  // default. The runtime event-emitters all populate typed payload
+  // fields (v0.9 unit tests + the v1.0-rc1 typed-payload tests assert
+  // this). The legacy --soft flag is kept as an escape hatch for
+  // exploratory runs but is no longer the default.
+  const soft = process.argv.includes('--soft');
+  const effectiveStrict = !soft;
   let perTypeChecked = 0;
   let perTypeFailed = 0;
   const perTypeFailureSamples = [];
@@ -126,12 +127,7 @@ function main() {
       }
     }
   }
-  // Soft check: we report the per-type summary in the JSON report but
-  // do not block the gate. The full per-type schema is enforced by
-  // validate:event-log:strict (and by the v0.9 per-event-type unit
-  // tests in test/v09-per-event-schemas.test.js, which exercise the
-  // validator with synthetic events).
-  if (strict && perTypeFailed > 0) {
+  if (effectiveStrict && perTypeFailed > 0) {
     errors.push(`${perTypeFailed}/${perTypeChecked} event(s) failed per-type payload validation (samples: ${JSON.stringify(perTypeFailureSamples)})`);
   }
 
@@ -148,7 +144,7 @@ function main() {
     invalidActorRefs,
     invalidLocationRefs,
     incidentEventCount: incidentEvents.length,
-    perTypeValidation: { totalChecked: perTypeChecked, totalFailed: perTypeFailed, mode: strict ? 'strict' : 'soft' }
+    perTypeValidation: { totalChecked: perTypeChecked, totalFailed: perTypeFailed, mode: effectiveStrict ? 'strict' : 'soft' }
   });
 }
 

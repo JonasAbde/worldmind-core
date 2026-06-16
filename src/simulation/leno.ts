@@ -66,3 +66,38 @@ export function lenoSuggestActions(world: WorldState, options: { incidentId?: st
     'Risky: pay Rune for information about Nadia and the workshop.'
   ];
 }
+
+/**
+ * v1.0-rc1: typed payload for the `leno_summary_tick` event. Carries the
+ * evidence gate (`includeHiddenCause`, `hiddenCause`) so that strict
+ * per-type validation can audit it. Hidden truth is included only when
+ * the player has collected the corresponding evidence.
+ */
+export function lenoTickPayload(world: WorldState, summary: string): {
+  includeHiddenCause: boolean;
+  hiddenCause: string | null;
+  agentCount: number;
+  activeIncidentCount: number;
+  resolvedIncidentCount: number;
+  publicEventCount: number;
+  summaryLine: string;
+} {
+  const includeHiddenCause = world.playerKnowledge.evidenceIds.includes('rumor_source_nadia');
+  const activeIncidents = Object.values(world.incidents).filter((i) => i.status === 'active');
+  const resolvedIncidents = Object.values(world.incidents).filter((i) => i.status === 'resolved');
+  const publicEvents = world.events.filter((e) => e.public || e.visibleToAgentIds.includes('player'));
+  // Hidden cause is the active incident's hiddenCause string, but only
+  // surfaced when evidence permits it. Otherwise null.
+  const hiddenCause = includeHiddenCause && activeIncidents[0]?.hiddenCause
+    ? activeIncidents[0].hiddenCause
+    : null;
+  return {
+    includeHiddenCause,
+    hiddenCause,
+    agentCount: Object.keys(world.agents).length,
+    activeIncidentCount: activeIncidents.length,
+    resolvedIncidentCount: resolvedIncidents.length,
+    publicEventCount: publicEvents.length,
+    summaryLine: summary.split('\n')[0] ?? ''
+  };
+}

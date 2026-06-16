@@ -29,7 +29,8 @@ export function updateEconomy(world: WorldRuntime): EventRecord[] {
       public: true,
       visibleToAgentIds: ['sara', 'yasin', 'rune', 'amina', 'player'],
       consequences: [{ type: 'food_price_changed', foodPrice: yasin.stats.foodPrice }],
-      importance: 3
+      importance: 3,
+      payload: { foodPrice: yasin.stats.foodPrice, scarcity, foodPriceIndex: world.economy.foodPriceIndex, stockLevel: sara.stats.stock ?? 0 }
     }));
   }
   return events;
