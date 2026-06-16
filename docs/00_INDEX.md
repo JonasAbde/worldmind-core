@@ -47,7 +47,8 @@
 - `41_SAVE_BROWSER_AND_TIMELINE.md` — v1.0-rc2 `worldmind saves` CLI med `list` / `inspect` / `restore` / `timeline` subcommands. Deterministisk restore (byte-identical), auditerbar restore-log (actor/reason), branch/origin-kæde synlig i timeline. 126/126 tests grønne.
 - `42_VISUAL_SAVE_BROWSER.md` — v1.0-rc3 visuelt dashboard: Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery), Visual Diff Panel. 137/137 tests grønne.
 - `43_BRANCH_DIFF_AND_QA_INSPECTOR.md` — v1.0-rc3 `worldmind saves diff` CLI + Visual Diff Panel. Struktureret diff med agent location, relationships, memories, rumors, economy, incidents.
-- `44_PLAYABLE_VERTICAL_SLICE.md` — v1.0-rc4 `worldmind play` playable loop (13 commands) + `worldmind demo:play` deterministisk 3-path walkthrough + `validate:leno` evidence-guard auditor. 153/153 tests grønne.
+- `44_PLAYABLE_VERTICAL_SLICE.md` — v1.0-rc4 `worldmind play` playable loop (14 commands) + `worldmind demo:play` deterministisk 3-path walkthrough + `validate:leno` evidence-guard auditor. 153/153 tests grønne.
+- `45_INTERACTIVE_WEB_PLAY_UI.md` — v1.0-rc5 static web-play UI (`npm run play:web` genererer `static-play/index.html` + `state.json`); shared `src/play/play-engine.js`; web-renderer med Leno evidence-guard; `npm run validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate`.
 
 ## Roadmap
 

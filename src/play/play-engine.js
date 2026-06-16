@@ -1,0 +1,526 @@
+/**
+ * Shared play engine for WorldMind.
+ *
+ * Both the CLI (`src/cli/play.js`) and the web UI
+ * (`src/play/web-renderer.js`, `src/cli/play-web.js`) consume this
+ * module. The engine is intentionally pure: it takes a world
+ * object and a command, returns a structured result. No I/O, no
+ * process.exit, no console writes. That makes it deterministic
+ * and trivially testable.
+ *
+ * Public API:
+ *   bootstrapWorld({ scenarioPath })   — fresh world, deterministic
+ *   resolveCommand(world, name, args)  — dispatch one player command
+ *   parseCommandText(text)             — "ask rune nadia" -> { command, args }
+ *   runScriptedPath(world, pathName)   — peaceful/investigation/founder/all
+ *   getDemoPaths()                     — list of { name, description, steps }
+ *   summarizeWorld(world)              — text overview for `look`
+ *
+ * Result envelope (resolveCommand):
+ *   { ok, kind, text, world, dialogue?, consequence?, evidence?,
+ *     error?, snapshot? }
+ */
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runSimulation } from '../simulation/sim.ts';
+import {
+  validateAction,
+  executeAction,
+  helpSaraPeacefully
+} from '../simulation/actions.ts';
+import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.ts';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO = process.cwd();
+
+const DEFAULT_SCENARIO = path.join(REPO, 'scenarios/new-aarhus-district-01.json');
+
+const AGENT_ALIASES = {
+  sara: 'sara', cafe: 'cafe', malik: 'malik', rune: 'rune',
+  amina: 'amina', player: 'player', nadia: 'nadia', omar: 'omar',
+  lina: 'lina', yasin: 'yasin', freja: 'freja', elias: 'elias'
+};
+
+const LOCATION_ALIASES = {
+  cafe: 'cafe', market: 'market', workshop: 'workshop', apartment: 'apartment',
+  home: 'apartment'
+};
+
+const DEMO_PATHS = [
+  {
+    name: 'peaceful',
+    label: 'Peaceful Mediation',
+    description: 'Help Sara, ask Amina to mediate, pay Malik a token.',
+    steps: ['inspect cafe', 'talk sara', 'ask amina', 'pay malik 5']
+  },
+  {
+    name: 'investigation',
+    label: 'Investigation & Counter-Rumor',
+    description: 'Ask Rune about Nadia, trace and counter the false rumor.',
+    steps: ['inspect cafe', 'listen_rumors market', 'ask rune nadia', 'trace_rumor', 'counter_rumor']
+  },
+  {
+    name: 'founder',
+    label: 'Founder / Business Negotiation',
+    description: 'Pay Malik for an alternative delivery, talk to Sara.',
+    steps: ['inspect workshop', 'pay malik 15', 'talk sara']
+  }
+];
+
+export function getDemoPaths() {
+  return DEMO_PATHS;
+}
+
+export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {}) {
+  const world = runSimulation({
+    days,
+    scenarioPath,
+    persistToSqlite: false,
+    writeScenario: false
+  });
+  if (!world.playerKnowledge) {
+    world.playerKnowledge = {
+      evidenceIds: [],
+      knownRumorIds: [],
+      suspectedCauses: [],
+      unresolvedQuestions: []
+    };
+  }
+  // Tag the player with a stable locationId so move/inspect/talk work.
+  if (world.agents.player && !world.agents.player.locationId) {
+    world.agents.player.locationId = 'cafe';
+  }
+  return world;
+}
+
+export function summarizeWorld(world) {
+  return [
+    `World: ${world.name}, Day ${world.day}, ${world.time}.`,
+    `State: ${Object.keys(world.agents).length} agents | ${Object.keys(world.memories).length} memories | ${Object.keys(world.rumors).length} rumors | ${Object.keys(world.incidents).length} incidents.`,
+    `Locations: ${Object.values(world.locations).map((l) => l.name).join(', ')}.`,
+    `Player evidence: ${(world.playerKnowledge?.evidenceIds || []).join(', ') || '(none)'}`
+  ].join('\n');
+}
+
+export function summarizeStatus(world) {
+  const pk = world.playerKnowledge || {};
+  return {
+    world: { name: world.name, day: world.day, time: world.time, tick: world.tick },
+    counts: {
+      agents: Object.keys(world.agents).length,
+      memories: Object.keys(world.memories).length,
+      rumors: Object.keys(world.rumors).length,
+      incidents: Object.keys(world.incidents).length
+    },
+    evidence: {
+      knownFacts: pk.evidenceIds || [],
+      suspectedCauses: pk.suspectedCauses || [],
+      unresolvedQuestions: pk.unresolvedQuestions || [],
+      knownRumorIds: pk.knownRumorIds || []
+    },
+    location: world.agents.player?.locationId ?? null
+  };
+}
+
+function resolveAgent(world, name) {
+  if (!name) return null;
+  const norm = String(name).toLowerCase();
+  if (world.agents[norm]) return norm;
+  if (AGENT_ALIASES[norm]) return AGENT_ALIASES[norm];
+  for (const a of Object.values(world.agents)) {
+    if (a.name.toLowerCase() === norm) return a.id;
+  }
+  return null;
+}
+
+function resolveLocation(world, name) {
+  if (!name) return null;
+  const norm = String(name).toLowerCase();
+  if (world.locations[norm]) return norm;
+  if (LOCATION_ALIASES[norm]) return LOCATION_ALIASES[norm];
+  for (const loc of Object.values(world.locations)) {
+    if (loc.name.toLowerCase() === norm) return loc.id;
+  }
+  return null;
+}
+
+function resolveRumor(world, name) {
+  if (!name) return null;
+  if (world.rumors[name]) return name;
+  for (const r of Object.values(world.rumors)) {
+    if (r.id === name) return r.id;
+  }
+  return null;
+}
+
+function diffRelationships(before, after, actorId) {
+  const out = [];
+  for (const id of Object.keys(after.agents)) {
+    if (id === actorId) continue;
+    const a = before.agents[id]?.relationships?.[actorId];
+    const b = after.agents[id]?.relationships?.[actorId];
+    if (!a || !b) continue;
+    const dt = (b.trust ?? 0) - (a.trust ?? 0);
+    const df = (b.fear ?? 0) - (a.fear ?? 0);
+    if (Math.abs(dt) >= 1 || Math.abs(df) >= 1) {
+      out.push({ agentId: id, trustDelta: dt, fearDelta: df });
+    }
+  }
+  return out;
+}
+
+/**
+ * Parse a freeform text command into (command, args).
+ * Examples:
+ *   "look"                            -> { command: "look", args: {} }
+ *   "talk sara"                       -> { command: "talk", args: { target: "sara" } }
+ *   "ask rune nadia"                  -> { command: "ask", args: { target: "rune", topic: "nadia" } }
+ *   "inspect cafe"                    -> { command: "inspect", args: { target: "cafe" } }
+ *   "move workshop"                   -> { command: "move", args: { target: "workshop" } }
+ *   "listen_rumors market"            -> { command: "listen_rumors", args: { target: "market" } }
+ *   "pay malik 10"                    -> { command: "pay", args: { target: "malik", amount: 10 } }
+ *   "trace_rumor"                     -> { command: "trace_rumor", args: {} }
+ *   "counter_rumor rumor_00001"       -> { command: "counter_rumor", args: { rumor: "rumor_00001" } }
+ *   "save" / "save my_arc"            -> { command: "save", args: { name?: "my_arc" } }
+ *   "branch my_branch"                -> { command: "branch", args: { name: "my_branch" } }
+ */
+export function parseCommandText(text) {
+  if (typeof text !== 'string') return null;
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const tokens = trimmed.split(/\s+/);
+  const head = tokens[0].toLowerCase();
+  const rest = tokens.slice(1);
+  switch (head) {
+    case 'look':
+    case 'status':
+    case 'ask_leno':
+    case 'leno':
+      return { command: head === 'leno' ? 'ask_leno' : head, args: {} };
+    case 'move':
+    case 'talk':
+    case 'ask':
+    case 'inspect':
+    case 'listen_rumors':
+    case 'listen':
+    case 'pay':
+    case 'trace_rumor':
+    case 'counter_rumor':
+    case 'save':
+    case 'branch': {
+      const args = {};
+      if (head === 'listen') head = 'listen_rumors';
+      if (head === 'leno') head = 'ask_leno';
+      if (head === 'move' || head === 'talk' || head === 'ask' || head === 'inspect' || head === 'listen_rumors' || head === 'counter_rumor' || head === 'trace_rumor') {
+        args.target = rest[0];
+        if (head === 'ask' && rest[1]) args.topic = rest.slice(1).join(' ');
+        if (head === 'talk' && rest[1]) args.message = rest.slice(1).join(' ');
+        if (head === 'counter_rumor' && rest[1]) args.message = rest.slice(1).join(' ');
+        if (head === 'trace_rumor' && rest[0]) args.rumor = rest[0];
+      } else if (head === 'pay') {
+        args.target = rest[0];
+        args.amount = rest[1] ? Number(rest[1]) : 0;
+      } else if (head === 'save' || head === 'branch') {
+        args.name = rest[0];
+      }
+      return { command: head, args };
+    }
+    case 'quit':
+    case 'exit':
+      return { command: 'quit', args: {} };
+    default:
+      return { command: head, args: { _raw: trimmed } };
+  }
+}
+
+const KNOWN_COMMANDS = new Set([
+  'look', 'status', 'move', 'talk', 'ask', 'inspect', 'listen_rumors',
+  'trace_rumor', 'counter_rumor', 'pay', 'ask_leno', 'save', 'branch',
+  'quit'
+]);
+
+/**
+ * Dispatch one player command. Pure function — returns a result
+ * envelope, mutates `world` in place (so callers can keep using
+ * the same world across calls).
+ */
+export function resolveCommand(world, commandOrText, args = {}) {
+  let command = commandOrText;
+  let effectiveArgs = args;
+  if (KNOWN_COMMANDS.has(String(commandOrText).toLowerCase())) {
+    command = String(commandOrText).toLowerCase();
+  } else {
+    const parsed = parseCommandText(commandOrText);
+    if (!parsed) return { ok: false, kind: 'error', error: 'empty command' };
+    if (!KNOWN_COMMANDS.has(parsed.command)) {
+      return { ok: false, kind: 'error', error: `unknown command: ${parsed.command}` };
+    }
+    command = parsed.command;
+    effectiveArgs = { ...parsed.args, ...args };
+  }
+
+  const actorId = 'player';
+
+  try {
+    switch (command) {
+      case 'look':
+        return {
+          ok: true, kind: 'look', command,
+          text: summarizeWorld(world),
+          world
+        };
+      case 'status':
+        return {
+          ok: true, kind: 'status', command,
+          status: summarizeStatus(world),
+          text: JSON.stringify(summarizeStatus(world), null, 2),
+          world
+        };
+      case 'move': {
+        const targetLoc = resolveLocation(world, effectiveArgs.target);
+        if (!targetLoc) return { ok: false, kind: 'error', error: `unknown location: ${effectiveArgs.target}` };
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'move_to_location', targetLocationId: targetLoc
+        });
+        const consequence = diffConsequence(world, before, actorId, ev);
+        return { ok: true, kind: 'move', command, text: ev.description, consequence, world };
+      }
+      case 'talk': {
+        const targetId = resolveAgent(world, effectiveArgs.target);
+        if (!targetId) return { ok: false, kind: 'error', error: `unknown agent: ${effectiveArgs.target}` };
+        const message = effectiveArgs.message || '';
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'talk_to_agent', targetAgentId: targetId,
+          message, tone: effectiveArgs.tone || 'friendly'
+        });
+        return {
+          ok: true, kind: 'dialogue', command,
+          text: ev.description,
+          dialogue: {
+            agentName: world.agents[targetId].name,
+            topic: null,
+            message: message || '(conversation)',
+            revealedFacts: [],
+            evidenceIds: []
+          },
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'ask': {
+        const targetId = resolveAgent(world, effectiveArgs.target);
+        if (!targetId) return { ok: false, kind: 'error', error: `unknown agent: ${effectiveArgs.target}` };
+        const topic = effectiveArgs.topic || 'delivery';
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'ask_about_topic', targetAgentId: targetId,
+          topic, tone: effectiveArgs.tone || 'direct'
+        });
+        const revealed = ev.payload?.evidenceRevealed;
+        return {
+          ok: true, kind: 'dialogue', command,
+          text: ev.description,
+          dialogue: {
+            agentName: world.agents[targetId].name,
+            topic,
+            message: `Re: ${topic}`,
+            revealedFacts: [revealed
+              ? `${targetId} revealed useful information about "${topic}"`
+              : `${targetId} gave a neutral answer about "${topic}"`],
+            evidenceIds: revealed ? ['topic_evidence'] : []
+          },
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'inspect': {
+        const targetAgent = resolveAgent(world, effectiveArgs.target);
+        const targetLoc = targetAgent ? null : resolveLocation(world, effectiveArgs.target);
+        if (!targetAgent && !targetLoc) return { ok: false, kind: 'error', error: `unknown target: ${effectiveArgs.target}` };
+        const before = snapshotForDelta(world);
+        const request = targetAgent
+          ? { actorId, actionId: 'ask_about_topic', targetAgentId: targetAgent, topic: 'general', tone: 'direct' }
+          : { actorId, actionId: 'inspect_location', targetLocationId: targetLoc, focus: effectiveArgs.topic || 'general' };
+        const ev = executeAction(world, request);
+        const label = targetAgent ? world.agents[targetAgent].name : world.locations[targetLoc].name;
+        return {
+          ok: true, kind: 'inspect', command,
+          text: `Inspected ${label}: ${ev.description}`,
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'listen_rumors': {
+        const targetLoc = resolveLocation(world, effectiveArgs.target);
+        if (!targetLoc) return { ok: false, kind: 'error', error: `unknown location: ${effectiveArgs.target}` };
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'listen_for_rumors', targetLocationId: targetLoc
+        });
+        const rumorIds = ev.payload?.rumorIds || [];
+        return {
+          ok: true, kind: 'rumors', command,
+          text: known.map ? null : null,
+          rumors: rumorIds.map((rid) => {
+            const r = world.rumors[rid];
+            return r ? { id: r.id, claim: r.claim, truthLevel: r.truthLevel } : { id: rid };
+          }),
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'trace_rumor': {
+        const rumorId = resolveRumor(world, effectiveArgs.rumor);
+        if (!rumorId) return { ok: false, kind: 'error', error: `unknown rumor: ${effectiveArgs.rumor}` };
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'trace_rumor', rumorId, evidenceStrength: 80
+        });
+        return {
+          ok: true, kind: 'rumors', command,
+          text: ev.description,
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'counter_rumor': {
+        const rumorId = resolveRumor(world, effectiveArgs.rumor);
+        if (!rumorId) return { ok: false, kind: 'error', error: `unknown rumor: ${effectiveArgs.rumor}` };
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'counter_rumor', rumorId,
+          counterClaim: effectiveArgs.message || 'I have evidence this rumor is false.',
+          evidenceStrength: 85
+        });
+        return {
+          ok: true, kind: 'rumors', command,
+          text: ev.description,
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'pay': {
+        const targetId = resolveAgent(world, effectiveArgs.target);
+        if (!targetId) return { ok: false, kind: 'error', error: `unknown agent: ${effectiveArgs.target}` };
+        const amount = Number(effectiveArgs.amount || 0);
+        if (!Number.isFinite(amount) || amount <= 0) return { ok: false, kind: 'error', error: 'amount must be a positive number' };
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId, actionId: 'pay_agent', targetAgentId: targetId, amount, reason: effectiveArgs.reason || 'play-action'
+        });
+        return {
+          ok: true, kind: 'transaction', command,
+          text: ev.description,
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'ask_leno': {
+        executeAction(world, { actorId, actionId: 'ask_leno' });
+        return {
+          ok: true, kind: 'leno', command,
+          leno: {
+            summary: lenoSummarize(world, { scope: 'world' }),
+            suggestions: lenoSuggestActions(world, { incidentId: 'missing_delivery' })
+          },
+          text: lenoSummarize(world, { scope: 'world' }),
+          world
+        };
+      }
+      case 'save':
+      case 'branch':
+        // Save/branch are no-ops at the engine level; the CLI/web layer
+        // persists via openSqliteWorldStore. We just signal intent.
+        return {
+          ok: true, kind: 'persistence', command,
+          text: `${command}: ${effectiveArgs.name || 'main'} (persisted by caller)`,
+          snapshot: { name: effectiveArgs.name || 'main', intent: command },
+          world
+        };
+      case 'quit':
+        return { ok: true, kind: 'quit', command, text: 'Goodbye.' };
+      default:
+        return { ok: false, kind: 'error', error: `unknown command: ${command}` };
+    }
+  } catch (e) {
+    return { ok: false, kind: 'error', command, error: e.message };
+  }
+}
+
+function snapshotForDelta(world) {
+  return {
+    agents: JSON.parse(JSON.stringify(world.agents)),
+    memories: world.memories,
+    rumors: world.rumors
+  };
+}
+
+function diffConsequence(world, before, actorId, ev) {
+  const relChanges = diffRelationships(before, world, actorId);
+  const memDelta = Object.keys(world.memories).length - Object.keys(before.memories).length;
+  const rumorDelta = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
+  const moneyDelta = (world.agents[actorId]?.stats?.money ?? 0) - (before.agents[actorId]?.stats?.money ?? 0);
+  const incident = Object.values(world.incidents || {}).find((i) => i.id === 'missing_delivery');
+  return {
+    relationships: relChanges,
+    newMemories: memDelta,
+    newRumors: rumorDelta,
+    moneyDelta,
+    incident: incident ? { title: incident.title, status: incident.status, resolutionState: incident.resolutionState ?? null } : null,
+    lastEvent: ev ? { type: ev.type, description: ev.description, importance: ev.importance } : null
+  };
+}
+
+export function runScriptedPath(world, pathName) {
+  const which = (pathName || 'all').toLowerCase();
+  const results = [];
+  const runners = {
+    peaceful: runPeaceful,
+    investigation: runInvestigation,
+    founder: runFounder
+  };
+  const list = which === 'all' ? Object.keys(runners) : [which];
+  for (const name of list) {
+    if (runners[name]) {
+      const r = runners[name](world);
+      results.push({ path: name, ...r });
+    }
+  }
+  return results;
+}
+
+function runPeaceful(world) {
+  world.agents.player.locationId = 'cafe';
+  resolveCommand(world, 'inspect', { target: 'cafe' });
+  resolveCommand(world, 'talk', { target: 'sara', message: "I'll help you with the delivery.", tone: 'friendly' });
+  resolveCommand(world, 'ask', { target: 'amina', topic: 'mediation' });
+  resolveCommand(world, 'pay', { target: 'malik', amount: 5, reason: 'peaceful-mediation' });
+  helpSaraPeacefully(world);
+  return { resolutionPath: 'peaceful_mediation' };
+}
+
+function runInvestigation(world) {
+  resolveCommand(world, 'inspect', { target: 'cafe' });
+  resolveCommand(world, 'listen_rumors', { target: 'market' });
+  resolveCommand(world, 'ask', { target: 'rune', topic: 'nadia' });
+  const rumorIds = Object.keys(world.rumors || {});
+  if (rumorIds.length) {
+    resolveCommand(world, 'trace_rumor', { rumor: rumorIds[0] });
+    resolveCommand(world, 'counter_rumor', { rumor: rumorIds[0], message: 'Nadia is the source.' });
+  }
+  if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
+    world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
+  }
+  return { resolutionPath: 'investigation_and_counter_rumor' };
+}
+
+function runFounder(world) {
+  resolveCommand(world, 'inspect', { target: 'workshop' });
+  resolveCommand(world, 'pay', { target: 'malik', amount: 15, reason: 'founder-negotiation' });
+  resolveCommand(world, 'talk', { target: 'sara', message: 'I arranged an alternative delivery from the workshop.' });
+  return { resolutionPath: 'founder_negotiation' };
+}

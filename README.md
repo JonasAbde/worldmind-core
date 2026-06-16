@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc4 playable vertical slice
+# WorldMind v1.0-rc5 interactive web play UI
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -40,6 +40,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v1.0-rc2** ny `worldmind saves` CLI med `list` / `inspect` / `restore` / `timeline` subcommands; deterministisk restore (byte-identical); auditerbar restore-log (actor/reason); branch/origin-kæde synlig; 126/126 tests grønne.
 - **v1.0-rc3** visuelt dashboard med Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery) og Visual Diff Panel. Ny `worldmind saves diff` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas). 137/137 tests grønne.
 - **v1.0-rc4** playable vertical slice. Ny `worldmind play` CLI med 14 player commands (look/move/talk/ask/inspect/listen_rumors/trace_rumor/counter_rumor/pay/ask_leno/status/save/branch/quit) der alle mapper til autoritative ActionRequests. Dialogue turn + consequence panel rendering. 3 resolution paths (peaceful / investigation / founder) — alle løser *The Missing Delivery* deterministisk. Ny `worldmind demo:play` (deterministisk 3-path walkthrough, byte-identical output) og `worldmind validate:leno` (Leno evidence-guard auditor der fanger hidden-truth leaks). 153/153 tests grønne, 13-trins `ci:gate` grøn.
+- **v1.0-rc5** interactive web play UI. Ny `worldmind play:web` CLI der genererer `static-play/index.html` (70KB) + `state.json` (122KB) — 11 centrale sektioner (Current Location, Visible Agents, Available Commands, Dialogue, Consequence, Evidence, Incident, Leno, Saves, Branches, Demo Paths) + Leno evidence-guard i UI. Shared `src/play/play-engine.js` (pure API) bruges af både CLI og web — ingen duplicate gameplay logic. Ny `worldmind validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate` grøn.
 
 ## Kør projektet
 
@@ -118,10 +119,11 @@ Læs i denne rækkefølge:
 15. `docs/42_VISUAL_SAVE_BROWSER.md` (v1.0-rc3)
 16. `docs/43_BRANCH_DIFF_AND_QA_INSPECTOR.md` (v1.0-rc3)
 17. `docs/44_PLAYABLE_VERTICAL_SLICE.md` (v1.0-rc4)
+18. `docs/45_INTERACTIVE_WEB_PLAY_UI.md` (v1.0-rc5)
 13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`
 
-## Spil WorldMind (v1.0-rc4)
+## Spil WorldMind (v1.0-rc5)
 
 ```bash
 # Interaktiv playable CLI
@@ -130,10 +132,13 @@ npm run play -- --help
 # Deterministisk 3-path walkthrough (løser The Missing Delivery)
 npm run demo:play
 
-# Én specifik path
-npm run demo:play -- --path=peaceful
-npm run demo:play -- --path=investigation
-npm run demo:play -- --path=founder
+# Interaktiv web-play UI (åbn i browser efter generering)
+npm run play:web
+start static-play/index.html   # Windows
+# eller: open static-play/index.html   # macOS
+
+# Validering af web UI
+npm run validate:web-play
 
 # Ét enkelt player command
 npm run play -- --command=look

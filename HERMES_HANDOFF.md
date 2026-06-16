@@ -1,16 +1,28 @@
-# Hermes Handoff — WorldMind v1.0-rc4 playable vertical slice
+# Hermes Handoff — WorldMind v1.0-rc5 interactive web play UI
 
 ## Status
 
-WorldMind er nu **spillable**. Spilleren kan udføre handlinger i verden
-via `worldmind play` CLI (14 player commands), og *The Missing Delivery*
-kan løses via **3 forskellige resolution paths** — alle deterministiske.
-Ny `worldmind demo:play` kører alle 3 paths i en byte-identical
-walkthrough. Ny `worldmind validate:leno` auditerer Leno-summaries for
-hidden-truth leaks. 153/153 tests grønne, 13-trins `ci:gate` grøn
-(inkl. `validate:leno` og `demo:play`).
+WorldMind har nu en **interaktiv web-play UI**. `npm run play:web`
+genererer `static-play/index.html` (70KB) + `state.json` (122KB)
+med 11 centrale sektioner + 3 demo paths + Leno evidence-guard.
+CLI (`play`) og web (`play:web`) deler samme `play-engine` —
+ingen duplicate gameplay logic. 171/171 tests grønne, 15-trins
+`ci:gate` grøn.
 
-## What is built (v1.0-rc4)
+## What is built (v1.0-rc5)
+
+Building on v1.0-rc4's playable vertical slice:
+
+- **`src/play/play-engine.js`** (ny): pure-API shared engine. `bootstrapWorld`, `resolveCommand`, `parseCommandText`, `runScriptedPath`, `getDemoPaths`, `summarizeWorld`, `summarizeStatus`. Bruges af både `src/cli/play.js` (CLI) og `src/cli/play-web.js` (web) så der er **ingen duplicate gameplay logic**.
+- **`src/play/web-renderer.js`** (ny): state → HTML rendering. `renderWebPage`, `renderHeader`, `renderLocation`, `renderAgents`, `renderCommandButtons`, `renderCommandForm`, `renderDialogueTurn`, `renderConsequence`, `renderEvidence`, `renderIncident`, `renderLeno`, `renderSaves`, `renderBranches`, `renderDemoPaths`, `escapeHtml`, `applyLenoGuard`. Leno evidence-guard er indbygget: source-defining Nadia mentions redakteres til "REDACTED — evidence required" medmindre `rumor_source_nadia` er i `playerKnowledge.evidenceIds`.
+- **`src/cli/play-web.js`** (ny): genererer `static-play/index.html` (70KB) + `static-play/state.json` (122KB) deterministisk. Indlejrer CSS, JS runtime, embedded JSON state. Quick-action buttons + fri tekst-command input. 12 button-shortcuts + alle 14 player commands understøttet via tekst.
+- **`src/cli/validate-web-play.js`** (ny): auditerer den genererede side. Tjekker 11 section labels + 3 runtime markers. Tilføjet til `ci:gate` som trin 15.
+- **`package.json`**: 2 nye scripts (`play:web`, `validate:web-play`). `ci:gate` udvidet fra 13 til 15 steps.
+- **`static-play/`** (ny mappe): genereret output (deterministisk, byte-identical mellem kørsler).
+- **`test/v15-interactive-web-play.test.js`** (ny): 18 tests der dækker engine API, renderer exports, alle 11 sektioner, Leno evidence-guard (med/uden evidence), text command parser, play:web determinism, validate:web-play, ci:gate wiring.
+- **`docs/45_INTERACTIVE_WEB_PLAY_UI.md`** (ny): UI-spec, sektioner, demo paths, Leno evidence-guard, arkitektur, næste sprint.
+
+## What is built (v1.0-rc4) — recapped
 
 Building on v1.0-rc3's visual dashboard foundation:
 

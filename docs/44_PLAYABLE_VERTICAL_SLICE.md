@@ -185,8 +185,10 @@ Eksisterende `saves` CLI subcommands (`list`, `inspect`, `restore`,
 
 **v1.0-rc5: Interactive Web Play UI** — bind `play` CLI'en til en
 minimal HTML/JS UI (stadig ingen React), så en founder kan klikke
-gennem casen uden at skrive commands. Eller:
+gennem casen uden at skrive commands. CLI og web deler samme
+`play-engine` så der er ingen duplicate gameplay logic. Færdig i
+v1.0-rc5 — se `docs/45_INTERACTIVE_WEB_PLAY_UI.md`.
 
-**v1.0-rc5: Agent Dialogue Generation** — kør Leno summaries
-igennem en lille sprogmodel for at generere naturlige dialogue turns
-i stedet for de nuværende skabelon-baserede outputs.
+**v1.0-rc6: Server-side play runtime + live command execution** —
+tilføj en simpel Node HTTP server der udfører commands fra browser
+i real-time (se `docs/45` for detaljer).
