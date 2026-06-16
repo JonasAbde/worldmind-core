@@ -114,3 +114,34 @@ This integration follows a reviewed production flow:
 - **Final art lock: DO NOT SHIP YET**
 
 Use this integrated pack as the reviewed prototype baseline, then run one focused "art lock" pass for the remaining open categories before public-facing release.
+
+## V5 generation follow-up (major improvement pass)
+
+A follow-up generation pass was executed to improve the weakest long-tail placeholders while staying dependency-light and deterministic in-repo.
+
+### Generated now
+
+- Upgraded long-tail character packs (PNG + WebP) for:
+  - `assets/characters/omar/*`
+  - `assets/characters/lina/*`
+  - `assets/characters/yasin/*`
+  - `assets/characters/freja/*`
+  - `assets/characters/elias/*`
+- Added new reviewed location concepts:
+  - `assets/locations/apartment-v5-reviewed.png/.webp`
+  - `assets/locations/harbour-docks-v5-reviewed.png/.webp`
+- Added reproducible generator:
+  - `tools/generate-missing-assets-v5.ps1`
+
+### Validation after V5 pass
+
+- `node tools/validate-worldmind-assets.mjs` → PASS
+- `node src/cli/validate-game-foundation.js` → PASS
+- `npm run validate:web-play` → PASS
+- `npm run validate:saves-ui` → PASS
+
+### Remaining open gaps after V5
+
+- Final designed audio set (current audio still prototype-tier)
+- Final art lock pass for faction logos, item icons, badges
+- Optional replacement of runtime `assets/locations/apartment.png` with a final approved apartment master if product direction decides V5 should become default
