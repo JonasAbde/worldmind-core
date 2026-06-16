@@ -109,6 +109,11 @@ async function main() {
     if (!shell?.location) throw new Error('gameShell.location missing');
     if (!Array.isArray(shell.npcCards)) throw new Error('gameShell.npcCards missing');
     if (!shell.caseBoard) throw new Error('gameShell.caseBoard missing');
+    if (!shell.founder) throw new Error('gameShell.founder missing');
+    if (!Array.isArray(shell.founder.contracts)) throw new Error('gameShell.founder.contracts missing');
+    if (typeof shell.founder.tierLabel !== 'string' || !shell.founder.tierLabel) {
+      throw new Error('gameShell.founder.tierLabel missing');
+    }
     if (!state.json.playerSnapshot) throw new Error('playerSnapshot missing');
     if (!state.json.districtView?.nodes) throw new Error('districtView missing');
 

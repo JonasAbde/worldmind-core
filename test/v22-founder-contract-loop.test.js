@@ -4,10 +4,26 @@
  */
 import { it } from 'node:test';
 import assert from 'node:assert';
-import { bootstrapWorld, resolveCommand } from '../src/play/play-engine.js';
+import { bootstrapWorld, resolveCommand, runScriptedPath } from '../src/play/play-engine.js';
+import { helpSaraPeacefully } from '../src/simulation/actions.ts';
 
 function newWorld() {
   return bootstrapWorld({ scenarioPath: './scenarios/new-aarhus-district-01.json', days: 1 });
+}
+
+function worldWithActiveIncident() {
+  const world = newWorld();
+  world.incidents = {
+    missing_delivery: {
+      id: 'missing_delivery',
+      status: 'active',
+      title: 'The Missing Delivery',
+      resolutionState: 'unresolved',
+      involvedAgentIds: ['sara', 'malik', 'nadia', 'rune']
+    }
+  };
+  world.founder = { unlocked: false, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
+  return world;
 }
 
 it('v22.1 — before resolution: start_delivery_workflow returns error', () => {
@@ -129,4 +145,43 @@ it('v22.11 — three completed contracts promote base level to 1', () => {
   assert.equal(world.founder.baseLevel, 1);
   const list = resolveCommand(world, 'list_contracts');
   assert(list.contracts.some((c) => c.id === 'delivery_market_supplies' && c.status === 'available'));
+});
+
+it('v22.12 — peaceful path auto-unlocks founder loop', () => {
+  const world = worldWithActiveIncident();
+  runScriptedPath(world, 'peaceful');
+  assert.equal(world.incidents.missing_delivery.status, 'resolved');
+  assert.equal(world.founder.unlocked, true, 'founder should unlock after peaceful resolution');
+  const list = resolveCommand(world, 'list_contracts');
+  assert.equal(list.ok, true, list.error);
+  assert.ok(Array.isArray(list.contracts));
+});
+
+it('v22.13 — helpSaraPeacefully unlocks founder when incident resolves', () => {
+  const world = worldWithActiveIncident();
+  helpSaraPeacefully(world);
+  assert.equal(world.incidents.missing_delivery.status, 'resolved');
+  const list = resolveCommand(world, 'list_contracts');
+  assert.equal(list.ok, true, list.error);
+  assert.equal(world.founder.unlocked, true);
+});
+
+it('v22.14 — investigation path auto-unlocks founder loop', () => {
+  const world = worldWithActiveIncident();
+  runScriptedPath(world, 'investigation');
+  assert.equal(world.incidents.missing_delivery.status, 'resolved');
+  assert.equal(world.incidents.missing_delivery.resolutionState, 'investigation_and_counter_rumor');
+  assert.equal(world.founder.unlocked, true);
+  const list = resolveCommand(world, 'list_contracts');
+  assert.equal(list.ok, true, list.error);
+});
+
+it('v22.15 — founder path auto-unlocks founder loop', () => {
+  const world = worldWithActiveIncident();
+  runScriptedPath(world, 'founder');
+  assert.equal(world.incidents.missing_delivery.status, 'resolved');
+  assert.equal(world.incidents.missing_delivery.resolutionState, 'founder_negotiation');
+  assert.equal(world.founder.unlocked, true);
+  const list = resolveCommand(world, 'list_contracts');
+  assert.equal(list.ok, true, list.error);
 });

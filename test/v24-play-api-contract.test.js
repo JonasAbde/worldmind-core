@@ -43,6 +43,10 @@ test('v24: buildPlayStatePayload includes gameShell and districtView', () => {
   assert.ok(payload.gameShell?.location);
   assert.ok(Array.isArray(payload.gameShell.npcCards));
   assert.ok(payload.gameShell.caseBoard);
+  assert.ok(Array.isArray(payload.gameShell.founder?.contracts));
+  assert.ok(payload.gameShell.founder.contracts.length >= 1);
+  assert.equal(typeof payload.gameShell.founder.tierLabel, 'string');
+  assert.ok(payload.gameShell.founder.tierLabel.length > 0);
   assert.ok(payload.districtView?.nodes?.length >= 4);
   assert.ok(payload.playerSnapshot);
   assert.equal(payload.redaction.hiddenCause, 'never_in_api');
@@ -73,6 +77,9 @@ describe('v24: play-server API contract', () => {
     assert.equal(r.json.apiVersion, PLAY_API_VERSION);
     assert.ok(r.json.gameShell.location.scene);
     assert.ok(r.json.gameShell.npcCards.length > 0);
+    assert.ok(Array.isArray(r.json.gameShell.founder?.contracts));
+    assert.equal(typeof r.json.gameShell.founder.tierLabel, 'string');
+    assert.ok(r.json.gameShell.founder.tierLabel.length > 0);
     assert.ok(r.json.districtView);
     const raw = JSON.stringify({ ...r.json, redaction: undefined });
     assert.doesNotMatch(raw, /"hiddenCause"\s*:\s*"[^"]+"/);

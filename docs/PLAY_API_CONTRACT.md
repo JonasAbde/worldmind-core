@@ -125,7 +125,7 @@ Built by `buildGameplayShellModel()` from world state + `content/worldmind/conte
 | `npcCards[]` | id, name, role, avatar, trust/suspicion/fear, `actions[]` |
 | `caseBoard` | evidenceCards, rumorCards, links, unresolvedQuestions |
 | `rumorTrail[]` | id, spreadRisk, traceCommand, counterCommand |
-| `founder` | unlocked, contracts, activeContract, unlockText |
+| `founder` | unlocked, baseLevel, tierLabel, contracts[], contractsCompleted, activeContract, reputation, money, unlockText |
 | `majorDecisions[]` | id, label, command, branchSuggested |
 
 ### Hotspot object

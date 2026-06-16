@@ -200,35 +200,32 @@ export function buildCommandText(command, args = {}) {
   }
 }
 
-export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
-  const normalized = String(commandText ?? '').trim().toLowerCase();
-  if (!normalized) return null;
-  return buildMajorDecisions(playerKnowledge).find((d) => {
-    const cmd = String(d.command ?? '').trim().toLowerCase();
-    return cmd && normalized === cmd;
-  }) ?? null;
+function normalizeMajorDecisionEntry(d) {
+  return {
+    id: d.id,
+    label: d.label ?? d.id,
+    command: d.command ?? d.decisionCommand ?? d.id,
+    branchSuggested: d.branchSuggested !== false,
+    requiredEvidence: d.requiredEvidence ?? []
+  };
 }
 
-function buildMajorDecisions(playerKnowledge = {}) {
+function buildMajorDecisions(playerKnowledge = {}, { includeGated = false } = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
   const fromQuest = _pack?.quests?.flatMap((q) => q.majorDecisions ?? []) ?? [];
   if (fromQuest.length) {
     return fromQuest
       .filter((d) => {
+        if (includeGated) return true;
         const required = d.requiredEvidence ?? [];
         return required.every((id) => evidenceIds.includes(id));
       })
-      .map((d) => ({
-        id: d.id,
-        label: d.label ?? d.id,
-        command: d.command ?? d.decisionCommand ?? d.id,
-        branchSuggested: d.branchSuggested ?? true
-      }));
+      .map(normalizeMajorDecisionEntry);
   }
 
   const fromPaths = _pack?.quests
     ?.flatMap((q) => q.resolutionPaths ?? [])
-    .map((p) => ({
+    .map((p) => normalizeMajorDecisionEntry({
       id: p.id,
       label: p.label ?? p.id,
       command: p.decisionCommand ?? p.steps?.[p.steps.length - 1] ?? p.id,
@@ -243,7 +240,118 @@ function buildMajorDecisions(playerKnowledge = {}) {
     { id: 'sell_info_registry', label: 'Sell info to Registry', command: 'inspect apartment', branchSuggested: true },
     { id: 'negotiate_malik', label: 'Negotiate with Malik', command: 'pay malik 15', branchSuggested: true },
     { id: 'start_delivery_workflow', label: 'Start delivery workflow', command: 'start_delivery_workflow', branchSuggested: true }
-  ];
+  ].map(normalizeMajorDecisionEntry);
+}
+
+function formatMajorDecisionPrompt(decision, commandText, reason) {
+  return {
+    id: decision.id,
+    label: decision.label ?? decision.id,
+    command: commandText || decision.command,
+    branchSuggested: decision.branchSuggested !== false,
+    requiredEvidence: decision.requiredEvidence ?? [],
+    reason: reason ?? decision.reason ?? 'authored_decision'
+  };
+}
+
+function findAuthoredMajorDecision(commandText, playerKnowledge, { includeGated = false } = {}) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  return buildMajorDecisions(playerKnowledge, { includeGated }).find((d) => {
+    const cmd = String(d.command ?? '').trim().toLowerCase();
+    return cmd && normalized === cmd;
+  }) ?? null;
+}
+
+function detectConsequentialPayDecision(commandText, playerKnowledge) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  const payMatch = normalized.match(/^pay\s+(\S+)\s+(\d+(?:\.\d+)?)$/);
+  if (!payMatch) return null;
+  const amount = Number(payMatch[2]);
+  if (!Number.isFinite(amount) || amount < 15) return null;
+
+  const authored = findAuthoredMajorDecision(commandText, playerKnowledge)
+    ?? buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+      const cmd = String(d.command ?? '').trim().toLowerCase();
+      return cmd.startsWith('pay ') && Number(cmd.split(/\s+/).pop()) >= 15;
+    })
+    ?? normalizeMajorDecisionEntry({
+      id: 'major_payment',
+      label: 'Major payment',
+      command: commandText,
+      branchSuggested: true
+    });
+
+  return formatMajorDecisionPrompt(authored, commandText, 'pay_threshold');
+}
+
+function detectConsequentialCounterRumorDecision(commandText, playerKnowledge) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized.startsWith('counter_rumor')) return null;
+
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  if (exact) return formatMajorDecisionPrompt(exact, commandText, 'counter_rumor');
+
+  const gated = buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+    const cmd = String(d.command ?? '').trim().toLowerCase();
+    return cmd === 'counter_rumor' || cmd.startsWith('counter_rumor ');
+  });
+  if (gated) return formatMajorDecisionPrompt(gated, commandText, 'counter_rumor');
+
+  return formatMajorDecisionPrompt(
+    normalizeMajorDecisionEntry({
+      id: 'counter_rumor',
+      label: 'Counter rumor',
+      command: commandText,
+      branchSuggested: true
+    }),
+    commandText,
+    'counter_rumor'
+  );
+}
+
+function detectMajorDecisionFromConsequence(consequence, commandText) {
+  const unlocks = consequence?.unlocks ?? [];
+  const tierUnlock = unlocks.find((u) => String(u).startsWith('founder_tier_'));
+  if (!tierUnlock) return null;
+  const tier = Number(String(tierUnlock).replace('founder_tier_', ''));
+  return formatMajorDecisionPrompt(
+    normalizeMajorDecisionEntry({
+      id: 'founder_tier_unlock',
+      label: `Founder tier unlocked: ${founderTierLabel(tier)}`,
+      command: commandText,
+      branchSuggested: true
+    }),
+    commandText,
+    'founder_tier_unlock'
+  );
+}
+
+export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  if (exact) return formatMajorDecisionPrompt(exact, commandText, 'authored_decision');
+
+  return detectConsequentialPayDecision(commandText, playerKnowledge)
+    ?? detectConsequentialCounterRumorDecision(commandText, playerKnowledge);
+}
+
+/**
+ * Resolve majorDecisionPrompt from command text and/or post-command consequences.
+ */
+export function resolveMajorDecisionPrompt({
+  commandText,
+  command,
+  args = {},
+  playerKnowledge = {},
+  consequence = null
+} = {}) {
+  const text = commandText ?? buildCommandText(command, args);
+  const fromCommand = detectMajorDecisionFromCommand(text, playerKnowledge);
+  if (fromCommand?.branchSuggested) return fromCommand;
+  return detectMajorDecisionFromConsequence(consequence, text);
 }
 
 export function buildGameplayShellModel(world, payload = {}) {

@@ -37,8 +37,8 @@ import {
   parseCommandText
 } from '../play/play-engine.js';
 import {
-  detectMajorDecisionFromCommand,
-  buildCommandText
+  buildCommandText,
+  resolveMajorDecisionPrompt
 } from '../play/game-shell-model.js';
 import {
   PLAY_API_VERSION,
@@ -313,8 +313,14 @@ async function handleCommand(req, res) {
     const cmdText = typeof text === 'string' ? text.trim() : buildCommandText(cmdName, cmdArgs);
     const result = resolveCommand(world, cmdName, cmdArgs);
     if (Array.isArray(result?.events)) recordEvents(result.events);
-    const decision = detectMajorDecisionFromCommand(cmdText, world.playerKnowledge);
-    const sanitized = sanitizeCommandResult(result, world, decision?.branchSuggested ? decision : undefined);
+    const majorDecisionPrompt = result.majorDecisionPrompt ?? resolveMajorDecisionPrompt({
+      commandText: cmdText,
+      command: cmdName,
+      args: cmdArgs,
+      playerKnowledge: world.playerKnowledge,
+      consequence: result.consequence
+    });
+    const sanitized = sanitizeCommandResult(result, world, majorDecisionPrompt?.branchSuggested ? majorDecisionPrompt : undefined);
     jsonResponse(req, res, 200, { ok: true, command: cmdName, args: cmdArgs, text: cmdText, result: sanitized });
   } catch (err) {
     jsonResponse(req, res, 400, { ok: false, error: String(err?.message || err) });

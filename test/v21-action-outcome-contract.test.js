@@ -135,13 +135,15 @@ it('v21.7 — look: safeWorldSummary is present', () => {
   }
 });
 
-// v21.8: majorDecisionPrompt shape on pay
-it('v21.8 — pay: majorDecisionPrompt has required fields if present', () => {
+// v21.8: majorDecisionPrompt on consequential pay
+it('v21.8 — pay >= 15: majorDecisionPrompt has required fields', () => {
   const world = newWorld();
   const result = resolveCommand(world, 'pay', { target: 'malik', amount: 15 });
-  if (result.majorDecisionPrompt) {
-    assert(result.majorDecisionPrompt.id !== undefined, 'majorDecisionPrompt.id required');
-    assert(result.majorDecisionPrompt.label !== undefined, 'majorDecisionPrompt.label required');
-    assert(result.majorDecisionPrompt.requiredEvidence !== undefined, 'majorDecisionPrompt.requiredEvidence required');
-  }
+  assert.equal(result.ok, true);
+  assert.ok(result.majorDecisionPrompt, 'majorDecisionPrompt expected for pay >= 15');
+  assert.equal(result.majorDecisionPrompt.id, 'founder_negotiation');
+  assert.ok(result.majorDecisionPrompt.label);
+  assert.ok(Array.isArray(result.majorDecisionPrompt.requiredEvidence));
+  assert.equal(result.majorDecisionPrompt.branchSuggested, true);
+  assert.ok(['authored_decision', 'pay_threshold'].includes(result.majorDecisionPrompt.reason));
 });

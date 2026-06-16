@@ -18,7 +18,7 @@
  *
  * Result envelope (resolveCommand):
  *   { ok, kind, text, world, dialogue?, consequence?, evidence?,
- *     error?, snapshot? }
+ *     majorDecisionPrompt?, error?, snapshot? }
  */
 
 import path from 'node:path';
@@ -29,6 +29,7 @@ import {
   executeAction,
   helpSaraPeacefully
 } from '../simulation/actions.ts';
+import { resolveIncident } from '../simulation/incidents.ts';
 import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.ts';
 import {
   createActiveFounderContract,
@@ -36,6 +37,7 @@ import {
   listFounderContractOffers,
   resolveFounderContractTemplate
 } from './founder-contracts.js';
+import { buildCommandText, resolveMajorDecisionPrompt } from './game-shell-model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -289,26 +291,20 @@ const KNOWN_COMMANDS = new Set([
   'start_delivery_workflow', 'run_delivery_contract', 'list_contracts', 'quit'
 ]);
 
-/**
- * Dispatch one player command. Pure function — returns a result
- * envelope, mutates `world` in place (so callers can keep using
- * the same world across calls).
- */
-export function resolveCommand(world, commandOrText, args = {}) {
-  let command = commandOrText;
-  let effectiveArgs = args;
-  if (KNOWN_COMMANDS.has(String(commandOrText).toLowerCase())) {
-    command = String(commandOrText).toLowerCase();
-  } else {
-    const parsed = parseCommandText(commandOrText);
-    if (!parsed) return { ok: false, kind: 'error', error: 'empty command' };
-    if (!KNOWN_COMMANDS.has(parsed.command)) {
-      return { ok: false, kind: 'error', error: `unknown command: ${parsed.command}` };
-    }
-    command = parsed.command;
-    effectiveArgs = { ...parsed.args, ...args };
-  }
+function attachMajorDecisionPrompt(result, command, effectiveArgs) {
+  if (!result?.ok) return result;
+  const prompt = resolveMajorDecisionPrompt({
+    commandText: buildCommandText(command, effectiveArgs),
+    command,
+    args: effectiveArgs,
+    playerKnowledge: result.world?.playerKnowledge ?? {},
+    consequence: result.consequence ?? null
+  });
+  if (!prompt?.branchSuggested) return result;
+  return { ...result, majorDecisionPrompt: prompt };
+}
 
+function resolveCommandCore(world, command, effectiveArgs) {
   const actorId = 'player';
   syncFounderAvailability(world);
 
@@ -612,6 +608,32 @@ export function resolveCommand(world, commandOrText, args = {}) {
   }
 }
 
+/**
+ * Dispatch one player command. Pure function — returns a result
+ * envelope, mutates `world` in place (so callers can keep using
+ * the same world across calls).
+ */
+export function resolveCommand(world, commandOrText, args = {}) {
+  let command = commandOrText;
+  let effectiveArgs = args;
+  if (KNOWN_COMMANDS.has(String(commandOrText).toLowerCase())) {
+    command = String(commandOrText).toLowerCase();
+  } else {
+    const parsed = parseCommandText(commandOrText);
+    if (!parsed) return { ok: false, kind: 'error', error: 'empty command' };
+    if (!KNOWN_COMMANDS.has(parsed.command)) {
+      return { ok: false, kind: 'error', error: `unknown command: ${parsed.command}` };
+    }
+    command = parsed.command;
+    effectiveArgs = { ...parsed.args, ...args };
+  }
+  return attachMajorDecisionPrompt(
+    resolveCommandCore(world, command, effectiveArgs),
+    command,
+    effectiveArgs
+  );
+}
+
 function snapshotForDelta(world) {
   return {
     agents: JSON.parse(JSON.stringify(world.agents)),
@@ -737,6 +759,7 @@ function runPeaceful(world) {
   resolveCommand(world, 'ask', { target: 'amina', topic: 'mediation' });
   resolveCommand(world, 'pay', { target: 'malik', amount: 5, reason: 'peaceful-mediation' });
   helpSaraPeacefully(world);
+  syncFounderAvailability(world);
   return { resolutionPath: 'peaceful_mediation' };
 }
 
@@ -752,6 +775,10 @@ function runInvestigation(world) {
   if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
     world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
   }
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'investigation_and_counter_rumor', 'player');
+  }
+  syncFounderAvailability(world);
   return { resolutionPath: 'investigation_and_counter_rumor' };
 }
 
@@ -759,5 +786,9 @@ function runFounder(world) {
   resolveCommand(world, 'inspect', { target: 'workshop' });
   resolveCommand(world, 'pay', { target: 'malik', amount: 15, reason: 'founder-negotiation' });
   resolveCommand(world, 'talk', { target: 'sara', message: 'I arranged an alternative delivery from the workshop.' });
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'founder_negotiation', 'player');
+  }
+  syncFounderAvailability(world);
   return { resolutionPath: 'founder_negotiation' };
 }
