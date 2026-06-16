@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import path from 'node:path';
-import { runSimulation, evaluateWorld } from '../simulation/sim.js';
+import { runSimulation, evaluateWorld } from '../simulation/sim.ts';
 import { generateDashboard } from '../simulation/dashboard.js';
 import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.js';
 import { openSqliteWorldStore } from '../persistence/sqlite.js';

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { serializeWorldState } from '../simulation/state.js';
-import { createWorld } from '../simulation/world.js';
+import { serializeWorldState } from '../simulation/state.ts';
+import { createWorld } from '../simulation/world.ts';
 
 function safeIdPart(value) {
   return String(value ?? 'default').replace(/[^a-zA-Z0-9_-]+/g, '_');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runSimulation } from '../src/simulation/sim.js';
+import { runSimulation } from '../src/simulation/sim.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 import { diffSnapshots } from '../src/persistence/timeline.js';
 import { generateDashboard } from '../src/simulation/dashboard.js';

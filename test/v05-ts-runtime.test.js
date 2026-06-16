@@ -8,13 +8,13 @@ import { fileURLToPath } from 'node:url';
 import {
   loadScenarioFile,
   loadScenarioWorldState
-} from '../src/simulation/scenario-loader.js';
+} from '../src/simulation/scenario-loader.ts';
 import {
   serializeWorldState,
   validateScenarioSchema
-} from '../src/simulation/state.js';
-import { createWorld } from '../src/simulation/world.js';
-import { runSimulation, initializeScenario, evaluateWorld } from '../src/simulation/sim.js';
+} from '../src/simulation/state.ts';
+import { createWorld } from '../src/simulation/world.ts';
+import { runSimulation, initializeScenario, evaluateWorld } from '../src/simulation/sim.ts';
 import { parseScenario, parseSnapshot, parseAction, parseDiff } from '../src/contracts/parse.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

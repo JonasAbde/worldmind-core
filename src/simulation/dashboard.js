@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { evaluateWorld } from './sim.js';
+import { evaluateWorld } from './sim.ts';
 import { lenoSummarize, lenoSuggestActions } from './leno.js';
 import { buildTimelineBranchView, diffSnapshots, filterEvents } from '../persistence/timeline.js';
 

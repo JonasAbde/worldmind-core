@@ -40,6 +40,7 @@ export interface Relationship {
   influence?: number;
   fear?: number;
   tags?: string[];
+  relationshipTags?: string[];
 }
 
 export interface Agent {
@@ -78,8 +79,11 @@ export interface Item {
 export interface Faction {
   id: string;
   name: string;
-  members: AgentId[];
+  members?: AgentId[];
   reputation?: number;
+  influence?: number;
+  goals?: string[];
+  stance?: string;
 }
 
 export interface MemoryRecord {
@@ -153,9 +157,9 @@ export interface TaskRecord {
 export interface EventRecord {
   id: string;
   type: string;
-  tick: number;
-  day: number;
-  time: string;
+  tick?: number;
+  day?: number;
+  time?: string;
   public: boolean;
   visibleToAgentIds: AgentId[];
   causes: string[];
@@ -163,7 +167,7 @@ export interface EventRecord {
   importance: number;
   locationId?: LocationId;
   actorIds: AgentId[];
-  description: string;
+  description?: string;
   payload: Record<string, unknown>;
   branchOriginSnapshotId?: SnapshotId | null;
   branchParentSnapshotId?: SnapshotId | null;
@@ -224,6 +228,7 @@ export interface WorldState {
   version: 2;
   id: string;
   name: string;
+  worldId?: string;
   tick: number;
   day: number;
   time: string;
@@ -247,6 +252,7 @@ export interface WorldState {
   branchNote?: string | null;
   currentSnapshotId?: SnapshotId | null;
   source?: 'scenario' | 'snapshot' | 'runtime';
+  createdAtTick?: number;
 }
 
 export interface ScenarioContract {
@@ -267,11 +273,15 @@ export interface ScenarioContract {
   relationshipEvents?: Relationship[];
   playerKnowledge: PlayerKnowledge;
   economy: EconomyState;
+  worldId?: string;
+  rngState?: RngStateNumber | { state: RngStateNumber } | null;
+  idCounters?: Record<string, number>;
   branchOriginSnapshotId?: SnapshotId | null;
   branchParentSnapshotId?: SnapshotId | null;
   branchName?: BranchName | null;
   branchNote?: string | null;
   currentSnapshotId?: SnapshotId | null;
+  source?: 'scenario' | 'snapshot' | 'runtime';
 }
 
 export type ActionRequest = {

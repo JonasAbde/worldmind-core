@@ -1,0 +1,9 @@
+{
+  "id": "branch_v06_canonical",
+  "worldId": "new_aarhus_district_01",
+  "name": "ts_runtime_baseline",
+  "originSnapshotId": "snap_00001",
+  "parentSnapshotId": "snap_00001",
+  "createdAt": "2026-06-16T00:00:00Z",
+  "note": "Canonical v0.6 branch fixture used by ci:gate."
+}

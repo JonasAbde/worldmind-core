@@ -36,6 +36,7 @@
 29. `29_TIMELINE_DIFF_AND_REPLAY.md`
 30. `30_DATA_CONTRACTS_AND_VALIDATION.md`
 31. `31_TYPESCRIPT_RUNTIME_MIGRATION.md` — v0.5 gradual migration to TypeScript + CLI validation gates.
+32. `32_AUTHORITATIVE_TYPESCRIPT_RUNTIME.md` — v0.6 authoritative `.ts` runtime + strict gates + `validate:branch` and `validate:dashboard`.
 
 ## Roadmap
 

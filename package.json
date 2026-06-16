@@ -19,7 +19,9 @@
     "validate:scenario": "node src/cli/validate.js scenario",
     "validate:snapshot": "node src/cli/validate.js snapshot",
     "validate:diff": "node src/cli/validate.js diff",
-    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json",
+    "validate:branch": "node src/cli/validate.js branch",
+    "validate:dashboard": "node src/cli/validate.js dashboard",
+    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json && node src/cli/validate.js branch scenarios/branch-v06-canonical.json && node src/cli/validate.js dashboard static-dashboard",
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check": "npm run typecheck && node src/cli/simulate.js --days 7 --assert"

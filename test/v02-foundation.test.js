@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { initializeScenario, runSimulation } from '../src/simulation/sim.js';
+import { initializeScenario, runSimulation } from '../src/simulation/sim.ts';
 import { lenoSummarize } from '../src/simulation/leno.js';
 import { ACTIONS } from '../src/simulation/constants.js';
 import { executeAction } from '../src/simulation/actions.js';
-import { loadScenarioFile, validateScenarioSchema } from '../src/simulation/scenario-loader.js';
+import { loadScenarioFile, validateScenarioSchema } from '../src/simulation/scenario-loader.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 
 const canonicalScenarioPath = path.resolve('scenarios/new-aarhus-district-01.json');

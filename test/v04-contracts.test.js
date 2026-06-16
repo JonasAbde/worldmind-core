@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runSimulation } from '../src/simulation/sim.js';
+import { runSimulation } from '../src/simulation/sim.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 import { executeAction } from '../src/simulation/actions.js';
 import { ACTIONS } from '../src/simulation/constants.js';
@@ -23,7 +23,7 @@ import {
   buildLenoContext,
   diffContracts
 } from '../src/contracts/index.js';
-import { loadScenarioFile } from '../src/simulation/scenario-loader.js';
+import { loadScenarioFile } from '../src/simulation/scenario-loader.ts';
 
 function tempDb() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'worldmind-v04-')), 'worldmind.sqlite');
