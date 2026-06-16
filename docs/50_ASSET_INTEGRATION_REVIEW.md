@@ -1,5 +1,7 @@
 # 50 — Asset Integration Review (QA v3 baseline + V4 reviewed overlay)
 
+Branch: `asset/reviewed-pack-v4-overlay` (synced with `origin/master`, includes `docs/51_ASSET_ART_LOCK_LANDING_AND_RUNTIME_PLAN.md`).
+
 ## Scope and method
 
 This integration follows a reviewed production flow:
@@ -73,26 +75,30 @@ This integration follows a reviewed production flow:
 - Reviewed character replacements (V4 approved set):
   - `player`, `sara`, `malik`, `amina`, `nadia`, `rune`
 
+### Upgraded in V5 (founder-demo acceptable, not final art lock)
+
+- Long-tail character packs regenerated with dedicated portrait/avatar/expression/sheet sets:
+  - `omar`, `lina`, `yasin`, `freja`, `elias`
+- Reviewed location concepts added (not yet wired as runtime defaults):
+  - `assets/locations/apartment-v5-reviewed.*`
+  - `assets/locations/harbour-docks-v5-reviewed.*`
+
 ### Placeholder-only / not final art lock
 
-- Long-tail characters explicitly marked placeholder in pack notes:
-  - `omar`, `lina`, `yasin`, `freja`, `elias`
 - Audio pack is usable for prototype, but explicitly placeholder-generated:
   - `assets/audio/README.md` states generated prototype cues
+- Faction logos, item icons, badges: present and registry-valid, but still generic/placeholder-tier per art-lock criteria in `docs/51`.
 
 ### Open quality gaps (do not fake closed)
 
-- Final single-generated art still missing per V4 manifest:
-  - characters: `omar`, `lina`, `yasin`, `freja`, `elias`
-  - locations: stronger final pass still needed for `apartment` and harbour-docks direction
-  - final designed audio set
-  - final faction logo pass
-  - final item icon pass
-  - final badge icon pass
+- Final designed audio set (city/rain/harbour ambience, Registry tones, Leno UI sounds)
+- Final art lock pass for faction logos, item icons, badges
+- Optional promotion of `apartment-v5-reviewed` / `harbour-docks-v5-reviewed` to runtime `assets/locations/*.png` after product sign-off
+- Landing site wiring in separate marketing repo (assets prepared under `assets/landing/`)
 
 ## Category focus checks
 
-- Characters: coverage complete for runtime; 6 reviewed + 5 placeholder tier.
+- Characters: coverage complete for runtime; 6 V4-reviewed + 5 V5-upgraded long-tail packs.
 - Locations: all required runtime paths present; most visible locations reviewed by V4 coverage strategy.
 - Evidence/Rumor/Incident UI: present and demo-usable through clean template assets.
 - Leno overlay: present and integrated (`assets/ui/leno-overlay.*`).
@@ -145,3 +151,27 @@ A follow-up generation pass was executed to improve the weakest long-tail placeh
 - Final designed audio set (current audio still prototype-tier)
 - Final art lock pass for faction logos, item icons, badges
 - Optional replacement of runtime `assets/locations/apartment.png` with a final approved apartment master if product direction decides V5 should become default
+
+## Landing lane (separate from runtime)
+
+Per `docs/51`, marketing/landing art lives under `assets/landing/` and does not replace runtime paths in `src/play/assets.js`.
+
+Prepared landing masters (PNG + WebP):
+
+- `assets/landing/worldmind-hero-key-art.*`
+- `assets/landing/new-aarhus-district-01.*`
+- `assets/landing/missing-delivery-case-board.*`
+- `assets/landing/leno-evidence-guard.*`
+- `assets/landing/simulation-hud-memory-permissions.*`
+- `assets/landing/timeline-branches.*`
+- `assets/landing/save-browser-snapshot-diff.*`
+- `assets/landing/npc-agent-portrait-set.*`
+- `assets/landing/worldmind-og-image.*`
+- `assets/landing/worldmind-app-icon.*`
+
+Total files under `assets/`: **435** (including landing lane; runtime registry paths: **78**, all present).
+
+## Related docs
+
+- `docs/49_ASSET_QA_V3_FINAL_PLACEHOLDERS.md` — QA v3 baseline verdict
+- `docs/51_ASSET_ART_LOCK_LANDING_AND_RUNTIME_PLAN.md` — two-lane strategy and art-lock criteria
