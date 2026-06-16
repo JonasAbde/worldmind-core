@@ -1,5 +1,7 @@
 # 50 — Asset Integration Review (QA v3 baseline + V4 reviewed overlay)
 
+> **Runtime UI binding (Visual Shell v1):** Location scenes (`assets/locations/*.png`), character portraits/avatars, UI evidence/rumor/Leno icons, and item icons (e.g. `assets/items/delivery-crate/icon.png`) are referenced by `game-shell-model.js` + `visual-game-shell.js`. Optional upgrades: `apartment-v5-reviewed.png`, `harbour-docks-v5-reviewed.png` — not wired until content-pack scene bindings added.
+
 Branch: `asset/reviewed-pack-v4-overlay` (synced with `origin/master`, includes `docs/51_ASSET_ART_LOCK_LANDING_AND_RUNTIME_PLAN.md`).
 
 ## Scope and method

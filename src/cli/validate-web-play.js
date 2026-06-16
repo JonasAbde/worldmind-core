@@ -2,18 +2,8 @@
 /**
  * validate:web-play — assert that the static play UI is well-formed.
  *
- * Checks that the supplied HTML page (or, by default, the freshly
- * generated `static-play/index.html`) contains every required
- * section label, that the Leno evidence guard is wired up, and
- * that the page embeds an `app.js` runtime.
- *
- * Usage:
- *   node src/cli/validate-web-play.js [path-to-index.html] [--json]
- *
- * Exit codes:
- *   0 — all required sections present
- *   1 — missing one or more sections
- *   2 — invalid input
+ * Checks required section labels, runtime markers, visual gameplay shell
+ * markers, leak guards, and referenced asset paths.
  */
 
 import fs from 'node:fs';
@@ -36,10 +26,40 @@ const REQUIRED_LABELS = [
 ];
 
 const REQUIRED_RUNTIME_MARKERS = [
-  'wm-cmd-btn',       // quick-action buttons
-  'wm-cmd-form',      // freeform command form
-  'wm-state'          // embedded JSON state
+  'wm-cmd-btn',
+  'wm-cmd-form',
+  'wm-state'
 ];
+
+const VISUAL_SHELL_MARKERS = [
+  'data-scene-img',
+  'wm-hotspot-run',
+  'data-run-command',
+  'wm-npc-portrait',
+  'data-case-board',
+  'data-rumor-trail',
+  'data-founder-panel',
+  'data-major-decision-modal',
+  'data-consequence-ticker',
+  'data-game-shell'
+];
+
+const FORBIDDEN_LEAK_PATTERNS = [
+  /"hiddenCause"\s*:\s*"[^"]+"/i,
+  /"hiddenCause"\s*:\s*\{/i,
+  /"secrets"\s*:\s*\[\s*"[^"]+"/i,
+  /\bnadia\s+is\s+the\s+source\b/i
+];
+
+function extractAssetRefs(html) {
+  const refs = new Set();
+  const re = /(?:src|href)=["'](assets\/[^"']+)["']/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    refs.add(m[1]);
+  }
+  return [...refs];
+}
 
 function inspectHtml(htmlPath) {
   if (!fs.existsSync(htmlPath)) {
@@ -48,13 +68,29 @@ function inspectHtml(htmlPath) {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const missingLabels = REQUIRED_LABELS.filter((l) => !html.includes(l));
   const missingMarkers = REQUIRED_RUNTIME_MARKERS.filter((m) => !html.includes(m));
-  if (missingLabels.length === 0 && missingMarkers.length === 0) {
+  const missingVisual = VISUAL_SHELL_MARKERS.filter((m) => !html.includes(m));
+  const leakHits = FORBIDDEN_LEAK_PATTERNS.filter((re) => re.test(html)).map((re) => re.source);
+
+  const assetRefs = extractAssetRefs(html);
+  const missingAssets = assetRefs.filter((ref) => !fs.existsSync(path.join(REPO, ref)));
+
+  const problems = [
+    ...missingLabels,
+    ...missingMarkers.map((m) => `marker:${m}`),
+    ...missingVisual.map((m) => `visual:${m}`),
+    ...leakHits.map((h) => `leak:${h}`),
+    ...missingAssets.map((a) => `asset:${a}`)
+  ];
+
+  if (problems.length === 0) {
     return {
       code: 0,
       payload: {
         path: htmlPath,
         sectionsChecked: REQUIRED_LABELS.length,
         runtimeMarkersChecked: REQUIRED_RUNTIME_MARKERS.length,
+        visualMarkersChecked: VISUAL_SHELL_MARKERS.length,
+        assetsChecked: assetRefs.length,
         sizeBytes: html.length
       }
     };
@@ -63,9 +99,12 @@ function inspectHtml(htmlPath) {
     code: 1,
     payload: {
       path: htmlPath,
-      missing: [...missingLabels, ...missingMarkers.map((m) => `marker:${m}`)],
+      missing: problems,
       missingLabels,
-      missingMarkers
+      missingMarkers,
+      missingVisual,
+      leakHits,
+      missingAssets
     }
   };
 }
@@ -77,15 +116,12 @@ function main() {
   const positional = argv.filter((a) => !a.startsWith('--'));
   const target = positional[0] || path.join(REPO, 'static-play/index.html');
 
-  // Print the JSON line LAST so callers can parse the final line.
-  // In --json mode we ONLY print JSON; otherwise we print a short
-  // human-readable banner first, then the JSON line.
   const result = inspectHtml(path.resolve(target));
   if (!jsonOnly) {
     if (result.code === 0) {
       process.stdout.write('web play: ok\n');
     } else if (result.code === 1) {
-      process.stdout.write('web play: missing required sections\n');
+      process.stdout.write('web play: missing required sections or visual shell markers\n');
     } else {
       process.stdout.write('web play: invalid input\n');
     }

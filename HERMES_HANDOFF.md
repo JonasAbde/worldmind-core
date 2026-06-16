@@ -1,17 +1,15 @@
-# Hermes Handoff — WorldMind Play API Contract v1
+# Hermes Handoff — WorldMind Unified Play v1 (Cursor track)
 
-## Status (parallel track — while Leno finishes runtime)
+## Status (single track — Jonas switches to Leno/Hermes on request)
 
-Branch `feature/play-api-contract-v1` (off `master` `02b49f1`):
+Branch **`feature/worldmind-unified-play-v1`** (off `master` `02b49f1`):
 
-- **`docs/PLAY_API_CONTRACT.md`** — stable client contract (`/api/health`, `/api/state`, `/api/command`, `gameShell`)
-- **`src/play/play-api-payload.js`** — `PLAY_API_VERSION`, `buildPlayStatePayload`, `buildCommandResultPayload`
-- **`GET /api/state`** returns `gameShell`, `playerSnapshot`, `districtView`, `apiVersion`
-- **CORS** via `WM_CORS_ORIGIN` for `worldmind-site` `/play`
-- **`docs/60_WORLDMIND_SITE_PLAY_BRIDGE.md`** — site checklist
-- **`npm run validate:play-api`**
+- **Visual Gameplay Shell v1** — three-column game layout, hotspots, case board, rumor trail, founder panel. See `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
+- **Play API Contract v1** — `docs/PLAY_API_CONTRACT.md`, `GET /api/state` returns `gameShell` + `districtView`, CORS via `WM_CORS_ORIGIN`, `npm run validate:play-api`.
+- **Runtime gameplay contracts** — action outcome envelope (v21), founder loop (v22), rumor runtime fields (v23).
+- **Site bridge spec** — `docs/60_WORLDMIND_SITE_PLAY_BRIDGE.md` (worldmind-site `/play` not in this repo).
 
-Visual shell: PR #1 (`feature/visual-gameplay-shell-v1`) — merge after `v1.0.0-rc.1` + runtime.
+Do **not** merge to `master` until `v1.0.0-rc.1` tag on `02b49f1`. Visual + API likely ship as **rc.2**.
 
 ---
 

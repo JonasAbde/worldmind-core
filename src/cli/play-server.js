@@ -348,7 +348,7 @@ async function handleBranchCreate(req, res) {
   }
 }
 
-async function handleSavesList(_req, res) {
+async function handleSavesList(req, res) {
   ensureBoot();
   const rows = store.listSnapshots(world.id);
   jsonResponse(req, res, 200, {
@@ -374,7 +374,7 @@ async function handleSavesList(_req, res) {
   });
 }
 
-async function handleSavesInspect(_req, res, id) {
+async function handleSavesInspect(req, res, id) {
   ensureBoot();
   try {
     const row = store.openSqliteWorldStore
@@ -410,7 +410,7 @@ async function handleSavesRestore(req, res, id) {
   }
 }
 
-async function handleBranchesList(_req, res) {
+async function handleBranchesList(req, res) {
   ensureBoot();
   const rows = store.listTimelineBranches(world.id);
   jsonResponse(req, res, 200, {
@@ -431,7 +431,7 @@ async function handleBranchesList(_req, res) {
   });
 }
 
-async function handleSavesDiff(_req, res, urlObj) {
+async function handleSavesDiff(req, res, urlObj) {
   ensureBoot();
   const from = urlObj.searchParams.get('from');
   const to = urlObj.searchParams.get('to');
@@ -448,14 +448,14 @@ async function handleSavesDiff(_req, res, urlObj) {
   }
 }
 
-async function handleEvents(_req, res, urlObj) {
+async function handleEvents(req, res, urlObj) {
   ensureBoot();
   const since = Number(urlObj.searchParams.get('since') || 0);
   const events = eventLog.slice(since);
   jsonResponse(req, res, 200, { ok: true, count: events.length, total: eventLog.length, events });
 }
 
-async function handleDemoPath(_req, res, name) {
+async function handleDemoPath(req, res, name) {
   ensureBoot();
   const paths = getDemoPaths();
   if (!paths[name]) return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });

@@ -2374,7 +2374,17 @@
         ],
         "createdAtTick": 4,
         "distortionLevel": 0,
-        "active": true
+        "active": true,
+        "spreadRisk": 55,
+        "sourceConfidence": 70,
+        "knownBy": [
+          "nadia",
+          "yasin",
+          "malik",
+          "freja",
+          "lina",
+          "rune"
+        ]
       }
     },
     "items": {

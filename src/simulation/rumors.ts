@@ -22,6 +22,16 @@ interface CreateRumorOptions {
   originEventId?: string;
 }
 
+export function syncRumorRuntimeFields(rumor: RumorRecord): void {
+  const spread = clamp(rumor.spreadRate ?? 30, 0, 100);
+  const distortion = clamp(rumor.distortionLevel ?? 0, 0, 100);
+  rumor.spreadRate = spread;
+  rumor.spreadRisk = clamp(rumor.spreadRisk ?? spread, 0, 100);
+  rumor.distortionLevel = distortion;
+  rumor.sourceConfidence = clamp(rumor.sourceConfidence ?? rumor.truthLevel, 0, 100);
+  rumor.knownBy = [...(rumor.knownByAgentIds ?? [])];
+}
+
 export function createRumor(world: WorldRuntime, options: CreateRumorOptions): RumorRecord {
   const { claim, sourceAgentId, targetAgentIds = [], truthLevel = 50, emotionalTone = 'suspicion', spreadRate = 30, originEventId } = options;
   const rumor: RumorRecord = {
@@ -38,6 +48,7 @@ export function createRumor(world: WorldRuntime, options: CreateRumorOptions): R
     distortionLevel: 0,
     active: true
   };
+  syncRumorRuntimeFields(rumor);
   world.rumors[rumor.id] = rumor;
   return rumor;
 }
@@ -50,6 +61,7 @@ export function spreadRumorTo(world: WorldRuntime, rumorId: string, listenerAgen
   const relToTarget = target ? world.agents[listenerAgentId].relationships[target] : undefined;
   const belief = relToTarget ? rumorBeliefChance(relToTarget, rumor.truthLevel) : rumor.truthLevel;
   rumor.knownByAgentIds.push(listenerAgentId);
+  syncRumorRuntimeFields(rumor);
   if (target && belief > 50) {
     applyRelationshipImpact(world, listenerAgentId, target, { suspicion: 12, trust: -8 }, `believed rumor: ${rumor.claim}`, rumor.originEventId);
   }
@@ -102,6 +114,7 @@ export function counterRumor(world: WorldRuntime, rumorId: string, options: Coun
   const reduction = 10 + evidenceStrength * 0.5;
   rumor.truthLevel = clamp(rumor.truthLevel - reduction, 0, 100);
   rumor.spreadRate = clamp((rumor.spreadRate ?? 0) - reduction * 0.5, 0, 100);
+  syncRumorRuntimeFields(rumor);
   return world.addEvent({
     type: 'counter_rumor',
     locationId: world.agents[actorId]?.locationId ?? 'market',

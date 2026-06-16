@@ -116,6 +116,27 @@ export function summarizeWorld(world) {
   ].join('\n');
 }
 
+export function buildSafeWorldSummary(world) {
+  const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
+  return {
+    world: { name: world.name, day: world.day, time: world.time },
+    location: world.agents.player?.locationId ?? null,
+    counts: {
+      agents: Object.keys(world.agents).length,
+      memories: Object.keys(world.memories).length,
+      rumors: Object.keys(world.rumors).length,
+      incidents: Object.keys(world.incidents).length
+    },
+    incident: incident ? {
+      id: incident.id,
+      title: incident.title,
+      status: incident.status,
+      visibleProblem: incident.visibleProblem ?? null
+    } : null,
+    evidenceCount: (world.playerKnowledge?.evidenceIds ?? []).length
+  };
+}
+
 export function summarizeStatus(world) {
   const pk = world.playerKnowledge || {};
   return {
@@ -250,7 +271,7 @@ export function parseCommandText(text) {
 const KNOWN_COMMANDS = new Set([
   'look', 'status', 'move', 'talk', 'ask', 'inspect', 'listen_rumors',
   'trace_rumor', 'counter_rumor', 'pay', 'ask_leno', 'save', 'branch',
-  'start_delivery_workflow', 'run_delivery_contract', 'quit'
+  'start_delivery_workflow', 'run_delivery_contract', 'list_contracts', 'quit'
 ]);
 
 /**
@@ -277,19 +298,26 @@ export function resolveCommand(world, commandOrText, args = {}) {
 
   try {
     switch (command) {
-      case 'look':
+      case 'look': {
+        const before = snapshotForDelta(world);
         return {
           ok: true, kind: 'look', command,
           text: summarizeWorld(world),
+          safeWorldSummary: buildSafeWorldSummary(world),
+          consequence: diffConsequence(world, before, actorId, null),
           world
         };
-      case 'status':
+      }
+      case 'status': {
+        const before = snapshotForDelta(world);
         return {
           ok: true, kind: 'status', command,
           status: summarizeStatus(world),
           text: JSON.stringify(summarizeStatus(world), null, 2),
+          consequence: diffConsequence(world, before, actorId, null),
           world
         };
+      }
       case 'move': {
         const targetLoc = resolveLocation(world, effectiveArgs.target);
         if (!targetLoc) return { ok: false, kind: 'error', error: `unknown location: ${effectiveArgs.target}` };
@@ -410,7 +438,7 @@ export function resolveCommand(world, commandOrText, args = {}) {
         const ev = executeAction(world, {
           actorId, actionId: 'counter_rumor', rumorId,
           counterClaim: effectiveArgs.message || 'I have evidence this rumor is false.',
-          evidenceStrength: 85
+          evidenceStrength: Number(effectiveArgs.evidenceStrength ?? 85)
         });
         return {
           ok: true, kind: 'rumors', command,
@@ -449,12 +477,10 @@ export function resolveCommand(world, commandOrText, args = {}) {
         }
         if (founder.activeContract) {
           return {
-            ok: true,
-            kind: 'founder',
+            ok: false,
+            kind: 'error',
             command,
-            text: `Contract already active: ${founder.activeContract.id}`,
-            consequence: diffConsequence(world, before, actorId, null),
-            world
+            error: 'founder contract already active; run run_delivery_contract first'
           };
         }
         founder.activeContract = {
@@ -513,7 +539,30 @@ export function resolveCommand(world, commandOrText, args = {}) {
           world
         };
       }
+      case 'list_contracts': {
+        const founder = world.founder ?? { unlocked: false };
+        if (!founder.unlocked) {
+          return { ok: false, kind: 'error', error: 'founder loop is locked until Missing Delivery is resolved' };
+        }
+        const before = snapshotForDelta(world);
+        return {
+          ok: true,
+          kind: 'founder',
+          command,
+          text: 'Available contracts: emergency delivery to Sara (25 payout, +3 reputation).',
+          contracts: [{
+            id: 'delivery_sara_emergency',
+            customer: 'Sara',
+            payout: 25,
+            reputationGain: 3,
+            status: founder.activeContract ? 'active' : 'available'
+          }],
+          consequence: diffConsequence(world, before, actorId, null),
+          world
+        };
+      }
       case 'ask_leno': {
+        const before = snapshotForDelta(world);
         executeAction(world, { actorId, actionId: 'ask_leno' });
         return {
           ok: true, kind: 'leno', command,
@@ -522,6 +571,11 @@ export function resolveCommand(world, commandOrText, args = {}) {
             suggestions: lenoSuggestActions(world, { incidentId: 'missing_delivery' })
           },
           text: lenoSummarize(world, { scope: 'world' }),
+          consequence: diffConsequence(world, before, actorId, {
+            type: 'leno.consulted',
+            description: 'Consulted Leno',
+            importance: 2
+          }),
           world
         };
       }
@@ -549,19 +603,68 @@ function snapshotForDelta(world) {
   return {
     agents: JSON.parse(JSON.stringify(world.agents)),
     memories: world.memories,
-    rumors: world.rumors,
+    rumors: JSON.parse(JSON.stringify(world.rumors)),
     economy: JSON.parse(JSON.stringify(world.economy ?? {})),
-    founder: JSON.parse(JSON.stringify(world.founder ?? {}))
+    founder: JSON.parse(JSON.stringify(world.founder ?? {})),
+    incidents: JSON.parse(JSON.stringify(world.incidents ?? {})),
+    playerKnowledge: JSON.parse(JSON.stringify(world.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [] }))
   };
+}
+
+function diffRumorTruthChanges(before, after) {
+  const changes = [];
+  for (const id of Object.keys(after.rumors ?? {})) {
+    const prev = before.rumors?.[id];
+    const next = after.rumors[id];
+    if (!prev || !next) continue;
+    const delta = (next.truthLevel ?? 0) - (prev.truthLevel ?? 0);
+    if (delta !== 0) changes.push({ rumorId: id, truthLevelDelta: delta });
+  }
+  return changes;
+}
+
+function diffIncidentChanges(before, after) {
+  const changes = [];
+  for (const id of Object.keys(after.incidents ?? {})) {
+    const prev = before.incidents?.[id];
+    const next = after.incidents[id];
+    if (!prev || !next) continue;
+    if (prev.status !== next.status || (prev.resolutionState ?? null) !== (next.resolutionState ?? null)) {
+      changes.push({
+        incidentId: id,
+        beforeStatus: prev.status ?? null,
+        afterStatus: next.status ?? null,
+        beforeResolutionState: prev.resolutionState ?? null,
+        afterResolutionState: next.resolutionState ?? null
+      });
+    }
+  }
+  return changes;
+}
+
+function diffUnlocks(before, after) {
+  const unlocks = [];
+  const wasFounder = Boolean(before.founder?.unlocked);
+  const nowFounder = Boolean(after.founder?.unlocked);
+  if (!wasFounder && nowFounder) unlocks.push('founder_loop');
+  return unlocks;
 }
 
 function diffConsequence(world, before, actorId, ev) {
   const relChanges = diffRelationships(before, world, actorId);
   const memDelta = Object.keys(world.memories).length - Object.keys(before.memories).length;
-  const rumorDelta = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
+  const newRumors = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
   const moneyDelta = (world.agents[actorId]?.stats?.money ?? 0) - (before.agents[actorId]?.stats?.money ?? 0);
   const reputationDelta = (world.agents[actorId]?.stats?.reputation ?? 0) - (before.agents[actorId]?.stats?.reputation ?? 0);
   const energyDelta = (world.agents[actorId]?.stats?.energy ?? 0) - (before.agents[actorId]?.stats?.energy ?? 0);
+  const evidenceBefore = new Set(before.playerKnowledge?.evidenceIds ?? []);
+  const evidenceDelta = (world.playerKnowledge?.evidenceIds ?? []).filter((id) => !evidenceBefore.has(id));
+  const rumorDelta = diffRumorTruthChanges(before, world);
+  const relationshipDelta = relChanges.length
+    ? { trustTotal: relChanges.reduce((sum, r) => sum + (r.trustDelta ?? 0), 0), changes: relChanges }
+    : { trustTotal: 0, changes: [] };
+  const incidentDelta = diffIncidentChanges(before, world);
+  const unlocks = diffUnlocks(before, world);
   const economyDelta = {
     foodScarcity: (world.economy?.foodScarcity ?? 0) - (before.economy?.foodScarcity ?? 0),
     trustPressure: (world.economy?.trustPressure ?? 0) - (before.economy?.trustPressure ?? 0)
@@ -569,16 +672,23 @@ function diffConsequence(world, before, actorId, ev) {
   const founderDelta = {
     contractsCompleted: (world.founder?.contractsCompleted ?? 0) - (before.founder?.contractsCompleted ?? 0),
     baseLevel: (world.founder?.baseLevel ?? 0) - (before.founder?.baseLevel ?? 0),
+    reputation: (world.founder?.reputation ?? 0) - (before.founder?.reputation ?? 0),
     activeContractChanged: (world.founder?.activeContract?.id ?? null) !== (before.founder?.activeContract?.id ?? null)
   };
   const incident = Object.values(world.incidents || {}).find((i) => i.id === 'missing_delivery');
   return {
     relationships: relChanges,
     newMemories: memDelta,
-    newRumors: rumorDelta,
+    newRumors,
     moneyDelta,
     reputationDelta,
     energyDelta,
+    evidenceDelta,
+    rumorDelta,
+    relationshipDelta,
+    incidentDelta,
+    unlocks,
+    factionDelta: { changes: [] },
     economyDelta,
     founderDelta,
     incident: incident ? { title: incident.title, status: incident.status, resolutionState: incident.resolutionState ?? null } : null,

@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { CHARACTER_ASSETS, WORLD_ASSETS } from './assets.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -53,6 +54,76 @@ const LOCATION_INDEX = (() => {
   };
 })();
 
+function normalizeHotspot(h) {
+  return {
+    id: h.id,
+    label: h.label,
+    command: h.command,
+    preview: h.preview ?? h.description ?? '',
+    description: h.description ?? h.preview ?? '',
+    risk: h.risk ?? 1,
+    possibleEvidence: h.possibleEvidence ?? [],
+    icon: h.icon ?? null
+  };
+}
+
+function buildNpcTopics(agentId) {
+  const topics = (_pack?.dialogue ?? [])
+    .filter((d) => d.agentId === agentId)
+    .map((d) => d.topic)
+    .filter(Boolean);
+  return topics.length ? topics : ['delivery'];
+}
+
+function buildNpcMood(agent, rel) {
+  if ((rel.fear ?? 0) > 20) return 'afraid';
+  if ((rel.suspicion ?? 0) > 25) return 'guarded';
+  if ((rel.trust ?? 0) > 30) return 'trusting';
+  return 'neutral';
+}
+
+function buildRumorTrail(world, playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const rumorIndex = Object.fromEntries((_pack?.rumors ?? []).map((r) => [r.id, r]));
+  const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
+  const hasSourceEvidence = evidenceIds.includes('rumor_source_nadia');
+
+  return knownRumorIds.map((id) => {
+    const meta = rumorIndex[id] ?? {};
+    const worldRumor = world?.rumors?.[id];
+    const claim = meta.claim ?? worldRumor?.claim ?? id;
+    const sourceHidden = Boolean(meta.hiddenSourceEvidenceId) && !evidenceIds.includes(meta.hiddenSourceEvidenceId);
+    const traced = evidenceIds.some((e) => e.includes('rumor') || e.includes('market'));
+    return {
+      id,
+      claim,
+      spreadRisk: meta.truthLevel === 'false_or_misleading' ? 'high' : 'medium',
+      distortion: meta.truthLevel ?? 'unknown',
+      trustConfidence: traced ? 'medium' : 'low',
+      traceState: traced ? 'partial' : 'untraced',
+      knownBy: worldRumor?.knownByAgentIds ?? [],
+      sourceRedacted: sourceHidden,
+      backfireWarning: !hasSourceEvidence,
+      traceCommand: `trace_rumor ${id}`,
+      counterCommand: `counter_rumor ${id}`
+    };
+  });
+}
+
+function buildSuspectCards(playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const suspects = [
+    { id: 'sara', label: 'Sara', role: 'café owner', locked: false },
+    { id: 'malik', label: 'Malik', role: 'mechanic', locked: false },
+    { id: 'nadia', label: 'Nadia', role: 'rumor source', locked: !evidenceIds.includes('rumor_source_nadia') }
+  ];
+  return suspects.map((s) => ({
+    ...s,
+    redacted: s.locked,
+    inspectCommand: s.locked ? null : `ask rune ${s.id === 'nadia' ? 'nadia' : s.id}`
+  }));
+}
+
 function buildCaseBoard(playerKnowledge = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
   const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
@@ -67,7 +138,8 @@ function buildCaseBoard(playerKnowledge = {}) {
       type: meta.type ?? 'evidence',
       locationId: meta.locationId ?? null,
       inspectCommand: meta.locationId ? `inspect ${meta.locationId}` : null,
-      redacted: false
+      redacted: false,
+      locked: false
     };
   });
 
@@ -79,6 +151,7 @@ function buildCaseBoard(playerKnowledge = {}) {
       label: meta.claim ?? id,
       truthLevel: meta.truthLevel ?? 'unknown',
       sourceRedacted: sourceHidden,
+      locked: false,
       traceCommand: `trace_rumor ${id}`,
       counterCommand: `counter_rumor ${id}`
     };
@@ -98,6 +171,7 @@ function buildCaseBoard(playerKnowledge = {}) {
     evidenceCards,
     rumorCards,
     links,
+    suspectCards: buildSuspectCards(playerKnowledge),
     unresolvedQuestions: playerKnowledge.unresolvedQuestions ?? []
   };
 }
@@ -180,48 +254,60 @@ export function buildGameplayShellModel(world, payload = {}) {
   );
 
   const locEntry = LOCATION_INDEX[playerLocationId] ?? {};
+  const player = world?.agents?.player;
+  const topicsByAgent = Object.fromEntries(
+    (_pack?.characters ?? []).map((c) => [c.id, buildNpcTopics(c.id)])
+  );
 
   const npcCards = Object.values(world?.agents ?? {})
     .filter((a) => a?.id && a.id !== 'player')
     .map((a) => {
       const rel = a.relationships?.player ?? { trust: 0, suspicion: 0, fear: 0 };
+      const assets = CHARACTER_ASSETS[a.id] ?? {};
+      const topics = topicsByAgent[a.id] ?? buildNpcTopics(a.id);
+      const primaryTopic = topics[0] ?? 'delivery';
       return {
         id: a.id,
         name: a.name ?? a.id,
         role: a.role ?? '',
+        mood: buildNpcMood(a, rel),
         locationName: world?.locations?.[a.locationId]?.name ?? a.locationId ?? '?',
-        avatar: a.assets?.avatar ?? `assets/characters/${a.id}/avatar.png`,
+        avatar: a.assets?.avatar ?? assets.avatar ?? `assets/characters/${a.id}/avatar.png`,
+        portrait: a.assets?.portrait ?? assets.portrait ?? `assets/characters/${a.id}/portrait.png`,
+        topics,
         trust: rel.trust ?? 0,
         suspicion: rel.suspicion ?? 0,
         fear: rel.fear ?? 0,
         actions: [
           { label: 'Talk', command: `talk ${a.id}` },
-          { label: 'Ask', command: `ask ${a.id} delivery` },
+          { label: `Ask: ${primaryTopic}`, command: `ask ${a.id} ${primaryTopic}` },
+          { label: 'Offer help', command: `talk ${a.id}` },
+          { label: 'Negotiate', command: `pay ${a.id} 5` },
           { label: 'Ask Leno', command: 'ask_leno' },
-          { label: 'Negotiate', command: `pay ${a.id} 5` }
+          { label: 'Profile', command: `inspect ${a.locationId ?? 'cafe'}` }
         ]
       };
     });
 
-  const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
-  const rumorTrail = knownRumorIds.map((id) => ({
-    id,
-    spreadRisk: 'medium',
-    traceCommand: `trace_rumor ${id}`,
-    counterCommand: `counter_rumor ${id}`
-  }));
+  const rumorTrail = buildRumorTrail(world, playerKnowledge);
 
   return {
     topbar: {
+      worldName: world?.name ?? 'New Aarhus District',
       day: world?.day ?? '?',
       time: world?.time ?? '?',
-      money: world?.agents?.player?.stats?.money ?? 0,
+      money: player?.stats?.money ?? 0,
+      reputation: player?.stats?.reputation ?? 0,
+      energy: player?.stats?.energy ?? 0,
+      branchName: world?.branchName ?? 'main',
       lenoStatus: payload?.leno?.summary ? 'online' : 'standby'
     },
     location: {
       id: playerLocationId,
+      name: world?.locations?.[playerLocationId]?.name ?? playerLocationId,
+      mood: locEntry.mood ?? '',
       scene: locEntry.scene ?? null,
-      hotspots: locEntry.hotspots ?? []
+      hotspots: (locEntry.hotspots ?? []).map(normalizeHotspot)
     },
     npcCards,
     caseBoard: buildCaseBoard(playerKnowledge),
@@ -231,10 +317,18 @@ export function buildGameplayShellModel(world, payload = {}) {
       baseLevel: world?.founder?.baseLevel ?? 0,
       contractsCompleted: world?.founder?.contractsCompleted ?? 0,
       activeContract: world?.founder?.activeContract ?? null,
+      reputation: world?.founder?.reputation ?? player?.stats?.reputation ?? 0,
+      money: player?.stats?.money ?? 0,
       unlockText: founderUnlocked
         ? 'Founder loop unlocked.'
         : 'Resolve The Missing Delivery to unlock founder loop.'
     },
-    majorDecisions: buildMajorDecisions(playerKnowledge)
+    majorDecisions: buildMajorDecisions(playerKnowledge),
+    assets: {
+      lenoOverlay: WORLD_ASSETS.ui.lenoOverlay,
+      evidenceIcon: WORLD_ASSETS.ui.evidenceCard,
+      rumorIcon: WORLD_ASSETS.ui.rumorCard,
+      incidentIcon: WORLD_ASSETS.ui.incidentAlert
+    }
   };
 }
