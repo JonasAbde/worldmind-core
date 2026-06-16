@@ -1,22 +1,41 @@
 # WorldMind Assets
 
-This folder is reserved for Higgsfield-generated visual assets for **WorldMind / HermesWorld Core**.
+This folder is reserved for visual assets for **WorldMind / HermesWorld Core**.
 
 ## Current status
 
-I prepared the Higgsfield generation workflow, but the first Cloud API render attempt returned:
+The original Higgsfield Cloud API render attempt returned:
 
 - `403 not_enough_credits`
 
-So the project now includes the prompt set and asset plan, but the actual rendered image files still need credits on the Higgsfield account.
+A replacement V2 visual baseline has now been generated outside the repo with image generation and packaged for manual binary upload. The image binaries are intentionally **not committed in this text-only update**.
 
-## Planned asset set
+## Target asset set
+
+Expected final paths:
 
 - `hero/worldmind-cover.png` — key art for the project
 - `concept/new-aarhus-district-01.png` — world mood / city concept
-- `ui/hud-memory-permissions.png` — in-world HUD / simulation overlay moodboard
+- `ui/hud-memory-permissions.png` — in-world HUD / memory-permissions interface
 - `characters/npc-portrait-set.png` — NPC portrait direction
+- `showcase/worldmind-v2-showcase.png` — 4-panel visual showcase for README/pitch usage
+
+## Local package
+
+The generated image package was prepared as:
+
+- `worldmind-v2-assets.zip`
+
+Unzip it into the repo root, then commit the binary PNG files manually:
+
+```bash
+git pull origin master
+unzip worldmind-v2-assets.zip -d .
+git add assets
+git commit -m "Add WorldMind v2 visual asset baseline"
+git push origin master
+```
 
 ## Primary generation prompt
 
-See `higgsfield-prompts.md` for the exact prompts.
+See `higgsfield-prompts.md` for the original prompt set. See `ASSET_MANIFEST.md` for the V2 baseline manifest and recommended usage.
