@@ -103,7 +103,8 @@ check('Creator filters unsafe permissions', () => {
 
 check('no real-world connectors in codebase', () => {
   const CONNECTORS = ['http://api.', 'https://api.', 'openweather', 'twilio', 'sendgrid', 'stripe', 'plaid'];
-  const SKIP_DIRS = ['node_modules', '.git', 'static-play', 'audit-worldmind.js'];
+  // audit-worldmind.js itself contains connector names as deny-list entries — skip it
+  const SKIP_DIRS = ['node_modules', '.git', 'static-play'];
   const SKIP_FILES = ['src/cli/audit-worldmind.js'];
   try {
     const r = execSync(
