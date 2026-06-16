@@ -14,9 +14,9 @@ WorldMind runtime er nu fuld TypeScript (`strict: true` + `strictNullChecks: tru
 - **`src/cli/validate.js`** (udvidet): nye `risk` og `event-log` subcommands.
 - **`tsconfig.json`**: `strictNullChecks: true` aktiveret som default.
 - **`test/v08-strict-invariants.test.js`** (ny): 14 nye tests for utils.ts migration, strictNullChecks, validate:risk, validate:event-log, hidden-truth regression, diff:event-log, ci:gate smoke.
-- **`docs/32_STRICT_NULL_CHECKS.md`** (ny): dokumentation af strictNullChecks-audit og nullable-felter.
-- **`docs/33_EVENT_LOG_INVARIANTS.md`** (ny): dokumentation af event-log invariants + diff:event-log.
-- **`docs/34_RISK_VALIDATION.md`** (ny): dokumentation af risk validator + Risk 4/5 policy.
+- **`docs/35_STRICT_NULL_CHECKS.md`** (ny): dokumentation af strictNullChecks-audit og nullable-felter.
+- **`docs/36_EVENT_LOG_INVARIANTS.md`** (ny): dokumentation af event-log invariants + diff:event-log.
+- **`docs/37_RISK_VALIDATION.md`** (ny): dokumentation af risk validator + Risk 4/5 policy.
 
 ## Hvad er migreret (v0.7 → v0.8)
 

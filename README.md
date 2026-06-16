@@ -100,8 +100,8 @@ Læs i denne rækkefølge:
 2. `AGENTS.md`
 3. `docs/00_INDEX.md`
 4. `docs/24_MVP_BUILD_PLAN.md`
-5. `docs/32_STRICT_NULL_CHECKS.md` (v0.8)
-6. `docs/33_EVENT_LOG_INVARIANTS.md` (v0.8)
-7. `docs/34_RISK_VALIDATION.md` (v0.8)
+5. `docs/35_STRICT_NULL_CHECKS.md` (v0.8)
+6. `docs/36_EVENT_LOG_INVARIANTS.md` (v0.8)
+7. `docs/37_RISK_VALIDATION.md` (v0.8)
 8. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`

@@ -68,3 +68,30 @@ automatically.
 - Gradually move the .js source files to .ts and tighten `strict: true`.
 - Add diff/memory/rumor/incident integration tests against the validator surface.
 - Wire validators into CLI commands so users get explicit errors instead of thrown strings.
+
+## v0.8 addendum
+
+Two new validators joined the gate in v0.8:
+
+- **`validate:risk`** — source-parses `src/simulation/actions.ts` and
+  enforces `actionId -> riskLevel` map against
+  `ACTION_RISK_LIMIT_MVP = 3`. Risk 4 (RESTRICTED) and Risk 5
+  (WORLD_CHANGING) are forbidden in MVP. Catches any sneaky addition
+  of a high-risk action that would have passed `validate:action`
+  (which checks shape, not risk policy). See `docs/37_RISK_VALIDATION.md`.
+
+- **`validate:event-log`** — runs the canonical 7-day sim and verifies
+  8 invariants on the event log. Catches drift in simulation
+  foundation (extra `world_started`, missing daily checkpoints,
+  dangling actor/location references, malformed incident ids).
+  See `docs/36_EVENT_LOG_INVARIANTS.md`.
+
+- **`diff:event-log`** subcommand of the diff-checker — runs the
+  canonical sim twice and asserts the two event logs are bit-for-bit
+  identical. Catches RNG drift, hidden non-determinism, or
+  accidental tick changes.
+
+`ci:gate` is now a 10-step pipeline: typecheck → test → check →
+validate scenario → validate branch → validate dashboard →
+validate action → validate risk → validate event-log →
+diff:canonical → diff:event-log.
