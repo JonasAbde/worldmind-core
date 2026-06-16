@@ -12,7 +12,11 @@ test('v28: build3DVisualCues includes district buildings and agents', () => {
   const cues = build3DVisualCues(world);
   const check = validate3DVisualCues(cues);
   assert.equal(check.ok, true, check.errors?.join('; '));
+  assert.equal(cues.version, 2);
   assert.ok(cues.locations.length >= 4);
+  assert.ok(cues.locations.every((l) => typeof l.sceneTexture === 'string' && l.sceneTexture.includes('assets/locations')));
+  assert.ok(cues.player?.position?.length === 3);
+  assert.ok(cues.camera?.walkEye?.length === 3);
   assert.ok(cues.locations.some((l) => l.id === 'cafe'));
   assert.ok(cues.camera?.target?.length === 3);
   assert.equal(cues.playerLocationId, world.agents.player.locationId);

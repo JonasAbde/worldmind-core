@@ -52,8 +52,8 @@ npm run dev
 | Phase | Deliverable |
 |-------|-------------|
 | **v1** ✅ | District diorama, click-to-act, Play API wired |
-| **v2** | First-person / walk mode, interior scenes per location |
-| **v3** | Animated NPCs, scene art on building faces, audio |
+| **v2** | Scene art billboards, walk camera, player marker, hotspot labels | In progress on `master` |
+| **v3** | Animated NPCs, interior scenes, audio | Planned |
 | **v4** | Full district traversal, day/night, persistent camera saves |
 
 v1 is **playable 3D** (click, move, talk, inspect) — not yet AAA open-world.

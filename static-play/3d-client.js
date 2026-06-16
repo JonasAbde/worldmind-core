@@ -110,32 +110,66 @@ function buildEdges(edges) {
   }
 }
 
+const textureLoader = new THREE.TextureLoader();
+const textureCache = new Map();
+
+function loadSceneTexture(path) {
+  if (!path) return null;
+  if (textureCache.has(path)) return textureCache.get(path);
+  const tex = textureLoader.load(path);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  textureCache.set(path, tex);
+  return tex;
+}
+
 function buildLocations(locations) {
+  const BILLBOARD_W = 4.2;
+  const BILLBOARD_H = 2.8;
   for (const loc of locations || []) {
-    const [w, h, d] = loc.scale || [2, 2.5, 2];
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, d),
+    const [px, , pz] = loc.position;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(1.6, 2.3, 32),
       new THREE.MeshStandardMaterial({
-        color: loc.color || '#64748b',
-        emissive: new THREE.Color(loc.emissive || '#000000'),
-        emissiveIntensity: loc.emissiveIntensity ?? 0.1,
-        roughness: 0.55,
-        metalness: 0.15
+        color: loc.isPlayerHere ? '#f59e0b' : '#1f2937',
+        emissive: new THREE.Color(loc.isPlayerHere ? '#f59e0b' : '#000000'),
+        emissiveIntensity: loc.isPlayerHere ? 0.35 : 0
       })
     );
-    mesh.position.set(loc.position[0], h / 2, loc.position[2]);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(px, 0.02, pz);
+    worldGroup.add(ring);
+
+    const tex = loadSceneTexture(loc.sceneTexture);
+    let mesh;
+    if (tex) {
+      mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(BILLBOARD_W, BILLBOARD_H),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false })
+      );
+      mesh.position.set(px, BILLBOARD_H / 2 + 0.15, pz);
+    } else {
+      const [w, h, d] = loc.scale || [2, 2.5, 2];
+      mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshStandardMaterial({
+          color: loc.color || '#64748b',
+          emissive: new THREE.Color(loc.emissive || '#000000'),
+          emissiveIntensity: loc.emissiveIntensity ?? 0.1
+        })
+      );
+      mesh.position.set(px, h / 2, pz);
+    }
     mesh.castShadow = true;
-    mesh.receiveShadow = true;
     addPickable(mesh, {
       kind: 'location',
       id: loc.id,
       label: loc.label,
       command: loc.command,
-      description: `${loc.zone} district · ${loc.agents?.length ?? 0} agent(s)`
+      description: `${loc.zone} · ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`
     });
 
-    const label = makeLabel(loc.label);
-    label.position.set(loc.position[0], h + 0.6, loc.position[2]);
+    const label = makeLabel(loc.label + (loc.isPlayerHere ? ' ★' : ''));
+    label.position.set(px, BILLBOARD_H + 0.8, pz);
     worldGroup.add(label);
 
     for (const agent of loc.agents || []) {
@@ -154,6 +188,24 @@ function buildLocations(locations) {
       });
     }
   }
+}
+
+function buildPlayer(player) {
+  if (!player?.position) return;
+  const [x, y, z] = player.position;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.45, 0.65, 32),
+    new THREE.MeshBasicMaterial({ color: '#f59e0b', transparent: true, opacity: 0.9 })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, y + 0.05, z);
+  worldGroup.add(ring);
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.28, 0.5, 4, 8),
+    new THREE.MeshStandardMaterial({ color: '#fbbf24', emissive: '#f59e0b', emissiveIntensity: 0.5 })
+  );
+  body.position.set(x, 0.9, z);
+  worldGroup.add(body);
 }
 
 function buildHotspots(hotspots) {
@@ -209,11 +261,13 @@ function applyVisualCues(cues) {
   buildEdges(cues.edges);
   buildLocations(cues.locations);
   buildHotspots(cues.hotspots);
+  buildPlayer(cues.player);
 
   const cam = cues.camera || {};
-  const target = new THREE.Vector3(...(cam.target || [0, 1.5, 0]));
+  const target = new THREE.Vector3(...(cam.walkTarget || cam.target || [0, 1.4, 0]));
+  const eye = cam.walkEye || [target.x, 1.65, target.z + 4.5];
   controls.target.copy(target);
-  camera.position.set(target.x + 8, target.y + 10, target.z + 12);
+  camera.position.set(eye[0], eye[1], eye[2]);
   controls.update();
 }
 

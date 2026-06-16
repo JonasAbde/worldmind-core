@@ -50,6 +50,7 @@ import { diffSnapshots, filterEvents } from '../persistence/timeline.js';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STATIC_DIR = path.join(REPO, 'static-play');
+const ASSETS_DIR = path.join(REPO, 'assets');
 const DB_PATH = process.env.WM_DB_PATH || path.join(REPO, 'data/worldmind.sqlite');
 const DEFAULT_SCENARIO = path.join(REPO, 'scenarios/new-aarhus-district-01.json');
 const CORS_ORIGINS = (process.env.WM_CORS_ORIGIN || '')
@@ -255,12 +256,22 @@ function readBody(req) {
 function serveStatic(req, res, urlPath) {
   let rel = urlPath === '/' ? '/index.html' : urlPath;
   rel = path.normalize(rel).replace(/^([./\\])+/, '');
-  const full = path.join(STATIC_DIR, rel);
+  let full = path.join(STATIC_DIR, rel);
   if (!full.startsWith(STATIC_DIR)) {
     res.writeHead(403); res.end('forbidden'); return;
   }
   if (!fs.existsSync(full) || !fs.statSync(full).isFile()) {
-    res.writeHead(404); res.end('not found'); return;
+    if (rel.startsWith('assets/')) {
+      const assetRel = rel.slice('assets/'.length);
+      const assetFull = path.join(ASSETS_DIR, assetRel);
+      if (assetFull.startsWith(ASSETS_DIR) && fs.existsSync(assetFull) && fs.statSync(assetFull).isFile()) {
+        full = assetFull;
+      } else {
+        res.writeHead(404); res.end('not found'); return;
+      }
+    } else {
+      res.writeHead(404); res.end('not found'); return;
+    }
   }
   const ext = path.extname(full).toLowerCase();
   const types = {
@@ -269,7 +280,10 @@ function serveStatic(req, res, urlPath) {
     '.css': 'text/css; charset=utf-8',
     '.json': 'application/json; charset=utf-8',
     '.svg': 'image/svg+xml',
-    '.png': 'image/png'
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg'
   };
   res.writeHead(200, { 'content-type': types[ext] || 'application/octet-stream', 'cache-control': 'no-store' });
   fs.createReadStream(full).pipe(res);

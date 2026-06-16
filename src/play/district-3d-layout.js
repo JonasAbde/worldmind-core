@@ -5,6 +5,7 @@
 
 import { buildDistrictView } from './district-view.js';
 import { buildGameplayShellModel } from './game-shell-model.js';
+import { sceneTexturePathForLocation } from './location-scene-assets.js';
 
 const ZONE_STYLES = Object.freeze({
   residential: { color: '#4a6fa5', height: 2.2, emissive: '#1e3a5f' },
@@ -63,28 +64,62 @@ export function build3DVisualCues(world, options = {}) {
   });
 
   const playerNode = locations.find((l) => l.id === playerLoc);
-  const hotspots = (shell.location?.hotspots ?? []).map((hotspot, index) => ({
-    id: hotspot.id,
-    label: hotspot.label,
-    command: hotspot.command,
-    risk: hotspot.risk ?? 1,
-    position: [
-      (playerNode?.position[0] ?? 0) + (index - 1) * 1.6,
-      0.5,
-      (playerNode?.position[2] ?? 0) + 2.2
-    ]
-  }));
+  const hotspotCount = shell.location?.hotspots?.length ?? 0;
+  const hotspots = (shell.location?.hotspots ?? []).map((hotspot, index) => {
+    const baseX = playerNode?.position[0] ?? 0;
+    const baseZ = playerNode?.position[2] ?? 0;
+    const angle = hotspotCount <= 1
+      ? 0
+      : -Math.PI / 3 + (index / (hotspotCount - 1)) * (Math.PI * 2 / 3);
+    const radius = 2.8;
+    return {
+      id: hotspot.id,
+      label: hotspot.label,
+      command: hotspot.command,
+      risk: hotspot.risk ?? 1,
+      icon: hotspot.icon ?? null,
+      position: [
+        baseX + Math.sin(angle) * radius,
+        0.75,
+        baseZ + Math.cos(angle) * radius
+      ]
+    };
+  });
+
+  const nodeById = Object.fromEntries((view.nodes || []).map((n) => [n.id, n]));
+  for (const loc of locations) {
+    const node = nodeById[loc.id];
+    const packScene = sceneTexturePathForLocation(loc.id);
+    const nodeAsset = node?.asset;
+    loc.sceneTexture = typeof nodeAsset === 'string' && nodeAsset.startsWith('assets/')
+      ? nodeAsset
+      : packScene;
+    loc.isPlayerHere = loc.id === playerLoc;
+    loc.walkAnchor = loc.position;
+    loc.interiorCamera = {
+      eye: [loc.position[0], 1.65, loc.position[2] + 4.5],
+      target: [loc.position[0], 1.4, loc.position[2]]
+    };
+  }
 
   return {
     kind: 'worldmind_3d_visual_cues',
-    version: 1,
+    version: 2,
     playerLocationId: playerLoc,
+    player: playerNode
+      ? {
+          position: [playerNode.position[0], 0.1, playerNode.position[2]],
+          locationId: playerLoc
+        }
+      : null,
     camera: {
       target: playerNode?.position ?? [0, 1.5, 0],
       distance: 16,
-      minDistance: 7,
+      minDistance: 4,
       maxDistance: 32,
-      polarAngle: 0.55
+      polarAngle: 0.55,
+      walkEye: playerNode?.interiorCamera?.eye ?? [0, 1.65, 4.5],
+      walkTarget: playerNode?.interiorCamera?.target ?? [0, 1.4, 0]
     },
     environment: {
       fogColor: '#0a0e14',
