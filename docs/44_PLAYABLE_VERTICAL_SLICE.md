@@ -189,6 +189,9 @@ gennem casen uden at skrive commands. CLI og web deler samme
 `play-engine` så der er ingen duplicate gameplay logic. Færdig i
 v1.0-rc5 — se `docs/45_INTERACTIVE_WEB_PLAY_UI.md`.
 
-**v1.0-rc6: Server-side play runtime + live command execution** —
-tilføj en simpel Node HTTP server der udfører commands fra browser
-i real-time (se `docs/45` for detaljer).
+**v1.0-rc6/rc7: Live Web Play Server + Save Browser Restore** —
+`src/cli/play-server.js` server `static-play/`, kører commands gennem
+`play-engine`, og eksponerer live save/branch/diff endpoints:
+`/api/saves`, `/api/saves/:id/restore`, `/api/branches`,
+`/api/saves/diff`. Browseren kan nu restore snapshots og opdatere uden
+reload. Se `docs/47_SAVE_BROWSER_BRANCH_RESTORE.md`.

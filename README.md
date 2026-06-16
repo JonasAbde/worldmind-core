@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc5 interactive web play UI
+# WorldMind v1.0-rc7 save browser UI and branch restore
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -41,6 +41,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v1.0-rc3** visuelt dashboard med Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery) og Visual Diff Panel. Ny `worldmind saves diff` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas). 137/137 tests grønne.
 - **v1.0-rc4** playable vertical slice. Ny `worldmind play` CLI med 14 player commands (look/move/talk/ask/inspect/listen_rumors/trace_rumor/counter_rumor/pay/ask_leno/status/save/branch/quit) der alle mapper til autoritative ActionRequests. Dialogue turn + consequence panel rendering. 3 resolution paths (peaceful / investigation / founder) — alle løser *The Missing Delivery* deterministisk. Ny `worldmind demo:play` (deterministisk 3-path walkthrough, byte-identical output) og `worldmind validate:leno` (Leno evidence-guard auditor der fanger hidden-truth leaks). 153/153 tests grønne, 13-trins `ci:gate` grøn.
 - **v1.0-rc5** interactive web play UI. Ny `worldmind play:web` CLI der genererer `static-play/index.html` (70KB) + `state.json` (122KB) — 11 centrale sektioner (Current Location, Visible Agents, Available Commands, Dialogue, Consequence, Evidence, Incident, Leno, Saves, Branches, Demo Paths) + Leno evidence-guard i UI. Shared `src/play/play-engine.js` (pure API) bruges af både CLI og web — ingen duplicate gameplay logic. Ny `worldmind validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate` grøn.
+- **v1.0-rc7** live save browser UI + branch timeline restore. Ny `worldmind play:server` HTTP runtime uden framework og `worldmind validate:saves-ui` gate. Browseren kan nu liste/filtrere saves, inspecte snapshots, restore uden reload, oprette branches og vise snapshot-diffs via `/api/saves`, `/api/saves/:id`, `/api/saves/:id/restore`, `/api/branches` og `/api/saves/diff`. Save/branch/diff genbruger SQLite/timeline persistence; private memory/secrets redacteres i API/UI. 188/188 tests grønne.
 
 ## Kør projektet
 
@@ -120,10 +121,11 @@ Læs i denne rækkefølge:
 16. `docs/43_BRANCH_DIFF_AND_QA_INSPECTOR.md` (v1.0-rc3)
 17. `docs/44_PLAYABLE_VERTICAL_SLICE.md` (v1.0-rc4)
 18. `docs/45_INTERACTIVE_WEB_PLAY_UI.md` (v1.0-rc5)
+19. `docs/47_SAVE_BROWSER_BRANCH_RESTORE.md` (v1.0-rc7)
 13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`
 
-## Spil WorldMind (v1.0-rc5)
+## Spil WorldMind (v1.0-rc7)
 
 ```bash
 # Interaktiv playable CLI
@@ -134,8 +136,13 @@ npm run demo:play
 
 # Interaktiv web-play UI (åbn i browser efter generering)
 npm run play:web
-start static-play/index.html   # Windows
-# eller: open static-play/index.html   # macOS
+start static-play/index.html   # static mode
+
+# Live web-play server + save/restore/branch UI
+npm run play:server
+start http://127.0.0.1:8080
+npm run validate:saves-ui
+# eller custom port: npm run play:server -- --port 9090
 
 # Validering af web UI
 npm run validate:web-play

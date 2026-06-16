@@ -134,12 +134,13 @@ server-side runtime der faktisk udfører commands.
 
 ## Næste Sprint Anbefaling
 
-**v1.0-rc6: Server-side play runtime + live command execution**
+**v1.0-rc7 status:** Live server + Save Browser Restore er implementeret.
+Se `docs/47_SAVE_BROWSER_BRANCH_RESTORE.md`.
 
-Tilføj en simpel Node HTTP server (`src/cli/play-server.js`) der:
-- Servicer `static-play/` på port 8080
-- Modtager POST `/api/command` med `{ command, args }`
-- Kalder `play-engine.resolveCommand` på server-side
-- Returnerer JSON til browser
-- Browseren opdaterer DOM i stedet for kun at vise en banner
-- Tilføj WebSocket for real-time event-streaming (valgfrit)
+**v1.0-rc8: UX polish + event stream**
+
+- Dedicated snapshot inspect drawer.
+- Branch restore confirmation flow.
+- Visual branch tree layout.
+- Event feed panel backed by `/api/events`.
+- Optional SSE/WebSocket to replace polling.

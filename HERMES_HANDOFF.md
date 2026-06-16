@@ -1,15 +1,23 @@
-# Hermes Handoff — WorldMind v1.0-rc5 interactive web play UI
+# Hermes Handoff — WorldMind v1.0-rc7 live save browser + branch restore
 
 ## Status
 
-WorldMind har nu en **interaktiv web-play UI**. `npm run play:web`
-genererer `static-play/index.html` (70KB) + `state.json` (122KB)
-med 11 centrale sektioner + 3 demo paths + Leno evidence-guard.
-CLI (`play`) og web (`play:web`) deler samme `play-engine` —
-ingen duplicate gameplay logic. 171/171 tests grønne, 15-trins
-`ci:gate` grøn.
+WorldMind har nu en **live web-play server og Save Browser UI**. Browseren kan sende commands til serveren, liste/filtrere snapshots, inspecte snapshots, restore uden page reload, oprette branches og vise snapshot-diffs. `play-server` bruger `src/play/play-engine.js` og eksisterende SQLite/timeline persistence — ingen duplicate gameplay eller save logic.
 
-## What is built (v1.0-rc5)
+Aktuel verifikation: **188/188 tests grønne**, strict typecheck clean, `validate:saves-ui` grøn. Private memories/secrets redacteres i API/UI, Leno evidence-guard er stadig aktiv, og Risk 4/5 actions forbliver gated.
+
+## What is built (v1.0-rc7)
+
+Building on v1.0-rc5's static web UI:
+
+- **`src/cli/play-server.js`** (ny): Node HTTP server uden tung framework. Servicer `static-play/` plus JSON API: `/api/health`, `/api/state`, `/api/command`, `/api/save`, `/api/events`, `/api/saves`, `/api/saves/:id`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff`.
+- **`src/cli/validate-saves-ui.js`** (ny): standalone validator. Auto-starter temporary play-server hvis nødvendig og tester health/state/saves/command/save/inspect/restore/branches/branch-create/diff/Leno guard/static sections.
+- **`src/play/web-renderer.js`** (udvidet): Save Browser panel med `data-saves-list`, search/filter, Save Now; Branch Timeline tree med branch create form; Snapshot Diff panel med `data-diff-panel`.
+- **`src/cli/play-web.js`** (udvidet): browser runtime prøver `/api/health`, skifter til live mode, kalder `/api/command`, `/api/saves`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff` uden reload.
+- **`test/v17-save-browser-ui.test.js`** (ny): 17 tests for endpoint contract, restore path, branch create, diff, hidden/private memory filtering, static UI sections og validator.
+- **`docs/47_SAVE_BROWSER_BRANCH_RESTORE.md`** (ny): API + UI + validation reference.
+
+## What is built (v1.0-rc5) — recapped
 
 Building on v1.0-rc4's playable vertical slice:
 

@@ -49,6 +49,7 @@
 - `43_BRANCH_DIFF_AND_QA_INSPECTOR.md` — v1.0-rc3 `worldmind saves diff` CLI + Visual Diff Panel. Struktureret diff med agent location, relationships, memories, rumors, economy, incidents.
 - `44_PLAYABLE_VERTICAL_SLICE.md` — v1.0-rc4 `worldmind play` playable loop (14 commands) + `worldmind demo:play` deterministisk 3-path walkthrough + `validate:leno` evidence-guard auditor. 153/153 tests grønne.
 - `45_INTERACTIVE_WEB_PLAY_UI.md` — v1.0-rc5 static web-play UI (`npm run play:web` genererer `static-play/index.html` + `state.json`); shared `src/play/play-engine.js`; web-renderer med Leno evidence-guard; `npm run validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate`.
+- `47_SAVE_BROWSER_BRANCH_RESTORE.md` — v1.0-rc7 live save browser + branch timeline restore. `npm run play:server`, `/api/saves`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff`; `npm run validate:saves-ui`; private memory redaction; 188/188 tests grønne.
 
 ## Roadmap
 

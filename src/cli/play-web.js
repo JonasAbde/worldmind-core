@@ -119,20 +119,107 @@ const APP_JS = `(function () {
     });
   }
 
-  function dispatch(cmd) {
-    // Static build: the in-page runtime is read-only. We surface a
-    // short status banner explaining how to run the command for real,
-    // and append the command to a "log" so the page is interactive.
+  function showBanner(text) {
     var banner = document.getElementById('wm-runtime-banner');
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'wm-runtime-banner';
-      banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1f6feb;color:white;padding:8px 12px;font-size:0.8rem;text-align:center;z-index:10;';
+      banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1f6feb;color:white;padding:8px 12px;font-size:0.8rem;text-align:center;z-index:10;font-family:monospace;';
       document.body.appendChild(banner);
     }
-    banner.textContent = 'Static build: command "' + cmd + '" recorded. Run via: npm run play -- --command=' + escapeHtml(cmd.split(' ')[0]) + ' (or visit the CLI for full execution).';
+    banner.textContent = text;
   }
 
+  // Detect live server by probing /api/health; fall back to static dispatch.
+  var liveMode = false;
+  fetch('/api/health').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (j && j.ok) {
+      liveMode = true;
+      showBanner('Live: connected to play-server (' + (j.version || 'unknown') + ')');
+      refreshSaves();
+      refreshBranches();
+    } else {
+      showBanner('Static build: start the server with "npm run play:server" for live execution.');
+    }
+  }).catch(function () {
+    showBanner('Static build: start the server with "npm run play:server" for live execution.');
+  });
+
+  function api(method, path, body) {
+    return fetch(path, {
+      method: method,
+      headers: { 'content-type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+  }
+
+  function dispatch(cmd) {
+    if (!liveMode) {
+      showBanner('Static build: command "' + cmd + '" recorded. Run via: npm run play -- --command=' + escapeHtml(cmd.split(' ')[0]));
+      return;
+    }
+    api('POST', '/api/command', { text: cmd }).then(function (r) {
+      if (r.status === 200 && r.body.ok) {
+        showBanner('Command "' + cmd + '" executed. Result: ' + JSON.stringify(r.body.result).slice(0, 200));
+      } else {
+        showBanner('Command failed: ' + (r.body.error || r.status));
+      }
+    });
+  }
+
+  // Save browser
+  function refreshSaves() {
+    api('GET', '/api/saves').then(function (r) {
+      if (r.status !== 200 || !r.body.ok) return;
+      var list = document.querySelector('[data-saves-list] tbody');
+      var summary = document.querySelector('[data-saves-summary]');
+      if (!list || !summary) return;
+      list.innerHTML = r.body.snapshots.map(function (s) {
+        return '<tr data-save-id="' + escapeHtml(s.id) + '"><td><code>' + escapeHtml(s.id) + '</code></td><td>' + escapeHtml(s.branchName) + '</td><td>Day ' + escapeHtml(String(s.day)) + ' ' + escapeHtml(s.time) + '</td><td>' + escapeHtml(String(s.tick)) + '</td><td>' + escapeHtml(s.createdAt) + '</td><td><button data-action="restore" data-save-id="' + escapeHtml(s.id) + '">Restore</button> <button data-action="inspect" data-save-id="' + escapeHtml(s.id) + '">Inspect</button></td></tr>';
+      }).join('');
+      summary.textContent = r.body.snapshots.length + ' snapshot(s) saved.';
+      // Attach restore handlers
+      list.querySelectorAll('[data-action="restore"]').forEach(function (btn) {
+        btn.addEventListener('click', function () { restoreSave(btn.getAttribute('data-save-id')); });
+      });
+      list.querySelectorAll('[data-action="inspect"]').forEach(function (btn) {
+        btn.addEventListener('click', function () { inspectSave(btn.getAttribute('data-save-id')); });
+      });
+    });
+  }
+
+  function inspectSave(id) {
+    api('GET', '/api/saves/' + encodeURIComponent(id)).then(function (r) {
+      var out = document.querySelector('[data-diff-output]');
+      if (out) out.textContent = 'Inspect ' + id + ' — ' + JSON.stringify(r.body, null, 2).slice(0, 500);
+    });
+  }
+
+  function restoreSave(id) {
+    api('POST', '/api/saves/' + encodeURIComponent(id) + '/restore', { actor: 'web-ui', reason: 'manual' }).then(function (r) {
+      if (r.status === 200 && r.body.ok) {
+        showBanner('Restored snapshot ' + id);
+        refreshSaves();
+        refreshBranches();
+      } else {
+        showBanner('Restore failed: ' + (r.body.error || r.status));
+      }
+    });
+  }
+
+  // Branch tree
+  function refreshBranches() {
+    api('GET', '/api/branches').then(function (r) {
+      if (r.status !== 200 || !r.body.ok) return;
+      var tree = document.querySelector('[data-branches-tree]');
+      if (!tree) return;
+      tree.innerHTML = r.body.branches.map(function (b) {
+        return '<li data-branch-id="' + escapeHtml(b.id) + '"><strong>' + escapeHtml(b.name) + '</strong> <span class="wm-branch-meta">origin <code>' + escapeHtml(b.originSnapshotId) + '</code>' + (b.currentSnapshotId ? ' → current <code>' + escapeHtml(b.currentSnapshotId) + '</code>' : '') + '</span></li>';
+      }).join('') || '<li class="wm-empty">No branches yet.</li>';
+    });
+  }
+
+  // Save / Branch / Diff controls
   document.querySelectorAll('.wm-cmd-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { dispatch(btn.getAttribute('data-command')); });
   });
@@ -144,6 +231,46 @@ const APP_JS = `(function () {
       if (input && input.value.trim()) dispatch(input.value.trim());
     });
   }
+  var refreshBtn = document.querySelector('[data-action="saves-refresh"]');
+  if (refreshBtn) refreshBtn.addEventListener('click', refreshSaves);
+  var filter = document.querySelector('[data-saves-filter]');
+  if (filter) filter.addEventListener('input', function () {
+    var q = filter.value.toLowerCase();
+    document.querySelectorAll('[data-saves-list] tbody tr').forEach(function (tr) {
+      tr.style.display = tr.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+    });
+  });
+  var branchForm = document.querySelector('[data-branch-create]');
+  if (branchForm) branchForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = new FormData(branchForm);
+    api('POST', '/api/branch', { name: data.get('name'), snapshotId: data.get('snapshotId'), note: data.get('note') || '' }).then(function (r) {
+      var out = document.querySelector('[data-branch-create-output]');
+      if (out) out.textContent = r.body.ok ? 'Branch created: ' + r.body.branchId : 'Error: ' + (r.body.error || r.status);
+      if (r.body.ok) refreshBranches();
+    });
+  });
+  var diffForm = document.querySelector('[data-diff-form]');
+  var diffPanel = document.querySelector('[data-diff-panel]');
+  var diffOut = document.querySelector('[data-diff-output]');
+  if (diffForm) diffForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = new FormData(diffForm);
+    var from = data.get('from'); var to = data.get('to');
+    api('GET', '/api/saves/diff?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)).then(function (r) {
+      if (r.body.ok && diffPanel) diffPanel.textContent = JSON.stringify(r.body.diff, null, 2);
+      if (diffOut) diffOut.textContent = r.body.ok ? 'Diff computed.' : 'Error: ' + (r.body.error || r.status);
+    });
+  });
+
+  // Save now button
+  var saveBtn = document.querySelector('[data-action="save-now"]');
+  if (saveBtn) saveBtn.addEventListener('click', function () {
+    api('POST', '/api/save', { branchName: 'main', note: 'from web-ui' }).then(function (r) {
+      showBanner(r.body.ok ? ('Saved ' + r.body.snapshotId) : ('Save failed: ' + (r.body.error || r.status)));
+      if (r.body.ok) refreshSaves();
+    });
+  });
 })();`;
 
 function main() {

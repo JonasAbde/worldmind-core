@@ -97,24 +97,28 @@
 - Risk 4/5 actions stadig gated (max risk = 3 i MVP).
 - Leno evidence guard stadig aktiv — intet hidden truth lækket.
 
-### v1.0-rc5 — Interactive Web Play UI  ✅ *(current)*
+### v1.0-rc5 — Interactive Web Play UI  ✅
 - `src/play/play-engine.js` (ny): pure-API shared engine. `bootstrapWorld`, `resolveCommand`, `parseCommandText`, `runScriptedPath`, `getDemoPaths`, `summarizeWorld`, `summarizeStatus`. Bruges af både `src/cli/play.js` (CLI) og `src/cli/play-web.js` (web) så der er **ingen duplicate gameplay logic**.
-- `src/play/web-renderer.js` (ny): state → HTML rendering. `renderWebPage`, `renderHeader`, `renderLocation`, `renderAgents`, `renderCommandButtons`, `renderCommandForm`, `renderDialogueTurn`, `renderConsequence`, `renderEvidence`, `renderIncident`, `renderLeno`, `renderSaves`, `renderBranches`, `renderDemoPaths`, `escapeHtml`, `applyLenoGuard`. Leno evidence-guard er indbygget: source-defining Nadia mentions redakteres til "REDACTED — evidence required" medmindre `rumor_source_nadia` er i `playerKnowledge.evidenceIds`.
-- `src/cli/play-web.js` (ny): genererer `static-play/index.html` (70KB) + `static-play/state.json` (122KB) deterministisk. Indlejrer CSS, JS runtime, embedded JSON state. Quick-action buttons + fri tekst-command input. 12 button-shortcuts + alle 14 player commands understøttet via tekst.
-- `src/cli/validate-web-play.js` (ny): auditerer den genererede side. Tjekker 11 section labels + 3 runtime markers (`wm-cmd-btn`, `wm-cmd-form`, `wm-state`). Tilføjet til `ci:gate` som trin 15.
-- `package.json`: 2 nye scripts (`play:web`, `validate:web-play`). `ci:gate` udvidet fra 13 til 15 steps.
-- `static-play/` (ny mappe): genereret output (deterministisk, byte-identical mellem kørsler). `static-play/index.html` kan åbnes direkte i browser.
-- `test/v15-interactive-web-play.test.js` (ny): 18 tests der dækker engine API, renderer exports, alle 11 sektioner, Leno evidence-guard (med/uden evidence), text command parser, play:web determinism, validate:web-play, ci:gate wiring.
-- 171/171 tests grønne, 15-trins `ci:gate` grøn. `play:web` byte-identical mellem kørsler. Event Log invariants stadig intakte: 0 violations / 123 events. Leno evidence guard stadig aktiv. Risk 4/5 actions stadig gated.
-- Web UI er **read-only** i denne sprint (browser sender commands til en status-banner). Faktisk command-udførelse kræver `npm run play` (CLI) eller `npm run demo:play`. Næste sprint tilføjer server-side runtime.
+- `src/play/web-renderer.js` (ny): state → HTML rendering. `renderWebPage`, `renderHeader`, `renderLocation`, `renderAgents`, `renderCommandButtons`, `renderDialogueTurn`, `renderConsequence`, `renderEvidence`, `renderIncident`, `renderLeno`, `renderSaves`, `renderBranches`, `renderDemoPaths`, `escapeHtml`, `applyLenoGuard`.
+- `src/cli/play-web.js` (ny): genererer `static-play/index.html` + `static-play/state.json` deterministisk. Quick-action buttons + fri tekst-command input.
+- `src/cli/validate-web-play.js` (ny): auditerer den genererede side. Tjekker 11 section labels + 3 runtime markers.
+- 171/171 tests grønne. Web UI var read-only i rc5.
 
-### v1.0-rc6 — (næste)
-- Server-side play runtime (`src/cli/play-server.js`) der servicer `static-play/` + håndterer `POST /api/command` + sender JSON-resultater tilbage til browser
-- Live DOM-opdatering i stedet for read-only banner
-- WebSocket eller SSE for real-time event-streaming
-- Authoring tools (creator mode v0.1)
-- 2D district view
-- Phone UI + Leno overlay
+### v1.0-rc7 — Live Save Browser UI + Branch Timeline Restore ✅ *(current)*
+- `src/cli/play-server.js` (ny): Node HTTP server uden framework. Servicer `static-play/`, `GET /api/health`, `GET /api/state`, `POST /api/command`, `POST /api/save`, `GET /api/events`, `GET /api/saves`, `GET /api/saves/:id`, `POST /api/saves/:id/restore`, `GET /api/branches`, `POST /api/branches`, `GET /api/saves/diff?from=A&to=B`.
+- `src/cli/validate-saves-ui.js` (ny): standalone validator der auto-starter en midlertidig play-server hvis nødvendig. Tjekker health/state/saves/command/save/inspect/restore/branches/branch-create/diff/Leno guard/static sections.
+- `src/play/web-renderer.js`: Save Browser panel fik `data-saves-list`, search/filter, restore/inspect controls; Branch Timeline tree fik create form; Snapshot Diff panel fik `data-diff-panel`.
+- `src/cli/play-web.js`: browser runtime prøver `/api/health`, skifter til live mode, kalder `/api/command`, `/api/saves`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff` uden reload.
+- Save/restore/branch/diff genbruger eksisterende persistence (`src/persistence/sqlite.js`) og timeline (`src/persistence/timeline.js`) — ingen duplicate save logic.
+- Private memories/secrets redacteres i API/UI, og `hiddenCause` skjules uden evidence. Leno guard og Risk 4/5 gates er stadig aktive.
+- 188/188 tests grønne.
+
+### v1.0-rc8 — (næste)
+- Polish Live Web Play UX: dedicated snapshot inspect drawer, branch restore confirmation, event feed timeline, and visual branch tree layout.
+- Optional SSE/WebSocket stream to replace polling.
+- Authoring tools (creator mode v0.1).
+- 2D district view.
+- Phone UI + Leno overlay.
 
 ## Non-goals (until v1.0)
 
@@ -135,15 +139,17 @@
 ## Verification gate (every sprint)
 
 ```bash
-npm test              # 171/171 grønne (v1.0-rc5)
+npm test              # 188/188 grønne (v1.0-rc7)
 npm run typecheck     # strict + strictNullChecks clean
 npm run check         # typecheck + MVP-eval passed
-npm run ci:gate       # 15 steps grønne
+npm run ci:gate       # 16+ steps grønne
 npm start             # dashboard regenereret med alle eval-kriterier
 npm run play -- --help        # 14 player commands listet
 npm run demo:play             # deterministisk 3-path walkthrough
 npm run validate:leno         # Leno evidence-guard audit
 npm run play:web              # generer static-play/index.html
 npm run validate:web-play     # auditer genereret web UI
+npm run play:server -- --help # live web server endpoints
+npm run validate:saves-ui     # save browser/restore/branch/diff live API gate
 npm run saves:list            # save browser
 ```

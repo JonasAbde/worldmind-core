@@ -211,22 +211,51 @@ export function renderLeno(payload) {
 
 export function renderSaves(saves) {
   const rows = (saves ?? []).map((s) =>
-    `<tr><td><code>${escapeHtml(s.id)}</code></td><td>${escapeHtml(s.branch ?? 'main')}</td><td>Day ${escapeHtml(String(s.day ?? '?'))} ${escapeHtml(s.time ?? '')}</td><td>${escapeHtml(s.tick ?? '?')}</td><td>${escapeHtml(s.createdAt ?? '')}</td></tr>`
+    `<tr data-save-id="${escapeHtml(s.id)}"><td><code>${escapeHtml(s.id)}</code></td><td>${escapeHtml(s.branch ?? 'main')}</td><td>Day ${escapeHtml(String(s.day ?? '?'))} ${escapeHtml(s.time ?? '')}</td><td>${escapeHtml(s.tick ?? '?')}</td><td>${escapeHtml(s.createdAt ?? '')}</td></tr>`
   ).join('');
-  return `<section class="wm-section wm-saves" id="wm-saves">
+  return `<section class="wm-section wm-saves" id="section-saves">
   <h2>Saves</h2>
-  <p class="wm-empty">${rows ? `${(saves ?? []).length} snapshot(s) saved.` : 'No saves yet. Use the CLI <code>npm run saves:list</code> to browse.'}</p>
-  ${rows ? `<table class="wm-saves-table"><thead><tr><th>ID</th><th>Branch</th><th>Day/Time</th><th>Tick</th><th>Created</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
+  <p class="wm-empty" data-saves-summary>${rows ? `${(saves ?? []).length} snapshot(s) saved.` : 'No saves yet. Use the CLI <code>npm run saves:list</code> to browse.'}</p>
+  ${rows ? `<table class="wm-saves-table" data-saves-list><thead><tr><th>ID</th><th>Branch</th><th>Day/Time</th><th>Tick</th><th>Created</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
+  <div class="wm-save-actions">
+    <button type="button" data-action="saves-refresh">Refresh</button>
+    <button type="button" data-action="save-now">Save now</button>
+    <input type="search" placeholder="Filter by id or branch" data-saves-filter />
+  </div>
 </section>`;
 }
 
 export function renderBranches(branches) {
-  const list = (branches ?? []).map((b) =>
-    `<li><strong>${escapeHtml(b.name)}</strong> — origin <code>${escapeHtml(b.originSnapshotId ?? '?')}</code>${b.note ? ` — ${escapeHtml(b.note)}` : ''}</li>`
-  ).join('');
-  return `<section class="wm-section wm-branches" id="wm-branches">
+  const tree = (branches ?? []).map((b) => `
+    <li data-branch-id="${escapeHtml(b.id)}">
+      <strong>${escapeHtml(b.name)}</strong>
+      <span class="wm-branch-meta">origin <code>${escapeHtml(b.originSnapshotId ?? '?')}</code>${b.currentSnapshotId ? ` → current <code>${escapeHtml(b.currentSnapshotId)}</code>` : ''}</span>
+      ${b.note ? `<div class="wm-branch-note">${escapeHtml(b.note)}</div>` : ''}
+    </li>
+  `).join('');
+  return `<section class="wm-section wm-branches" id="section-branches">
   <h2>Branches</h2>
-  <ul>${list || '<li class="wm-empty">No branches yet.</li>'}</ul>
+  <ul class="wm-branches-tree" data-branches-tree>${tree || '<li class="wm-empty">No branches yet.</li>'}</ul>
+  <form class="wm-branch-create" data-branch-create>
+    <label>Name <input type="text" name="name" required /></label>
+    <label>Snapshot ID <input type="text" name="snapshotId" required /></label>
+    <label>Note <input type="text" name="note" /></label>
+    <button type="submit">Create branch</button>
+    <output data-branch-create-output></output>
+  </form>
+</section>`;
+}
+
+export function renderDiff() {
+  return `<section class="wm-section wm-diff" id="section-diff">
+  <h2>Snapshot Diff</h2>
+  <form class="wm-diff-form" data-diff-form>
+    <label>From <input type="text" name="from" required /></label>
+    <label>To <input type="text" name="to" required /></label>
+    <button type="submit">Compute diff</button>
+    <output data-diff-output></output>
+  </form>
+  <pre class="wm-diff-panel" data-diff-panel>Pick two snapshots and compute a diff.</pre>
 </section>`;
 }
 
@@ -294,6 +323,7 @@ export function renderWebPage(payload) {
         ${renderLeno(payload)}
         ${renderSaves(payload?.saves)}
         ${renderBranches(payload?.branches)}
+        ${renderDiff()}
       </div>
     </div>
   </main>
