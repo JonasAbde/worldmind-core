@@ -81,8 +81,26 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .wm-agents-here, .wm-agent-list, .wm-demo-path-list { list-style: none; padding: 0; margin: 0; }
 .wm-agents-here li, .wm-agent-list li { padding: 4px 0; border-bottom: 1px solid #21262d; }
 .wm-agent { display: flex; flex-direction: column; gap: 2px; }
+.wm-agent-card { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: start; }
+.wm-agent-avatar { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; border: 1px solid #30363d; }
 .wm-agent-role { color: #8b95a1; font-size: 0.8rem; }
 .wm-agent-loc { color: #6e7681; font-size: 0.75rem; }
+.wm-agent-stats { color: #9fb4c8; font-size: 0.75rem; display: block; margin: 2px 0; }
+.wm-agent-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.wm-agent-actions button { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; cursor: pointer; }
+.wm-topbar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.85rem; }
+.wm-location-scene { margin: 8px 0; }
+.wm-scene-img { width: 100%; border-radius: 6px; border: 1px solid #30363d; }
+.wm-hotspot-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
+.wm-hotspot { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 6px; }
+.wm-hotspot button { background: #1f6feb; border: none; color: #fff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+.wm-case-board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wm-case-board ul { list-style: none; padding: 0; margin: 0; }
+.wm-case-card { display: flex; align-items: center; gap: 6px; border: 1px solid #21262d; border-radius: 4px; padding: 4px; margin: 4px 0; background: #0d1117; }
+.wm-case-card img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+.wm-ticker { margin: 0; padding-left: 18px; font-size: 0.82rem; }
+.wm-decision-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.wm-decision-list button { background: #3d1f6b; color: #fff; border: 1px solid #5d2fa0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.78rem; }
 .wm-command-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .wm-cmd-btn { background: #21262d; color: #e6e6e6; border: 1px solid #30363d; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; }
 .wm-cmd-btn:hover { background: #30363d; }
@@ -222,6 +240,40 @@ const APP_JS = `(function () {
   // Save / Branch / Diff controls
   document.querySelectorAll('.wm-cmd-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { dispatch(btn.getAttribute('data-command')); });
+  });
+  document.querySelectorAll('[data-run-command]').forEach(function (btn) {
+    btn.addEventListener('click', function () { dispatch(btn.getAttribute('data-run-command')); });
+  });
+  document.querySelectorAll('[data-major-decision]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var choice = btn.getAttribute('data-major-decision');
+      if (!liveMode) {
+        showBanner('Major decision: ' + choice + '. Start play-server to branch before decision.');
+        return;
+      }
+      var mkBranch = confirm('Create branch before this decision?');
+      if (!mkBranch) {
+        showBanner('Decision noted without branch: ' + choice);
+        return;
+      }
+      api('POST', '/api/save', { branchName: 'main', note: 'pre-decision:' + choice }).then(function (saveRes) {
+        if (!saveRes.body || !saveRes.body.ok) {
+          showBanner('Pre-decision save failed: ' + (saveRes.body?.error || saveRes.status));
+          return;
+        }
+        var snapshotId = saveRes.body.snapshotId;
+        var branchName = 'decision_' + choice + '_' + Date.now();
+        api('POST', '/api/branch', { name: branchName, snapshotId: snapshotId, note: 'before ' + choice }).then(function (branchRes) {
+          if (branchRes.body && branchRes.body.ok) {
+            showBanner('Branch created before decision: ' + branchName);
+            refreshSaves();
+            refreshBranches();
+          } else {
+            showBanner('Branch create failed: ' + (branchRes.body?.error || branchRes.status));
+          }
+        });
+      });
+    });
   });
   var form = document.getElementById('wm-cmd-form');
   if (form) {

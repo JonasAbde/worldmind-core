@@ -121,6 +121,21 @@ This integration follows a reviewed production flow:
 
 Use this integrated pack as the reviewed prototype baseline, then run one focused "art lock" pass for the remaining open categories before public-facing release.
 
+## Sync with master (docs/51 + docs/52)
+
+Branch was synced with `origin/master` after initial integration. Two new docs arrived from master without conflicts:
+
+- `docs/51_ASSET_ART_LOCK_LANDING_AND_RUNTIME_PLAN.md` — defines landing vs runtime separation and ship criteria.
+- `docs/52_FULL_FEATURED_GAMEPLAY_EXPANSION_PLAN.md` — full gameplay expansion plan.
+
+Both are now present in this branch.
+
+Key requirement from docs/51 implemented in this branch:
+
+- `assets/landing/` created as a dedicated product/marketing asset lane, separate from runtime sprites.
+- 10 landing PNGs sourced from best available assets.
+- WebP and responsive derivatives generated under `assets/landing/generated/`.
+
 ## V5 generation follow-up (major improvement pass)
 
 A follow-up generation pass was executed to improve the weakest long-tail placeholders while staying dependency-light and deterministic in-repo.
