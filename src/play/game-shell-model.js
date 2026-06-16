@@ -129,10 +129,13 @@ export function buildGameplayShellModel(world, payload = {}) {
     rumorTrail,
     founder: {
       unlocked: founderUnlocked,
+      baseLevel: world?.founder?.baseLevel ?? 0,
+      contractsCompleted: world?.founder?.contractsCompleted ?? 0,
+      activeContract: world?.founder?.activeContract ?? null,
       unlockText: founderUnlocked
         ? 'Founder loop unlocked.'
         : 'Resolve The Missing Delivery to unlock founder loop.'
     },
-    majorDecisions: MAJOR_DECISIONS
+    majorDecisions: MAJOR_DECISIONS.map((id) => ({ id, command: id }))
   };
 }

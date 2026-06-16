@@ -238,7 +238,7 @@ export function parseCommandText(text) {
 const KNOWN_COMMANDS = new Set([
   'look', 'status', 'move', 'talk', 'ask', 'inspect', 'listen_rumors',
   'trace_rumor', 'counter_rumor', 'pay', 'ask_leno', 'save', 'branch',
-  'quit'
+  'start_delivery_workflow', 'run_delivery_contract', 'quit'
 ]);
 
 /**
@@ -455,7 +455,9 @@ function snapshotForDelta(world) {
   return {
     agents: JSON.parse(JSON.stringify(world.agents)),
     memories: world.memories,
-    rumors: world.rumors
+    rumors: world.rumors,
+    economy: JSON.parse(JSON.stringify(world.economy ?? {})),
+    founder: JSON.parse(JSON.stringify(world.founder ?? {}))
   };
 }
 
@@ -464,12 +466,27 @@ function diffConsequence(world, before, actorId, ev) {
   const memDelta = Object.keys(world.memories).length - Object.keys(before.memories).length;
   const rumorDelta = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
   const moneyDelta = (world.agents[actorId]?.stats?.money ?? 0) - (before.agents[actorId]?.stats?.money ?? 0);
+  const reputationDelta = (world.agents[actorId]?.stats?.reputation ?? 0) - (before.agents[actorId]?.stats?.reputation ?? 0);
+  const energyDelta = (world.agents[actorId]?.stats?.energy ?? 0) - (before.agents[actorId]?.stats?.energy ?? 0);
+  const economyDelta = {
+    foodScarcity: (world.economy?.foodScarcity ?? 0) - (before.economy?.foodScarcity ?? 0),
+    trustPressure: (world.economy?.trustPressure ?? 0) - (before.economy?.trustPressure ?? 0)
+  };
+  const founderDelta = {
+    contractsCompleted: (world.founder?.contractsCompleted ?? 0) - (before.founder?.contractsCompleted ?? 0),
+    baseLevel: (world.founder?.baseLevel ?? 0) - (before.founder?.baseLevel ?? 0),
+    activeContractChanged: (world.founder?.activeContract?.id ?? null) !== (before.founder?.activeContract?.id ?? null)
+  };
   const incident = Object.values(world.incidents || {}).find((i) => i.id === 'missing_delivery');
   return {
     relationships: relChanges,
     newMemories: memDelta,
     newRumors: rumorDelta,
     moneyDelta,
+    reputationDelta,
+    energyDelta,
+    economyDelta,
+    founderDelta,
     incident: incident ? { title: incident.title, status: incident.status, resolutionState: incident.resolutionState ?? null } : null,
     lastEvent: ev ? { type: ev.type, description: ev.description, importance: ev.importance } : null
   };

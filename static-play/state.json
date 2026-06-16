@@ -201,8 +201,7 @@
           "mem_00066",
           "mem_00071",
           "mem_00076",
-          "mem_00081",
-          "mem_00082"
+          "mem_00081"
         ],
         "currentIntent": "activate_leno",
         "secrets": [],
@@ -413,9 +412,7 @@
           "mem_00077"
         ],
         "currentIntent": "secure_supply",
-        "secrets": [
-          "uses_old_logistics_agent_tool"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/sara/portrait.png",
           "avatar": "assets/characters/sara/avatar.png",
@@ -616,9 +613,7 @@
           "mem_00053"
         ],
         "currentIntent": "avoid_registry_attention",
-        "secrets": [
-          "hides_illegal_repair_modules"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/malik/portrait.png",
           "avatar": "assets/characters/malik/avatar.png",
@@ -813,9 +808,7 @@
           "mem_00054"
         ],
         "currentIntent": "destabilize_rivals",
-        "secrets": [
-          "started_false_sara_registry_rumor"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/nadia/portrait.png",
           "avatar": "assets/characters/nadia/avatar.png",
@@ -1192,9 +1185,7 @@
           "mem_00056"
         ],
         "currentIntent": "learn_from_world",
-        "secrets": [
-          "does_not_fully_know_origin"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/lina/portrait.png",
           "avatar": "assets/characters/lina/avatar.png",
@@ -1790,9 +1781,7 @@
           "mem_00079"
         ],
         "currentIntent": "find_delivery_work",
-        "secrets": [
-          "saw_nadia_near_workshop_before_delivery_failure"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/rune/portrait.png",
           "avatar": "assets/characters/rune/avatar.png",
@@ -2172,9 +2161,7 @@
           "mem_00080"
         ],
         "currentIntent": "support_neighbors",
-        "secrets": [
-          "helps_free_agents_hide_from_registry"
-        ],
+        "secrets": [],
         "assets": {
           "portrait": "assets/characters/amina/portrait.png",
           "avatar": "assets/characters/amina/avatar.png",
@@ -2343,7 +2330,7 @@
         "status": "resolved",
         "createdAtTick": 12,
         "visibleProblem": "Sara's Café is missing supplies and may close early.",
-        "hiddenCause": "Nadia planted a false rumor that Sara works with Registry.",
+        "hiddenCause": null,
         "involvedAgentIds": [
           "sara",
           "malik",
@@ -4652,30 +4639,6 @@
         "time": "20:00",
         "tick": 80,
         "public": true
-      },
-      "mem_00082": {
-        "id": "mem_00082",
-        "agentId": "player",
-        "type": "episodic",
-        "content": "Action executed: ask_leno",
-        "sourceEventId": "evt_00040",
-        "relatedAgentIds": [],
-        "relatedLocationIds": [
-          "apartment"
-        ],
-        "relatedItemIds": [],
-        "emotionalWeight": 55,
-        "confidence": 85,
-        "importance": 2,
-        "sentiment": "neutral",
-        "visibility": "private",
-        "createdAtTick": 96,
-        "decayRate": 3.25,
-        "locked": false,
-        "day": 2,
-        "time": "00:00",
-        "tick": 96,
-        "public": false
       }
     },
     "economy": {
@@ -4762,12 +4725,5 @@
       ]
     }
   ],
-  "leno": {
-    "summary": "World: New Aarhus District 01, Day 2, 00:00.\nState: 11 agents | 82 memories | 1 rumors | 1 incidents.\nResolved incident: The Missing Delivery. Known facts: Sara is low on supplies. | Malik refused delivery. | A rumor connects Sara to Registry..\nResolution path: investigation_and_counter_rumor.\nEvidence level: Nadia is a probable source of the false rumor.\nRecent visible events: Food scarcity increased. Market food price is now 18. / Food scarcity increased. Market food price is now 18. / Daily checkpoint: 11 agents, 71 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 1, 12:00. / Food scarcity increased. Market food price is now 18. / Daily checkpoint: 11 agents, 76 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 1, 18:00. / Food scarcity increased. Market food price is now 18..",
-    "suggestions": [
-      "Safe: talk to Sara again and inspect the café stock.",
-      "Social: ask Amina to mediate between Sara and Malik.",
-      "Risky: pay Rune for information about Nadia and the workshop."
-    ]
-  }
+  "leno": null
 }

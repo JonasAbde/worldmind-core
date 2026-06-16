@@ -247,6 +247,10 @@ const APP_JS = `(function () {
   document.querySelectorAll('[data-major-decision]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var choice = btn.getAttribute('data-major-decision');
+      var runAfter = btn.getAttribute('data-run-after-branch') || choice;
+      var executeDecision = function () {
+        dispatch(runAfter);
+      };
       if (!liveMode) {
         showBanner('Major decision: ' + choice + '. Start play-server to branch before decision.');
         return;
@@ -254,6 +258,7 @@ const APP_JS = `(function () {
       var mkBranch = confirm('Create branch before this decision?');
       if (!mkBranch) {
         showBanner('Decision noted without branch: ' + choice);
+        executeDecision();
         return;
       }
       api('POST', '/api/save', { branchName: 'main', note: 'pre-decision:' + choice }).then(function (saveRes) {
@@ -268,6 +273,7 @@ const APP_JS = `(function () {
             showBanner('Branch created before decision: ' + branchName);
             refreshSaves();
             refreshBranches();
+            executeDecision();
           } else {
             showBanner('Branch create failed: ' + (branchRes.body?.error || branchRes.status));
           }
@@ -343,18 +349,34 @@ function main() {
   // Bootstrap a fresh world from the canonical scenario.
   const world = bootstrapWorld({ scenarioPath });
 
+  // Redacted copy: all private/hidden fields stripped so the browser
+  // payload NEVER leaks secrets, even if the original world has them.
+  const safeWorld = JSON.parse(JSON.stringify(world));
+  // Strip incident hiddenCause (the central design secret)
+  if (safeWorld.incidents) {
+    for (const inc of Object.values(safeWorld.incidents)) {
+      if (inc.hiddenCause !== undefined) inc.hiddenCause = null;
+    }
+  }
+  // Strip agent secrets (private motivations)
+  if (safeWorld.agents) {
+    for (const agent of Object.values(safeWorld.agents)) {
+      if (agent.secrets) agent.secrets = [];
+    }
+  }
+
   // Pre-compute a "look" result so the page shows an initial
   // dialogue/consequence panel (empty, but the structure is there).
-  const initial = resolveCommand(world, 'look', {});
+  const initial = resolveCommand(safeWorld, 'look', {});
 
-  // Pre-compute the Leno summary (with the guard built into the
-  // renderer; the page never ships a leaky summary).
-  const lenoResult = resolveCommand(world, 'ask_leno', {});
+  // Pre-compute the Leno summary on the REDACTED world state so the
+  // payload NEVER contains hidden secrets even in the initial snapshot.
+  const lenoResult = resolveCommand(safeWorld, 'ask_leno', {});
 
   const payload = {
     world: {
       id: world.id, name: world.name, day: world.day, time: world.time, tick: world.tick,
-      agents: world.agents, locations: world.locations, incidents: world.incidents,
+      agents: safeWorld.agents, locations: world.locations, incidents: safeWorld.incidents,
       rumors: world.rumors, items: world.items, factions: world.factions,
       memories: world.memories, economy: world.economy,
       playerKnowledge: world.playerKnowledge

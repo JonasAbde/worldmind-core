@@ -43,15 +43,22 @@ Kernen er ikke "NPC chatbot". Kernen er en simulation-first engine, hvor Event L
 - **v1.0-rc5** interactive web play UI. Ny `worldmind play:web` CLI der genererer `static-play/index.html` (70KB) + `state.json` (122KB) — 11 centrale sektioner (Current Location, Visible Agents, Available Commands, Dialogue, Consequence, Evidence, Incident, Leno, Saves, Branches, Demo Paths) + Leno evidence-guard i UI. Shared `src/play/play-engine.js` (pure API) bruges af både CLI og web — ingen duplicate gameplay logic. Ny `worldmind validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate` grøn.
 - **v1.0-rc7** live save browser UI + branch timeline restore. Ny `worldmind play:server` HTTP runtime uden framework og `worldmind validate:saves-ui` gate. Browseren kan nu liste/filtrere saves, inspecte snapshots, restore uden reload, oprette branches og vise snapshot-diffs via `/api/saves`, `/api/saves/:id`, `/api/saves/:id/restore`, `/api/branches` og `/api/saves/diff`. Save/branch/diff genbruger SQLite/timeline persistence; private memory/secrets redacteres i API/UI. 188/188 tests grønne.
 - **v1.0-rc8** 2D district view + phone/Leno UI. `worldmind play:web` inkluderer nu `renderDistrictView()` med SVG kort over de 4 locations, `renderPhoneTabs()` med 8 tabs (Messages, Contacts, Rumors, Evidence, Jobs/Incident, Saves, Branches, Leno), `renderEventFeed()` panel. Location click → move command via `/api/command`. Leno overlay viser suggestions. 200/200 tests grønne.
-
 ## Kør projektet
 
 ```bash
+npm install
 npm test
 npm run typecheck
 npm run check
 npm run ci:gate
 npm start
+```
+
+**Creator mode** — build your own scenarios:
+
+```bash
+npm run creator -- new scenarios/my-district.json
+npm run creator -- validate scenarios/my-district.json
 ```
 
 Valgfri flags:

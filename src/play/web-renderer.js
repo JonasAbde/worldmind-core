@@ -207,7 +207,11 @@ export function renderConsequence(consequence) {
     `relationships: ${rels ? 'updated' : 'no change'}`,
     `memories: ${consequence.newMemories >= 0 ? '+' : ''}${consequence.newMemories ?? 0}`,
     `rumors: ${consequence.newRumors >= 0 ? '+' : ''}${consequence.newRumors ?? 0}`,
-    `money: ${consequence.moneyDelta >= 0 ? '+' : ''}${consequence.moneyDelta ?? 0}`
+    `money: ${consequence.moneyDelta >= 0 ? '+' : ''}${consequence.moneyDelta ?? 0}`,
+    `reputation: ${consequence.reputationDelta >= 0 ? '+' : ''}${consequence.reputationDelta ?? 0}`,
+    `energy: ${consequence.energyDelta >= 0 ? '+' : ''}${consequence.energyDelta ?? 0}`,
+    `food scarcity: ${consequence.economyDelta?.foodScarcity >= 0 ? '+' : ''}${consequence.economyDelta?.foodScarcity ?? 0}`,
+    `base progress: +${consequence.founderDelta?.contractsCompleted ?? 0} contracts${(consequence.founderDelta?.baseLevel ?? 0) > 0 ? ' / base level up' : ''}`
   ];
   return `<section class="wm-section wm-consequence" id="wm-consequence">
   <h2>Consequence</h2>
@@ -258,9 +262,10 @@ export function renderFounderPanel(shell) {
   ${unlocked
     ? `<p>Founder loop unlocked.</p>
        <ul>
-         <li>First workflow contract available</li>
-         <li>Malik/Sara contract option available</li>
-         <li>Base progress + reputation loop active</li>
+         <li>Contracts completed: <strong>${escapeHtml(shell?.founder?.contractsCompleted ?? 0)}</strong></li>
+         <li>Base level: <strong>${escapeHtml(shell?.founder?.baseLevel ?? 0)}</strong></li>
+         <li>Active contract: <strong>${escapeHtml(shell?.founder?.activeContract?.id ?? 'none')}</strong></li>
+         <li><button type="button" data-run-command="start_delivery_workflow">Start workflow</button> <button type="button" data-run-command="run_delivery_contract">Run contract</button></li>
        </ul>`
     : `<p class="wm-empty">${escapeHtml(shell?.founder?.unlockText ?? 'Resolve The Missing Delivery to unlock founder loop.')}</p>`}
 </section>`;
@@ -271,7 +276,11 @@ export function renderMajorDecisionPanel(shell) {
   return `<section class="wm-section wm-major-decisions" id="wm-major-decisions">
   <h2>Major Decisions</h2>
   <p>Create branch before high-impact choices.</p>
-  <div class="wm-decision-list">${choices.map((c) => `<button type="button" data-major-decision="${c}">${escapeHtml(c)}</button>`).join('')}</div>
+  <div class="wm-decision-list">${choices.map((c) => {
+    const id = typeof c === 'string' ? c : c.id;
+    const cmd = typeof c === 'string' ? c : c.command;
+    return `<button type="button" data-major-decision="${escapeHtml(id)}" data-run-after-branch="${escapeHtml(cmd)}">${escapeHtml(id)}</button>`;
+  }).join('')}</div>
 </section>`;
 }
 
