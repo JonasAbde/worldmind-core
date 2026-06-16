@@ -300,6 +300,56 @@ test('v1.0-rc9: play:web includes live shell update markers', async () => {
   assert.match(html, /data-founder-contracts/);
 });
 
+test('v1.0-rc10: case board builds authored links between visible cards', async () => {
+  const { buildGameplayShellModel } = await import(pathToFileURL(path.join(REPO, 'src/play/game-shell-model.js')).href);
+  const shell = buildGameplayShellModel(
+    { agents: { player: { locationId: 'cafe', stats: { money: 100 } } }, incidents: {}, founder: { unlocked: false } },
+    {
+      playerKnowledge: {
+        evidenceIds: ['cafe_delivery_gap', 'rumor_source_nadia'],
+        knownRumorIds: ['rumor_missing_delivery_blame', 'market_rumor_chain']
+      }
+    }
+  );
+  assert.ok(shell.caseBoard.links.length >= 2);
+  const revealLink = shell.caseBoard.links.find((l) => l.relation === 'reveals_source');
+  assert.equal(revealLink?.redacted, false);
+});
+
+test('v1.0-rc10: detectMajorDecisionFromCommand matches negotiated pay command', async () => {
+  const { detectMajorDecisionFromCommand } = await import(pathToFileURL(path.join(REPO, 'src/play/game-shell-model.js')).href);
+  const decision = detectMajorDecisionFromCommand('pay malik 15', { evidenceIds: [] });
+  assert.equal(decision?.id, 'founder_negotiation');
+  assert.equal(decision?.command, 'pay malik 15');
+});
+
+test('v1.0-rc10: renderCaseBoard emits trace buttons and case link rows', async () => {
+  const { renderCaseBoard } = await import(pathToFileURL(WEB_RENDERER).href);
+  const html = renderCaseBoard({
+    evidenceCards: [{ id: 'cafe_delivery_gap', label: 'Delivery gap', locationId: 'cafe', inspectCommand: 'inspect cafe' }],
+    rumorCards: [{
+      id: 'rumor_missing_delivery_blame',
+      label: 'Someone stole the delivery',
+      traceCommand: 'trace_rumor rumor_missing_delivery_blame',
+      counterCommand: 'counter_rumor rumor_missing_delivery_blame'
+    }],
+    links: [{ from: 'cafe_delivery_gap', to: 'rumor_missing_delivery_blame', relation: 'contradicts', redacted: false }]
+  });
+  assert.match(html, /wm-case-links/);
+  assert.match(html, /data-run-command="inspect cafe"/);
+  assert.match(html, /contradicts/);
+});
+
+test('v1.0-rc10: play:web embeds case board and major-decision live helpers', async () => {
+  const res = runScript(PLAY_WEB, []);
+  assert.equal(res.status, 0);
+  const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
+  assert.match(html, /renderCaseBoardHtml/);
+  assert.match(html, /data-case-board/);
+  assert.match(html, /majorDecisionPrompt/);
+  assert.match(html, /wm-case-links/);
+});
+
 test('v1.0-rc5: ci:gate includes play:web and validate:web-play', async () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
   assert.match(pkg.scripts['ci:gate'] || '', /play:web|play-web/i, 'ci:gate should run play:web');

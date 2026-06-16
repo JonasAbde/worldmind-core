@@ -266,6 +266,18 @@ describe('v1.0-rc7: save browser UI + branch restore', () => {
     }
   });
 
+  test('POST /api/command returns gameShell and majorDecisionPrompt for major pay command', async () => {
+    const r = await fetchJson(port, '/api/command', {
+      method: 'POST',
+      body: { text: 'pay malik 15' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.ok, true);
+    assert.ok(r.json.result.gameShell?.caseBoard);
+    assert.equal(r.json.result.majorDecisionPrompt?.id, 'founder_negotiation');
+    assert.equal(r.json.text, 'pay malik 15');
+  });
+
   test('validate:saves-ui passes', async () => {
     // Run validate:saves-ui against the running server (port 0 -> we need to know the port).
     // The validator should discover the server via WM_VALIDATE_PORT or by probing.

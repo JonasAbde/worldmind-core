@@ -225,22 +225,63 @@ export function renderConsequence(consequence) {
 </section>`;
 }
 
+export function renderCaseBoard(caseBoard) {
+  const evidenceCards = (caseBoard?.evidenceCards ?? []).map((card) => {
+    const c = typeof card === 'string' ? { id: card, label: card } : card;
+    return `<li class="wm-case-card" data-case-card-id="${escapeHtml(c.id)}">
+      <img src="assets/ui/evidence-card.png" alt="Evidence card" />
+      <div>
+        <strong>${escapeHtml(c.label ?? c.id)}</strong>
+        ${c.locationId ? `<span class="wm-case-meta">@ ${escapeHtml(c.locationId)}</span>` : ''}
+        ${c.inspectCommand ? `<button type="button" data-run-command="${escapeHtml(c.inspectCommand)}">Inspect</button>` : ''}
+      </div>
+    </li>`;
+  }).join('');
+
+  const rumorCards = (caseBoard?.rumorCards ?? []).map((card) => {
+    const c = typeof card === 'string' ? { id: card, label: card } : card;
+    return `<li class="wm-case-card" data-case-card-id="${escapeHtml(c.id)}">
+      <img src="assets/ui/rumor-card.png" alt="Rumor card" />
+      <div>
+        <strong>${escapeHtml(c.label ?? c.id)}</strong>
+        ${c.sourceRedacted ? '<span class="wm-case-meta">Source: REDACTED</span>' : ''}
+        <div class="wm-case-actions">
+          <button type="button" data-run-command="${escapeHtml(c.traceCommand)}">Trace</button>
+          <button type="button" data-run-command="${escapeHtml(c.counterCommand)}">Counter</button>
+        </div>
+      </div>
+    </li>`;
+  }).join('');
+
+  const links = (caseBoard?.links ?? []).map((link) =>
+    `<li class="wm-case-link" data-link-from="${escapeHtml(link.from)}" data-link-to="${escapeHtml(link.to)}">
+      <code>${escapeHtml(link.from)}</code> → <code>${escapeHtml(link.to)}</code>
+      <span class="wm-case-meta">${escapeHtml(link.relation)}${link.redacted ? ' · REDACTED' : ''}</span>
+    </li>`
+  ).join('');
+
+  return `<div><h4>Evidence Cards</h4><ul>${evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>'}</ul></div>
+    <div><h4>Rumor Cards</h4><ul>${rumorCards || '<li class="wm-empty">No rumor cards yet.</li>'}</ul></div>
+    ${links ? `<div class="wm-case-links-wrap"><h4>Case Links</h4><ul class="wm-case-links">${links}</ul></div>` : ''}`;
+}
+
 export function renderEvidence(payload) {
   const pk = payload?.playerKnowledge ?? payload?.world?.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [], suspectedCauses: [], unresolvedQuestions: [] };
   const shell = payload?.gameShell ?? {};
   const guardedSummary = applyLenoGuard(payload?.leno?.summary ?? '', payload);
-  const evidenceCards = (shell?.caseBoard?.evidenceCards ?? pk.evidenceIds ?? []).map((e) => `<li class="wm-case-card"><img src="assets/ui/evidence-card.png" alt="Evidence card" /><span>${escapeHtml(e)}</span></li>`).join('');
-  const rumorCards = (shell?.caseBoard?.rumorCards ?? pk.knownRumorIds ?? []).map((r) => `<li class="wm-case-card"><img src="assets/ui/rumor-card.png" alt="Rumor card" /><span>${escapeHtml(r)}</span></li>`).join('');
+  const caseBoardHtml = renderCaseBoard(shell?.caseBoard ?? {
+    evidenceCards: pk.evidenceIds ?? [],
+    rumorCards: pk.knownRumorIds ?? [],
+    links: [],
+    unresolvedQuestions: pk.unresolvedQuestions ?? []
+  });
   return `<section class="wm-section wm-evidence" id="wm-evidence">
   <h2>Evidence</h2>
   <p><strong>Known facts:</strong> ${(pk.evidenceIds ?? []).map((e) => `<code>${escapeHtml(e)}</code>`).join(' ') || '<em>(none collected yet)</em>'}</p>
   <p><strong>Suspected causes:</strong> ${(pk.suspectedCauses ?? []).join(', ') || '<em>(none)</em>'}</p>
   <p><strong>Unresolved questions:</strong> ${(pk.unresolvedQuestions ?? []).join(', ') || '<em>(none)</em>'}</p>
   <h3>Case Board</h3>
-  <div class="wm-case-board">
-    <div><h4>Evidence Cards</h4><ul>${evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>'}</ul></div>
-    <div><h4>Rumor Cards</h4><ul>${rumorCards || '<li class="wm-empty">No rumor cards yet.</li>'}</ul></div>
-  </div>
+  <div class="wm-case-board" data-case-board>${caseBoardHtml}</div>
   ${guardedSummary ? `<h3>Leno summary (guarded)</h3><pre>${escapeHtml(guardedSummary)}</pre>` : ''}
 </section>`;
 }

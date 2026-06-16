@@ -103,13 +103,15 @@ check('Creator filters unsafe permissions', () => {
 
 check('no real-world connectors in codebase', () => {
   const CONNECTORS = ['http://api.', 'https://api.', 'openweather', 'twilio', 'sendgrid', 'stripe', 'plaid'];
-  const SKIP_DIRS = ['node_modules', '.git', 'static-play'];
+  const SKIP_DIRS = ['node_modules', '.git', 'static-play', 'audit-worldmind.js'];
+  const SKIP_FILES = ['src/cli/audit-worldmind.js'];
   try {
     const r = execSync(
       `git ls-files --cached "*.js" "*.json" | grep -v -E "${SKIP_DIRS.join('|')}"`,
       { encoding: 'utf8', cwd: ROOT }
     );
-    const files = r.trim().split('\n').filter(Boolean);
+    const files = r.trim().split('\n').filter(Boolean)
+      .filter(f => !SKIP_FILES.includes(f));
     const hits = [];
     for (const file of files.slice(0, 200)) {
       try {

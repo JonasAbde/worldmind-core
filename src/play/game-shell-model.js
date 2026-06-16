@@ -53,6 +53,87 @@ const LOCATION_INDEX = (() => {
   };
 })();
 
+function buildCaseBoard(playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
+  const evidenceIndex = Object.fromEntries((_pack?.evidence ?? []).map((e) => [e.id, e]));
+  const rumorIndex = Object.fromEntries((_pack?.rumors ?? []).map((r) => [r.id, r]));
+
+  const evidenceCards = evidenceIds.map((id) => {
+    const meta = evidenceIndex[id] ?? {};
+    return {
+      id,
+      label: meta.label ?? id,
+      type: meta.type ?? 'evidence',
+      locationId: meta.locationId ?? null,
+      inspectCommand: meta.locationId ? `inspect ${meta.locationId}` : null,
+      redacted: false
+    };
+  });
+
+  const rumorCards = knownRumorIds.map((id) => {
+    const meta = rumorIndex[id] ?? {};
+    const sourceHidden = Boolean(meta.hiddenSourceEvidenceId) && !evidenceIds.includes(meta.hiddenSourceEvidenceId);
+    return {
+      id,
+      label: meta.claim ?? id,
+      truthLevel: meta.truthLevel ?? 'unknown',
+      sourceRedacted: sourceHidden,
+      traceCommand: `trace_rumor ${id}`,
+      counterCommand: `counter_rumor ${id}`
+    };
+  });
+
+  const visibleIds = new Set([...evidenceIds, ...knownRumorIds]);
+  const links = (_pack?.caseLinks ?? [])
+    .filter((link) => visibleIds.has(link.from) && visibleIds.has(link.to))
+    .map((link) => ({
+      from: link.from,
+      to: link.to,
+      relation: link.relation,
+      redacted: link.relation === 'reveals_source' && !evidenceIds.includes('rumor_source_nadia')
+    }));
+
+  return {
+    evidenceCards,
+    rumorCards,
+    links,
+    unresolvedQuestions: playerKnowledge.unresolvedQuestions ?? []
+  };
+}
+
+export function buildCommandText(command, args = {}) {
+  switch (command) {
+    case 'pay':
+      return `pay ${args.target ?? ''} ${args.amount ?? ''}`.trim();
+    case 'talk':
+      return args.message ? `talk ${args.target} ${args.message}` : `talk ${args.target ?? ''}`;
+    case 'ask':
+      return args.topic ? `ask ${args.target} ${args.topic}` : `ask ${args.target ?? ''}`;
+    case 'inspect':
+      return `inspect ${args.target ?? ''}`;
+    case 'move':
+      return `move ${args.target ?? ''}`;
+    case 'listen_rumors':
+      return `listen_rumors ${args.target ?? ''}`;
+    case 'trace_rumor':
+      return args.rumor ? `trace_rumor ${args.rumor}` : 'trace_rumor';
+    case 'counter_rumor':
+      return args.rumor ? `counter_rumor ${args.rumor}` : 'counter_rumor';
+    default:
+      return command;
+  }
+}
+
+export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  return buildMajorDecisions(playerKnowledge).find((d) => {
+    const cmd = String(d.command ?? '').trim().toLowerCase();
+    return cmd && normalized === cmd;
+  }) ?? null;
+}
+
 function buildMajorDecisions(playerKnowledge = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
   const fromQuest = _pack?.quests?.flatMap((q) => q.majorDecisions ?? []) ?? [];
@@ -143,11 +224,7 @@ export function buildGameplayShellModel(world, payload = {}) {
       hotspots: locEntry.hotspots ?? []
     },
     npcCards,
-    caseBoard: {
-      evidenceCards: playerKnowledge.evidenceIds ?? [],
-      rumorCards: knownRumorIds,
-      unresolvedQuestions: playerKnowledge.unresolvedQuestions ?? []
-    },
+    caseBoard: buildCaseBoard(playerKnowledge),
     rumorTrail,
     founder: {
       unlocked: founderUnlocked,

@@ -37,6 +37,11 @@ import {
   parseCommandText,
   summarizeWorld
 } from '../play/play-engine.js';
+import {
+  buildGameplayShellModel,
+  detectMajorDecisionFromCommand,
+  buildCommandText
+} from '../play/game-shell-model.js';
 import { openSqliteWorldStore } from '../persistence/sqlite.js';
 import { diffSnapshots, filterEvents } from '../persistence/timeline.js';
 
@@ -301,9 +306,17 @@ async function handleCommand(req, res) {
   }
   if (!cmdName) return jsonResponse(res, 400, { ok: false, error: 'command or text required' });
   try {
+    const cmdText = typeof text === 'string' ? text.trim() : buildCommandText(cmdName, cmdArgs);
     const result = resolveCommand(world, cmdName, cmdArgs);
     if (Array.isArray(result?.events)) recordEvents(result.events);
-    jsonResponse(res, 200, { ok: true, command: cmdName, args: cmdArgs, result: sanitizeCommandResult(result) });
+    const sanitized = sanitizeCommandResult(result);
+    const decision = detectMajorDecisionFromCommand(cmdText, world.playerKnowledge);
+    if (decision?.branchSuggested) sanitized.majorDecisionPrompt = decision;
+    sanitized.gameShell = buildGameplayShellModel(world, {
+      playerKnowledge: world.playerKnowledge,
+      leno: result.leno
+    });
+    jsonResponse(res, 200, { ok: true, command: cmdName, args: cmdArgs, text: cmdText, result: sanitized });
   } catch (err) {
     jsonResponse(res, 400, { ok: false, error: String(err?.message || err) });
   }

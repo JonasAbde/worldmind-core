@@ -98,6 +98,12 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .wm-case-board ul { list-style: none; padding: 0; margin: 0; }
 .wm-case-card { display: flex; align-items: center; gap: 6px; border: 1px solid #21262d; border-radius: 4px; padding: 4px; margin: 4px 0; background: #0d1117; }
 .wm-case-card img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+.wm-case-meta { display: block; color: #8b95a1; font-size: 0.72rem; margin-top: 2px; }
+.wm-case-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.wm-case-actions button, .wm-case-card button { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; cursor: pointer; }
+.wm-case-links-wrap { grid-column: 1 / -1; margin-top: 4px; }
+.wm-case-links { list-style: none; padding: 0; margin: 0; }
+.wm-case-link { border: 1px dashed #30363d; border-radius: 4px; padding: 4px 6px; margin: 4px 0; font-size: 0.78rem; background: #0d1117; }
 .wm-ticker { margin: 0; padding-left: 18px; font-size: 0.82rem; }
 .wm-decision-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .wm-decision-list button { background: #3d1f6b; color: #fff; border: 1px solid #5d2fa0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.78rem; }
@@ -169,6 +175,63 @@ const APP_JS = `(function () {
       headers: { 'content-type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+  }
+
+  function renderCaseBoardHtml(caseBoard) {
+    var evidenceCards = (caseBoard && caseBoard.evidenceCards || []).map(function (card) {
+      var c = typeof card === 'string' ? { id: card, label: card } : card;
+      return '<li class="wm-case-card" data-case-card-id="' + escapeHtml(c.id) + '">' +
+        '<img src="assets/ui/evidence-card.png" alt="Evidence card" />' +
+        '<div><strong>' + escapeHtml(c.label || c.id) + '</strong>' +
+        (c.locationId ? '<span class="wm-case-meta">@ ' + escapeHtml(c.locationId) + '</span>' : '') +
+        (c.inspectCommand ? '<button type="button" data-run-command="' + escapeHtml(c.inspectCommand) + '">Inspect</button>' : '') +
+        '</div></li>';
+    }).join('');
+    var rumorCards = (caseBoard && caseBoard.rumorCards || []).map(function (card) {
+      var c = typeof card === 'string' ? { id: card, label: card } : card;
+      return '<li class="wm-case-card" data-case-card-id="' + escapeHtml(c.id) + '">' +
+        '<img src="assets/ui/rumor-card.png" alt="Rumor card" />' +
+        '<div><strong>' + escapeHtml(c.label || c.id) + '</strong>' +
+        (c.sourceRedacted ? '<span class="wm-case-meta">Source: REDACTED</span>' : '') +
+        '<div class="wm-case-actions">' +
+        '<button type="button" data-run-command="' + escapeHtml(c.traceCommand) + '">Trace</button>' +
+        '<button type="button" data-run-command="' + escapeHtml(c.counterCommand) + '">Counter</button>' +
+        '</div></div></li>';
+    }).join('');
+    var links = (caseBoard && caseBoard.links || []).map(function (link) {
+      return '<li class="wm-case-link" data-link-from="' + escapeHtml(link.from) + '" data-link-to="' + escapeHtml(link.to) + '">' +
+        '<code>' + escapeHtml(link.from) + '</code> → <code>' + escapeHtml(link.to) + '</code>' +
+        '<span class="wm-case-meta">' + escapeHtml(link.relation) + (link.redacted ? ' · REDACTED' : '') + '</span></li>';
+    }).join('');
+    return '<div><h4>Evidence Cards</h4><ul>' + (evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>') + '</ul></div>' +
+      '<div><h4>Rumor Cards</h4><ul>' + (rumorCards || '<li class="wm-empty">No rumor cards yet.</li>') + '</ul></div>' +
+      (links ? '<div class="wm-case-links-wrap"><h4>Case Links</h4><ul class="wm-case-links">' + links + '</ul></div>' : '');
+  }
+
+  function promptMajorDecisionBranch(decision) {
+    if (!decision || !decision.branchSuggested || !liveMode) return;
+    var label = decision.label || decision.id || 'decision';
+    if (!confirm('Major decision detected: "' + label + '". Save branch snapshot for timeline?')) {
+      showBanner('Major decision recorded without branch: ' + label);
+      return;
+    }
+    api('POST', '/api/save', { branchName: 'main', note: 'post-decision:' + (decision.id || label) }).then(function (saveRes) {
+      if (!saveRes.body || !saveRes.body.ok) {
+        showBanner('Post-decision save failed: ' + (saveRes.body && saveRes.body.error || saveRes.status));
+        return;
+      }
+      var snapshotId = saveRes.body.snapshotId;
+      var branchName = 'decision_' + (decision.id || 'choice') + '_' + Date.now();
+      api('POST', '/api/branch', { name: branchName, snapshotId: snapshotId, note: 'after ' + label }).then(function (branchRes) {
+        if (branchRes.body && branchRes.body.ok) {
+          showBanner('Branch saved for major decision: ' + branchName);
+          refreshSaves();
+          refreshBranches();
+        } else {
+          showBanner('Branch create failed: ' + (branchRes.body && branchRes.body.error || branchRes.status));
+        }
+      });
+    });
   }
 
   function applyCommandResult(result) {
@@ -249,6 +312,27 @@ const APP_JS = `(function () {
         feed.insertBefore(li, feed.firstChild);
       }
     }
+
+    if (result.gameShell && result.gameShell.caseBoard) {
+      var boardEl = document.querySelector('[data-case-board]');
+      if (boardEl) boardEl.innerHTML = renderCaseBoardHtml(result.gameShell.caseBoard);
+    }
+
+    if (result.playerKnowledge) {
+      var evidenceSection = document.getElementById('wm-evidence');
+      if (evidenceSection) {
+        var pk = result.playerKnowledge;
+        var facts = evidenceSection.querySelector('p strong');
+        if (facts && facts.textContent === 'Known facts:') {
+          facts.parentElement.innerHTML = '<strong>Known facts:</strong> ' +
+            ((pk.evidenceIds || []).map(function (e) { return '<code>' + escapeHtml(e) + '</code>'; }).join(' ') || '<em>(none collected yet)</em>');
+        }
+      }
+    }
+
+    if (result.majorDecisionPrompt) {
+      promptMajorDecisionBranch(result.majorDecisionPrompt);
+    }
   }
 
   function dispatch(cmd) {
@@ -322,8 +406,12 @@ const APP_JS = `(function () {
   document.querySelectorAll('.wm-cmd-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { dispatch(btn.getAttribute('data-command')); });
   });
-  document.querySelectorAll('[data-run-command]').forEach(function (btn) {
-    btn.addEventListener('click', function () { dispatch(btn.getAttribute('data-run-command')); });
+  document.addEventListener('click', function (e) {
+    var runBtn = e.target.closest('[data-run-command]');
+    if (runBtn) {
+      e.preventDefault();
+      dispatch(runBtn.getAttribute('data-run-command'));
+    }
   });
   document.querySelectorAll('[data-major-decision]').forEach(function (btn) {
     btn.addEventListener('click', function () {

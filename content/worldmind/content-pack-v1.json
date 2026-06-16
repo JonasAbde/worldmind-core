@@ -82,6 +82,11 @@
     { "id": "market_rumor_chain", "type": "rumor_trace", "label": "Rumor chain points away from Sara", "locationId": "market" },
     { "id": "rumor_source_nadia", "type": "source_evidence", "label": "Evidence identifying Nadia as source", "locationId": "market", "hiddenTruth": true }
   ],
+  "caseLinks": [
+    { "from": "cafe_delivery_gap", "to": "rumor_missing_delivery_blame", "relation": "contradicts" },
+    { "from": "market_rumor_chain", "to": "rumor_missing_delivery_blame", "relation": "traces" },
+    { "from": "rumor_source_nadia", "to": "rumor_missing_delivery_blame", "relation": "reveals_source" }
+  ],
   "dialogue": [
     { "id": "dialogue_sara_help", "agentId": "sara", "topic": "delivery", "tone": "worried", "unlocks": ["cafe_delivery_gap"] },
     { "id": "dialogue_rune_nadia", "agentId": "rune", "topic": "nadia", "tone": "cautious", "unlocks": ["market_rumor_chain"] },

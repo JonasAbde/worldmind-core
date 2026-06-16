@@ -50,7 +50,8 @@
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check": "npm run typecheck && node src/cli/simulate.js --days 7 --assert",
-    "audit:worldmind": "node src/cli/audit-worldmind.js"
+    "audit:worldmind": "node src/cli/audit-worldmind.js",
+    "release:verify": "node src/cli/release-verify.js"
   },
   "keywords": [
     "ai-agents",
