@@ -12,6 +12,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { CHARACTER_ASSETS, WORLD_ASSETS } from './assets.js';
+import { listFounderContractOffers, founderTierLabel } from './founder-contracts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -53,6 +55,76 @@ const LOCATION_INDEX = (() => {
   };
 })();
 
+function normalizeHotspot(h) {
+  return {
+    id: h.id,
+    label: h.label,
+    command: h.command,
+    preview: h.preview ?? h.description ?? '',
+    description: h.description ?? h.preview ?? '',
+    risk: h.risk ?? 1,
+    possibleEvidence: h.possibleEvidence ?? [],
+    icon: h.icon ?? null
+  };
+}
+
+function buildNpcTopics(agentId) {
+  const topics = (_pack?.dialogue ?? [])
+    .filter((d) => d.agentId === agentId)
+    .map((d) => d.topic)
+    .filter(Boolean);
+  return topics.length ? topics : ['delivery'];
+}
+
+function buildNpcMood(agent, rel) {
+  if ((rel.fear ?? 0) > 20) return 'afraid';
+  if ((rel.suspicion ?? 0) > 25) return 'guarded';
+  if ((rel.trust ?? 0) > 30) return 'trusting';
+  return 'neutral';
+}
+
+function buildRumorTrail(world, playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const rumorIndex = Object.fromEntries((_pack?.rumors ?? []).map((r) => [r.id, r]));
+  const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
+  const hasSourceEvidence = evidenceIds.includes('rumor_source_nadia');
+
+  return knownRumorIds.map((id) => {
+    const meta = rumorIndex[id] ?? {};
+    const worldRumor = world?.rumors?.[id];
+    const claim = meta.claim ?? worldRumor?.claim ?? id;
+    const sourceHidden = Boolean(meta.hiddenSourceEvidenceId) && !evidenceIds.includes(meta.hiddenSourceEvidenceId);
+    const traced = evidenceIds.some((e) => e.includes('rumor') || e.includes('market'));
+    return {
+      id,
+      claim,
+      spreadRisk: meta.truthLevel === 'false_or_misleading' ? 'high' : 'medium',
+      distortion: meta.truthLevel ?? 'unknown',
+      trustConfidence: traced ? 'medium' : 'low',
+      traceState: traced ? 'partial' : 'untraced',
+      knownBy: worldRumor?.knownByAgentIds ?? [],
+      sourceRedacted: sourceHidden,
+      backfireWarning: !hasSourceEvidence,
+      traceCommand: `trace_rumor ${id}`,
+      counterCommand: `counter_rumor ${id}`
+    };
+  });
+}
+
+function buildSuspectCards(playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const suspects = [
+    { id: 'sara', label: 'Sara', role: 'café owner', locked: false },
+    { id: 'malik', label: 'Malik', role: 'mechanic', locked: false },
+    { id: 'nadia', label: 'Nadia', role: 'rumor source', locked: !evidenceIds.includes('rumor_source_nadia') }
+  ];
+  return suspects.map((s) => ({
+    ...s,
+    redacted: s.locked,
+    inspectCommand: s.locked ? null : `ask rune ${s.id === 'nadia' ? 'nadia' : s.id}`
+  }));
+}
+
 function buildCaseBoard(playerKnowledge = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
   const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
@@ -67,7 +139,8 @@ function buildCaseBoard(playerKnowledge = {}) {
       type: meta.type ?? 'evidence',
       locationId: meta.locationId ?? null,
       inspectCommand: meta.locationId ? `inspect ${meta.locationId}` : null,
-      redacted: false
+      redacted: false,
+      locked: false
     };
   });
 
@@ -79,6 +152,7 @@ function buildCaseBoard(playerKnowledge = {}) {
       label: meta.claim ?? id,
       truthLevel: meta.truthLevel ?? 'unknown',
       sourceRedacted: sourceHidden,
+      locked: false,
       traceCommand: `trace_rumor ${id}`,
       counterCommand: `counter_rumor ${id}`
     };
@@ -98,6 +172,7 @@ function buildCaseBoard(playerKnowledge = {}) {
     evidenceCards,
     rumorCards,
     links,
+    suspectCards: buildSuspectCards(playerKnowledge),
     unresolvedQuestions: playerKnowledge.unresolvedQuestions ?? []
   };
 }
@@ -125,35 +200,32 @@ export function buildCommandText(command, args = {}) {
   }
 }
 
-export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
-  const normalized = String(commandText ?? '').trim().toLowerCase();
-  if (!normalized) return null;
-  return buildMajorDecisions(playerKnowledge).find((d) => {
-    const cmd = String(d.command ?? '').trim().toLowerCase();
-    return cmd && normalized === cmd;
-  }) ?? null;
+function normalizeMajorDecisionEntry(d) {
+  return {
+    id: d.id,
+    label: d.label ?? d.id,
+    command: d.command ?? d.decisionCommand ?? d.id,
+    branchSuggested: d.branchSuggested !== false,
+    requiredEvidence: d.requiredEvidence ?? []
+  };
 }
 
-function buildMajorDecisions(playerKnowledge = {}) {
+function buildMajorDecisions(playerKnowledge = {}, { includeGated = false } = {}) {
   const evidenceIds = playerKnowledge.evidenceIds ?? [];
   const fromQuest = _pack?.quests?.flatMap((q) => q.majorDecisions ?? []) ?? [];
   if (fromQuest.length) {
     return fromQuest
       .filter((d) => {
+        if (includeGated) return true;
         const required = d.requiredEvidence ?? [];
         return required.every((id) => evidenceIds.includes(id));
       })
-      .map((d) => ({
-        id: d.id,
-        label: d.label ?? d.id,
-        command: d.command ?? d.decisionCommand ?? d.id,
-        branchSuggested: d.branchSuggested ?? true
-      }));
+      .map(normalizeMajorDecisionEntry);
   }
 
   const fromPaths = _pack?.quests
     ?.flatMap((q) => q.resolutionPaths ?? [])
-    .map((p) => ({
+    .map((p) => normalizeMajorDecisionEntry({
       id: p.id,
       label: p.label ?? p.id,
       command: p.decisionCommand ?? p.steps?.[p.steps.length - 1] ?? p.id,
@@ -168,7 +240,118 @@ function buildMajorDecisions(playerKnowledge = {}) {
     { id: 'sell_info_registry', label: 'Sell info to Registry', command: 'inspect apartment', branchSuggested: true },
     { id: 'negotiate_malik', label: 'Negotiate with Malik', command: 'pay malik 15', branchSuggested: true },
     { id: 'start_delivery_workflow', label: 'Start delivery workflow', command: 'start_delivery_workflow', branchSuggested: true }
-  ];
+  ].map(normalizeMajorDecisionEntry);
+}
+
+function formatMajorDecisionPrompt(decision, commandText, reason) {
+  return {
+    id: decision.id,
+    label: decision.label ?? decision.id,
+    command: commandText || decision.command,
+    branchSuggested: decision.branchSuggested !== false,
+    requiredEvidence: decision.requiredEvidence ?? [],
+    reason: reason ?? decision.reason ?? 'authored_decision'
+  };
+}
+
+function findAuthoredMajorDecision(commandText, playerKnowledge, { includeGated = false } = {}) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  return buildMajorDecisions(playerKnowledge, { includeGated }).find((d) => {
+    const cmd = String(d.command ?? '').trim().toLowerCase();
+    return cmd && normalized === cmd;
+  }) ?? null;
+}
+
+function detectConsequentialPayDecision(commandText, playerKnowledge) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  const payMatch = normalized.match(/^pay\s+(\S+)\s+(\d+(?:\.\d+)?)$/);
+  if (!payMatch) return null;
+  const amount = Number(payMatch[2]);
+  if (!Number.isFinite(amount) || amount < 15) return null;
+
+  const authored = findAuthoredMajorDecision(commandText, playerKnowledge)
+    ?? buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+      const cmd = String(d.command ?? '').trim().toLowerCase();
+      return cmd.startsWith('pay ') && Number(cmd.split(/\s+/).pop()) >= 15;
+    })
+    ?? normalizeMajorDecisionEntry({
+      id: 'major_payment',
+      label: 'Major payment',
+      command: commandText,
+      branchSuggested: true
+    });
+
+  return formatMajorDecisionPrompt(authored, commandText, 'pay_threshold');
+}
+
+function detectConsequentialCounterRumorDecision(commandText, playerKnowledge) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized.startsWith('counter_rumor')) return null;
+
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  if (exact) return formatMajorDecisionPrompt(exact, commandText, 'counter_rumor');
+
+  const gated = buildMajorDecisions(playerKnowledge, { includeGated: true }).find((d) => {
+    const cmd = String(d.command ?? '').trim().toLowerCase();
+    return cmd === 'counter_rumor' || cmd.startsWith('counter_rumor ');
+  });
+  if (gated) return formatMajorDecisionPrompt(gated, commandText, 'counter_rumor');
+
+  return formatMajorDecisionPrompt(
+    normalizeMajorDecisionEntry({
+      id: 'counter_rumor',
+      label: 'Counter rumor',
+      command: commandText,
+      branchSuggested: true
+    }),
+    commandText,
+    'counter_rumor'
+  );
+}
+
+function detectMajorDecisionFromConsequence(consequence, commandText) {
+  const unlocks = consequence?.unlocks ?? [];
+  const tierUnlock = unlocks.find((u) => String(u).startsWith('founder_tier_'));
+  if (!tierUnlock) return null;
+  const tier = Number(String(tierUnlock).replace('founder_tier_', ''));
+  return formatMajorDecisionPrompt(
+    normalizeMajorDecisionEntry({
+      id: 'founder_tier_unlock',
+      label: `Founder tier unlocked: ${founderTierLabel(tier)}`,
+      command: commandText,
+      branchSuggested: true
+    }),
+    commandText,
+    'founder_tier_unlock'
+  );
+}
+
+export function detectMajorDecisionFromCommand(commandText, playerKnowledge = {}) {
+  const normalized = String(commandText ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+
+  const exact = findAuthoredMajorDecision(commandText, playerKnowledge);
+  if (exact) return formatMajorDecisionPrompt(exact, commandText, 'authored_decision');
+
+  return detectConsequentialPayDecision(commandText, playerKnowledge)
+    ?? detectConsequentialCounterRumorDecision(commandText, playerKnowledge);
+}
+
+/**
+ * Resolve majorDecisionPrompt from command text and/or post-command consequences.
+ */
+export function resolveMajorDecisionPrompt({
+  commandText,
+  command,
+  args = {},
+  playerKnowledge = {},
+  consequence = null
+} = {}) {
+  const text = commandText ?? buildCommandText(command, args);
+  const fromCommand = detectMajorDecisionFromCommand(text, playerKnowledge);
+  if (fromCommand?.branchSuggested) return fromCommand;
+  return detectMajorDecisionFromConsequence(consequence, text);
 }
 
 export function buildGameplayShellModel(world, payload = {}) {
@@ -180,48 +363,60 @@ export function buildGameplayShellModel(world, payload = {}) {
   );
 
   const locEntry = LOCATION_INDEX[playerLocationId] ?? {};
+  const player = world?.agents?.player;
+  const topicsByAgent = Object.fromEntries(
+    (_pack?.characters ?? []).map((c) => [c.id, buildNpcTopics(c.id)])
+  );
 
   const npcCards = Object.values(world?.agents ?? {})
     .filter((a) => a?.id && a.id !== 'player')
     .map((a) => {
       const rel = a.relationships?.player ?? { trust: 0, suspicion: 0, fear: 0 };
+      const assets = CHARACTER_ASSETS[a.id] ?? {};
+      const topics = topicsByAgent[a.id] ?? buildNpcTopics(a.id);
+      const primaryTopic = topics[0] ?? 'delivery';
       return {
         id: a.id,
         name: a.name ?? a.id,
         role: a.role ?? '',
+        mood: buildNpcMood(a, rel),
         locationName: world?.locations?.[a.locationId]?.name ?? a.locationId ?? '?',
-        avatar: a.assets?.avatar ?? `assets/characters/${a.id}/avatar.png`,
+        avatar: a.assets?.avatar ?? assets.avatar ?? `assets/characters/${a.id}/avatar.png`,
+        portrait: a.assets?.portrait ?? assets.portrait ?? `assets/characters/${a.id}/portrait.png`,
+        topics,
         trust: rel.trust ?? 0,
         suspicion: rel.suspicion ?? 0,
         fear: rel.fear ?? 0,
         actions: [
           { label: 'Talk', command: `talk ${a.id}` },
-          { label: 'Ask', command: `ask ${a.id} delivery` },
+          { label: `Ask: ${primaryTopic}`, command: `ask ${a.id} ${primaryTopic}` },
+          { label: 'Offer help', command: `talk ${a.id}` },
+          { label: 'Negotiate', command: `pay ${a.id} 5` },
           { label: 'Ask Leno', command: 'ask_leno' },
-          { label: 'Negotiate', command: `pay ${a.id} 5` }
+          { label: 'Profile', command: `inspect ${a.locationId ?? 'cafe'}` }
         ]
       };
     });
 
-  const knownRumorIds = playerKnowledge.knownRumorIds ?? [];
-  const rumorTrail = knownRumorIds.map((id) => ({
-    id,
-    spreadRisk: 'medium',
-    traceCommand: `trace_rumor ${id}`,
-    counterCommand: `counter_rumor ${id}`
-  }));
+  const rumorTrail = buildRumorTrail(world, playerKnowledge);
 
   return {
     topbar: {
+      worldName: world?.name ?? 'New Aarhus District',
       day: world?.day ?? '?',
       time: world?.time ?? '?',
-      money: world?.agents?.player?.stats?.money ?? 0,
+      money: player?.stats?.money ?? 0,
+      reputation: player?.stats?.reputation ?? 0,
+      energy: player?.stats?.energy ?? 0,
+      branchName: world?.branchName ?? 'main',
       lenoStatus: payload?.leno?.summary ? 'online' : 'standby'
     },
     location: {
       id: playerLocationId,
+      name: world?.locations?.[playerLocationId]?.name ?? playerLocationId,
+      mood: locEntry.mood ?? '',
       scene: locEntry.scene ?? null,
-      hotspots: locEntry.hotspots ?? []
+      hotspots: (locEntry.hotspots ?? []).map(normalizeHotspot)
     },
     npcCards,
     caseBoard: buildCaseBoard(playerKnowledge),
@@ -229,12 +424,22 @@ export function buildGameplayShellModel(world, payload = {}) {
     founder: {
       unlocked: founderUnlocked,
       baseLevel: world?.founder?.baseLevel ?? 0,
+      tierLabel: founderTierLabel(world?.founder?.baseLevel ?? 0),
       contractsCompleted: world?.founder?.contractsCompleted ?? 0,
       activeContract: world?.founder?.activeContract ?? null,
+      contracts: listFounderContractOffers(world?.founder ?? {}),
+      reputation: world?.founder?.reputation ?? player?.stats?.reputation ?? 0,
+      money: player?.stats?.money ?? 0,
       unlockText: founderUnlocked
         ? 'Founder loop unlocked.'
         : 'Resolve The Missing Delivery to unlock founder loop.'
     },
-    majorDecisions: buildMajorDecisions(playerKnowledge)
+    majorDecisions: buildMajorDecisions(playerKnowledge),
+    assets: {
+      lenoOverlay: WORLD_ASSETS.ui.lenoOverlay,
+      evidenceIcon: WORLD_ASSETS.ui.evidenceCard,
+      rumorIcon: WORLD_ASSETS.ui.rumorCard,
+      incidentIcon: WORLD_ASSETS.ui.incidentAlert
+    }
   };
 }

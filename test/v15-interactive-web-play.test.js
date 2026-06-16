@@ -190,7 +190,8 @@ test('v1.0-rc8: gameplay shell renders hotspots, npc cards, case board, and deci
   const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
   assert.match(html, /wm-topbar/);
   assert.match(html, /data-hotspot-id=/);
-  assert.match(html, /wm-agent-card/);
+  assert.match(html, /wm-npc-card/);
+  assert.match(html, /wm-npc-portrait/);
   assert.match(html, /wm-case-board/);
   assert.match(html, /wm-rumor-trail/);
   assert.match(html, /wm-ticker/);
@@ -247,8 +248,14 @@ test('v1.0-rc5: validate:web-play reads --json from a custom page', () => {
   const labels = ['Current Location', 'Visible Agents', 'Available Commands', 'Dialogue',
     'Consequence', 'Evidence', 'Incident', 'Leno', 'Saves', 'Branches', 'Demo Paths'];
   const markers = ['wm-cmd-btn', 'wm-cmd-form', 'wm-state'];
+  const visual = [
+    'data-scene-img', 'wm-hotspot-run', 'data-run-command', 'wm-npc-portrait',
+    'data-case-board', 'data-rumor-trail', 'data-founder-panel', 'data-major-decision-modal',
+    'data-consequence-ticker', 'data-game-shell'
+  ];
   const goodHtml = '<html><body>' + labels.map((s) => `<h2>${s}</h2>`).join('\n')
     + '\n' + markers.map((m) => `<div class="${m}">marker</div>`).join('\n')
+    + '\n' + visual.map((m) => `<!-- ${m} -->`).join('\n')
     + '</body></html>';
   fs.writeFileSync(tmp, goodHtml);
   const res = runScript(VALIDATE_WEB, ['--json', tmp]);
@@ -258,6 +265,7 @@ test('v1.0-rc5: validate:web-play reads --json from a custom page', () => {
   assert.equal(json.ok, true);
   assert.ok(json.sectionsChecked >= 11);
   assert.ok(json.runtimeMarkersChecked >= 3);
+  assert.ok(json.visualMarkersChecked >= 10);
 });
 
 test('v1.0-rc9: founder workflow commands start and complete delivery contract', async () => {
@@ -346,8 +354,46 @@ test('v1.0-rc10: play:web embeds case board and major-decision live helpers', as
   const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
   assert.match(html, /renderCaseBoardHtml/);
   assert.match(html, /data-case-board/);
-  assert.match(html, /majorDecisionPrompt/);
-  assert.match(html, /wm-case-links/);
+  assert.match(html, /matchMajorDecision/);
+  assert.match(html, /data-major-decision-modal/);
+  assert.match(html, /data-case-tab/);
+});
+
+test('v1.1 visual shell: generated page has gameplay layout markers', async () => {
+  runScript(PLAY_WEB, []);
+  const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
+  assert.match(html, /data-game-shell/);
+  assert.match(html, /data-scene-img/);
+  assert.match(html, /wm-hotspot-run/);
+  assert.match(html, /wm-npc-portrait/);
+  assert.match(html, /data-rumor-trail/);
+  assert.match(html, /data-founder-panel/);
+  assert.match(html, /data-consequence-ticker/);
+  assert.match(html, /assets\/locations\/cafe\.png/);
+});
+
+test('v1.1 visual shell: validate-web-play checks visual markers and assets', () => {
+  runScript(PLAY_WEB, []);
+  const res = runScript(VALIDATE_WEB, []);
+  assert.equal(res.status, 0, `validate:web-play failed: ${res.stdout}\n${res.stderr}`);
+  const json = JSON.parse(res.stdout.trim().split('\n').pop());
+  assert.ok(json.visualMarkersChecked >= 10);
+  assert.ok(json.assetsChecked >= 10);
+});
+
+test('v1.1 visual shell: hotspots include description and inspect buttons', async () => {
+  const { buildGameplayShellModel } = await import(pathToFileURL(path.join(REPO, 'src/play/game-shell-model.js')).href);
+  const shell = buildGameplayShellModel(
+    { agents: { player: { locationId: 'cafe', stats: { money: 50 } } }, locations: { cafe: { name: 'Café' } }, incidents: {} },
+    { playerKnowledge: { evidenceIds: [], knownRumorIds: [] } }
+  );
+  const crate = shell.location.hotspots.find((h) => h.id === 'cafe_delivery_crate');
+  assert.ok(crate?.description);
+  assert.ok(crate?.possibleEvidence?.length);
+  const { renderLocationPlay } = await import(pathToFileURL(path.join(REPO, 'src/play/visual-game-shell.js')).href);
+  const html = renderLocationPlay(shell, {});
+  assert.match(html, /Inspect \/ Run/);
+  assert.match(html, /cafe_delivery_crate/);
 });
 
 test('v1.0-rc5: ci:gate includes play:web and validate:web-play', async () => {

@@ -18,7 +18,7 @@
  *
  * Result envelope (resolveCommand):
  *   { ok, kind, text, world, dialogue?, consequence?, evidence?,
- *     error?, snapshot? }
+ *     majorDecisionPrompt?, error?, snapshot? }
  */
 
 import path from 'node:path';
@@ -29,7 +29,15 @@ import {
   executeAction,
   helpSaraPeacefully
 } from '../simulation/actions.ts';
+import { resolveIncident } from '../simulation/incidents.ts';
 import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.ts';
+import {
+  createActiveFounderContract,
+  founderBaseLevelForContracts,
+  listFounderContractOffers,
+  resolveFounderContractTemplate
+} from './founder-contracts.js';
+import { buildCommandText, resolveMajorDecisionPrompt } from './game-shell-model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,9 +102,8 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
   }
 
   if (!world.founder) {
-    const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
     world.founder = {
-      unlocked: Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation'),
+      unlocked: isFounderUnlockedFromIncidents(world),
       baseLevel: 0,
       reputation: world.agents?.player?.stats?.reputation ?? 0,
       contractsCompleted: 0,
@@ -107,6 +114,16 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
   return world;
 }
 
+function isFounderUnlockedFromIncidents(world) {
+  const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
+  return Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation');
+}
+
+function syncFounderAvailability(world) {
+  if (!world.founder) return;
+  if (isFounderUnlockedFromIncidents(world)) world.founder.unlocked = true;
+}
+
 export function summarizeWorld(world) {
   return [
     `World: ${world.name}, Day ${world.day}, ${world.time}.`,
@@ -114,6 +131,27 @@ export function summarizeWorld(world) {
     `Locations: ${Object.values(world.locations).map((l) => l.name).join(', ')}.`,
     `Player evidence: ${(world.playerKnowledge?.evidenceIds || []).join(', ') || '(none)'}`
   ].join('\n');
+}
+
+export function buildSafeWorldSummary(world) {
+  const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
+  return {
+    world: { name: world.name, day: world.day, time: world.time },
+    location: world.agents.player?.locationId ?? null,
+    counts: {
+      agents: Object.keys(world.agents).length,
+      memories: Object.keys(world.memories).length,
+      rumors: Object.keys(world.rumors).length,
+      incidents: Object.keys(world.incidents).length
+    },
+    incident: incident ? {
+      id: incident.id,
+      title: incident.title,
+      status: incident.status,
+      visibleProblem: incident.visibleProblem ?? null
+    } : null,
+    evidenceCount: (world.playerKnowledge?.evidenceIds ?? []).length
+  };
 }
 
 export function summarizeStatus(world) {
@@ -250,46 +288,48 @@ export function parseCommandText(text) {
 const KNOWN_COMMANDS = new Set([
   'look', 'status', 'move', 'talk', 'ask', 'inspect', 'listen_rumors',
   'trace_rumor', 'counter_rumor', 'pay', 'ask_leno', 'save', 'branch',
-  'start_delivery_workflow', 'run_delivery_contract', 'quit'
+  'start_delivery_workflow', 'run_delivery_contract', 'list_contracts', 'quit'
 ]);
 
-/**
- * Dispatch one player command. Pure function — returns a result
- * envelope, mutates `world` in place (so callers can keep using
- * the same world across calls).
- */
-export function resolveCommand(world, commandOrText, args = {}) {
-  let command = commandOrText;
-  let effectiveArgs = args;
-  if (KNOWN_COMMANDS.has(String(commandOrText).toLowerCase())) {
-    command = String(commandOrText).toLowerCase();
-  } else {
-    const parsed = parseCommandText(commandOrText);
-    if (!parsed) return { ok: false, kind: 'error', error: 'empty command' };
-    if (!KNOWN_COMMANDS.has(parsed.command)) {
-      return { ok: false, kind: 'error', error: `unknown command: ${parsed.command}` };
-    }
-    command = parsed.command;
-    effectiveArgs = { ...parsed.args, ...args };
-  }
+function attachMajorDecisionPrompt(result, command, effectiveArgs) {
+  if (!result?.ok) return result;
+  const prompt = resolveMajorDecisionPrompt({
+    commandText: buildCommandText(command, effectiveArgs),
+    command,
+    args: effectiveArgs,
+    playerKnowledge: result.world?.playerKnowledge ?? {},
+    consequence: result.consequence ?? null
+  });
+  if (!prompt?.branchSuggested) return result;
+  return { ...result, majorDecisionPrompt: prompt };
+}
 
+function resolveCommandCore(world, command, effectiveArgs) {
   const actorId = 'player';
+  syncFounderAvailability(world);
 
   try {
     switch (command) {
-      case 'look':
+      case 'look': {
+        const before = snapshotForDelta(world);
         return {
           ok: true, kind: 'look', command,
           text: summarizeWorld(world),
+          safeWorldSummary: buildSafeWorldSummary(world),
+          consequence: diffConsequence(world, before, actorId, null),
           world
         };
-      case 'status':
+      }
+      case 'status': {
+        const before = snapshotForDelta(world);
         return {
           ok: true, kind: 'status', command,
           status: summarizeStatus(world),
           text: JSON.stringify(summarizeStatus(world), null, 2),
+          consequence: diffConsequence(world, before, actorId, null),
           world
         };
+      }
       case 'move': {
         const targetLoc = resolveLocation(world, effectiveArgs.target);
         if (!targetLoc) return { ok: false, kind: 'error', error: `unknown location: ${effectiveArgs.target}` };
@@ -410,7 +450,7 @@ export function resolveCommand(world, commandOrText, args = {}) {
         const ev = executeAction(world, {
           actorId, actionId: 'counter_rumor', rumorId,
           counterClaim: effectiveArgs.message || 'I have evidence this rumor is false.',
-          evidenceStrength: 85
+          evidenceStrength: Number(effectiveArgs.evidenceStrength ?? 85)
         });
         return {
           ok: true, kind: 'rumors', command,
@@ -449,30 +489,27 @@ export function resolveCommand(world, commandOrText, args = {}) {
         }
         if (founder.activeContract) {
           return {
-            ok: true,
-            kind: 'founder',
+            ok: false,
+            kind: 'error',
             command,
-            text: `Contract already active: ${founder.activeContract.id}`,
-            consequence: diffConsequence(world, before, actorId, null),
-            world
+            error: 'founder contract already active; run run_delivery_contract first'
           };
         }
-        founder.activeContract = {
-          id: `delivery_contract_${world.tick ?? 0}`,
-          customer: 'Sara',
-          payout: 25,
-          reputationGain: 3,
-          stockImpact: -4,
-          status: 'active'
-        };
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted ?? 0);
+        const template = resolveFounderContractTemplate(effectiveArgs.contract ?? effectiveArgs.id, founder);
+        if (!template) {
+          return { ok: false, kind: 'error', error: `unknown or locked founder contract: ${effectiveArgs.contract ?? effectiveArgs.id ?? '(none)'}` };
+        }
+        founder.activeContract = createActiveFounderContract(template, world.tick ?? 0);
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: 'Founder workflow started: deliver emergency stock to Sara.',
+          text: `Founder workflow started: ${template.label} for ${template.customer}.`,
+          contract: founder.activeContract,
           consequence: diffConsequence(world, before, actorId, {
             type: 'founder.contract_started',
-            description: 'Delivery contract started',
+            description: `Delivery contract started: ${template.id}`,
             importance: 6
           }),
           world
@@ -485,35 +522,56 @@ export function resolveCommand(world, commandOrText, args = {}) {
           return { ok: false, kind: 'error', error: 'no active founder contract; run start_delivery_workflow first' };
         }
         const contract = founder.activeContract;
+        const prevBaseLevel = founder.baseLevel ?? 0;
         founder.contractsCompleted = (founder.contractsCompleted ?? 0) + 1;
-        founder.baseLevel = founder.contractsCompleted >= 3 ? 1 : founder.baseLevel ?? 0;
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted);
         founder.reputation = (founder.reputation ?? 0) + (contract.reputationGain ?? 2);
         founder.activeContract = null;
 
         if (world.agents?.player?.stats) {
           world.agents.player.stats.money = (world.agents.player.stats.money ?? 0) + (contract.payout ?? 20);
           world.agents.player.stats.reputation = (world.agents.player.stats.reputation ?? 0) + (contract.reputationGain ?? 2);
-          world.agents.player.stats.energy = Math.max(0, (world.agents.player.stats.energy ?? 100) - 6);
+          world.agents.player.stats.energy = Math.max(0, (world.agents.player.stats.energy ?? 100) - (contract.energyCost ?? 6));
         }
         if (world.economy) {
           world.economy.foodScarcity = Math.max(0, (world.economy.foodScarcity ?? 0) + (contract.stockImpact ?? -3));
           world.economy.trustPressure = Math.max(0, (world.economy.trustPressure ?? 0) - 1);
         }
 
+        const tierUp = founder.baseLevel > prevBaseLevel;
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: `Contract delivered. +${contract.payout} money, +${contract.reputationGain} reputation.`,
+          text: `Contract delivered (${contract.label ?? contract.templateId ?? contract.id}). +${contract.payout} money, +${contract.reputationGain} reputation.${tierUp ? ` Base level now ${founder.baseLevel}.` : ''}`,
           consequence: diffConsequence(world, before, actorId, {
             type: 'founder.contract_completed',
             description: 'Delivery contract completed',
-            importance: 8
+            importance: tierUp ? 9 : 8
           }),
           world
         };
       }
+      case 'list_contracts': {
+        const founder = world.founder ?? { unlocked: false };
+        if (!founder.unlocked) {
+          return { ok: false, kind: 'error', error: 'founder loop is locked until Missing Delivery is resolved' };
+        }
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted ?? 0);
+        const contracts = listFounderContractOffers(founder);
+        const before = snapshotForDelta(world);
+        return {
+          ok: true,
+          kind: 'founder',
+          command,
+          text: `Founder contracts (${contracts.filter((c) => c.status === 'available').length} available, base level ${founder.baseLevel}).`,
+          contracts,
+          consequence: diffConsequence(world, before, actorId, null),
+          world
+        };
+      }
       case 'ask_leno': {
+        const before = snapshotForDelta(world);
         executeAction(world, { actorId, actionId: 'ask_leno' });
         return {
           ok: true, kind: 'leno', command,
@@ -522,6 +580,11 @@ export function resolveCommand(world, commandOrText, args = {}) {
             suggestions: lenoSuggestActions(world, { incidentId: 'missing_delivery' })
           },
           text: lenoSummarize(world, { scope: 'world' }),
+          consequence: diffConsequence(world, before, actorId, {
+            type: 'leno.consulted',
+            description: 'Consulted Leno',
+            importance: 2
+          }),
           world
         };
       }
@@ -545,23 +608,101 @@ export function resolveCommand(world, commandOrText, args = {}) {
   }
 }
 
+/**
+ * Dispatch one player command. Pure function — returns a result
+ * envelope, mutates `world` in place (so callers can keep using
+ * the same world across calls).
+ */
+export function resolveCommand(world, commandOrText, args = {}) {
+  let command = commandOrText;
+  let effectiveArgs = args;
+  if (KNOWN_COMMANDS.has(String(commandOrText).toLowerCase())) {
+    command = String(commandOrText).toLowerCase();
+  } else {
+    const parsed = parseCommandText(commandOrText);
+    if (!parsed) return { ok: false, kind: 'error', error: 'empty command' };
+    if (!KNOWN_COMMANDS.has(parsed.command)) {
+      return { ok: false, kind: 'error', error: `unknown command: ${parsed.command}` };
+    }
+    command = parsed.command;
+    effectiveArgs = { ...parsed.args, ...args };
+  }
+  return attachMajorDecisionPrompt(
+    resolveCommandCore(world, command, effectiveArgs),
+    command,
+    effectiveArgs
+  );
+}
+
 function snapshotForDelta(world) {
   return {
     agents: JSON.parse(JSON.stringify(world.agents)),
     memories: world.memories,
-    rumors: world.rumors,
+    rumors: JSON.parse(JSON.stringify(world.rumors)),
     economy: JSON.parse(JSON.stringify(world.economy ?? {})),
-    founder: JSON.parse(JSON.stringify(world.founder ?? {}))
+    founder: JSON.parse(JSON.stringify(world.founder ?? {})),
+    incidents: JSON.parse(JSON.stringify(world.incidents ?? {})),
+    playerKnowledge: JSON.parse(JSON.stringify(world.playerKnowledge ?? { evidenceIds: [], knownRumorIds: [] }))
   };
+}
+
+function diffRumorTruthChanges(before, after) {
+  const changes = [];
+  for (const id of Object.keys(after.rumors ?? {})) {
+    const prev = before.rumors?.[id];
+    const next = after.rumors[id];
+    if (!prev || !next) continue;
+    const delta = (next.truthLevel ?? 0) - (prev.truthLevel ?? 0);
+    if (delta !== 0) changes.push({ rumorId: id, truthLevelDelta: delta });
+  }
+  return changes;
+}
+
+function diffIncidentChanges(before, after) {
+  const changes = [];
+  for (const id of Object.keys(after.incidents ?? {})) {
+    const prev = before.incidents?.[id];
+    const next = after.incidents[id];
+    if (!prev || !next) continue;
+    if (prev.status !== next.status || (prev.resolutionState ?? null) !== (next.resolutionState ?? null)) {
+      changes.push({
+        incidentId: id,
+        beforeStatus: prev.status ?? null,
+        afterStatus: next.status ?? null,
+        beforeResolutionState: prev.resolutionState ?? null,
+        afterResolutionState: next.resolutionState ?? null
+      });
+    }
+  }
+  return changes;
+}
+
+function diffUnlocks(before, after) {
+  const unlocks = [];
+  const wasFounder = Boolean(before.founder?.unlocked);
+  const nowFounder = Boolean(after.founder?.unlocked);
+  if (!wasFounder && nowFounder) unlocks.push('founder_loop');
+  const prevTier = before.founder?.baseLevel ?? 0;
+  const nextTier = after.founder?.baseLevel ?? 0;
+  if (nextTier > prevTier) unlocks.push(`founder_tier_${nextTier}`);
+  return unlocks;
 }
 
 function diffConsequence(world, before, actorId, ev) {
   const relChanges = diffRelationships(before, world, actorId);
   const memDelta = Object.keys(world.memories).length - Object.keys(before.memories).length;
-  const rumorDelta = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
+  const newRumors = Object.keys(world.rumors).length - Object.keys(before.rumors).length;
   const moneyDelta = (world.agents[actorId]?.stats?.money ?? 0) - (before.agents[actorId]?.stats?.money ?? 0);
   const reputationDelta = (world.agents[actorId]?.stats?.reputation ?? 0) - (before.agents[actorId]?.stats?.reputation ?? 0);
   const energyDelta = (world.agents[actorId]?.stats?.energy ?? 0) - (before.agents[actorId]?.stats?.energy ?? 0);
+  const evidenceBefore = new Set(before.playerKnowledge?.evidenceIds ?? []);
+  const evidenceDelta = (world.playerKnowledge?.evidenceIds ?? []).filter((id) => !evidenceBefore.has(id));
+  const rumorDelta = diffRumorTruthChanges(before, world);
+  const relationshipDelta = relChanges.length
+    ? { trustTotal: relChanges.reduce((sum, r) => sum + (r.trustDelta ?? 0), 0), changes: relChanges }
+    : { trustTotal: 0, changes: [] };
+  const incidentDelta = diffIncidentChanges(before, world);
+  const unlocks = diffUnlocks(before, world);
   const economyDelta = {
     foodScarcity: (world.economy?.foodScarcity ?? 0) - (before.economy?.foodScarcity ?? 0),
     trustPressure: (world.economy?.trustPressure ?? 0) - (before.economy?.trustPressure ?? 0)
@@ -569,16 +710,23 @@ function diffConsequence(world, before, actorId, ev) {
   const founderDelta = {
     contractsCompleted: (world.founder?.contractsCompleted ?? 0) - (before.founder?.contractsCompleted ?? 0),
     baseLevel: (world.founder?.baseLevel ?? 0) - (before.founder?.baseLevel ?? 0),
+    reputation: (world.founder?.reputation ?? 0) - (before.founder?.reputation ?? 0),
     activeContractChanged: (world.founder?.activeContract?.id ?? null) !== (before.founder?.activeContract?.id ?? null)
   };
   const incident = Object.values(world.incidents || {}).find((i) => i.id === 'missing_delivery');
   return {
     relationships: relChanges,
     newMemories: memDelta,
-    newRumors: rumorDelta,
+    newRumors,
     moneyDelta,
     reputationDelta,
     energyDelta,
+    evidenceDelta,
+    rumorDelta,
+    relationshipDelta,
+    incidentDelta,
+    unlocks,
+    factionDelta: { changes: [] },
     economyDelta,
     founderDelta,
     incident: incident ? { title: incident.title, status: incident.status, resolutionState: incident.resolutionState ?? null } : null,
@@ -611,6 +759,7 @@ function runPeaceful(world) {
   resolveCommand(world, 'ask', { target: 'amina', topic: 'mediation' });
   resolveCommand(world, 'pay', { target: 'malik', amount: 5, reason: 'peaceful-mediation' });
   helpSaraPeacefully(world);
+  syncFounderAvailability(world);
   return { resolutionPath: 'peaceful_mediation' };
 }
 
@@ -626,6 +775,10 @@ function runInvestigation(world) {
   if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
     world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
   }
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'investigation_and_counter_rumor', 'player');
+  }
+  syncFounderAvailability(world);
   return { resolutionPath: 'investigation_and_counter_rumor' };
 }
 
@@ -633,5 +786,9 @@ function runFounder(world) {
   resolveCommand(world, 'inspect', { target: 'workshop' });
   resolveCommand(world, 'pay', { target: 'malik', amount: 15, reason: 'founder-negotiation' });
   resolveCommand(world, 'talk', { target: 'sara', message: 'I arranged an alternative delivery from the workshop.' });
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'founder_negotiation', 'player');
+  }
+  syncFounderAvailability(world);
   return { resolutionPath: 'founder_negotiation' };
 }

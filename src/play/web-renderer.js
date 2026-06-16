@@ -33,36 +33,21 @@
 import { buildDistrictView } from './district-view.js';
 import { bindAssets } from './assets.js';
 import { buildGameplayShellModel } from './game-shell-model.js';
+import { escapeHtml, applyLenoGuard } from './html-utils.js';
+import {
+  renderGameTopBar,
+  renderLocationPlay,
+  renderNpcInteractionCards,
+  renderCaseBoardGameplay,
+  renderRumorTrailGameplay,
+  renderLenoGameplayPanel,
+  renderFounderGameplay,
+  renderActionCenter,
+  renderMajorDecisionModal,
+  renderGameBottomBar
+} from './visual-game-shell.js';
 
-const SOURCE_DEFINING = /\bnadia\s+is\s+the\s+source\b/i;
-
-function hasNadiaEvidence(payload) {
-  const pk = payload?.playerKnowledge ?? payload?.world?.playerKnowledge;
-  return Boolean(pk?.evidenceIds?.includes?.('rumor_source_nadia'));
-}
-
-export function escapeHtml(text) {
-  if (text === null || text === undefined) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/**
- * Apply the Leno evidence guard to a summary text.
- *   - Source-defining Nadia mentions ("Nadia is the source") are
- *     REPLACED with "REDACTED — evidence required" unless
- *     `rumor_source_nadia` is in evidence.
- *   - Plain "Nadia" mentions are passed through (Leno may speculate).
- */
-export function applyLenoGuard(text, payload) {
-  if (typeof text !== 'string') return '';
-  if (hasNadiaEvidence(payload)) return text;
-  return text.replace(SOURCE_DEFINING, 'REDACTED — evidence required');
-}
+export { escapeHtml, applyLenoGuard };
 
 export function renderHeader(world) {
   return `<header class="wm-header">
@@ -522,6 +507,10 @@ export function renderWebPage(payload) {
   const css = payload?.appCss ?? '';
   const js = payload?.appJs ?? '';
   const districtView = payload?.districtView ?? buildDistrictView(world);
+  const dialogueHtml = renderDialogueTurn(payload?.dialogue);
+  const consequenceHtml = renderConsequence(payload?.consequence);
+  const commandHtml = renderCommandButtons();
+  const eventFeedHtml = renderEventFeed(payload?.events ?? []);
   const stateJson = JSON.stringify({
     world: {
       id: world.id, name: world.name, day: world.day, time: world.time, tick: world.tick,
@@ -529,6 +518,9 @@ export function renderWebPage(payload) {
       rumors: world.rumors, playerKnowledge: world.playerKnowledge
     },
     demoPaths: payload?.demoPaths ?? [],
+    gameShell: {
+      majorDecisions: shell?.majorDecisions ?? []
+    },
     initialResult: {
       dialogue: payload?.dialogue ?? null,
       consequence: payload?.consequence ?? null,
@@ -545,35 +537,57 @@ export function renderWebPage(payload) {
   <title>WorldMind — Interactive Play</title>
   <style>${css}</style>
 </head>
-<body class="wm-body">
-  <main class="wm-main">
+<body class="wm-body wm-game-body">
+  <main class="wm-main wm-game-main">
     ${renderHeader(world)}
-    ${renderTopBar(world, payload, shell)}
-    <div class="wm-grid">
-      <div class="wm-col-left">
-        ${renderLocation(world, shell)}
-        ${renderAgents(world, shell)}
+    ${renderGameTopBar(shell, world)}
+    <div class="wm-game-shell" data-game-shell>
+      <aside class="wm-game-left" data-game-left>
         ${renderDistrictView(districtView)}
-        ${renderCommandButtons()}
-        ${renderDemoPaths(payload?.demoPaths ?? [])}
+        ${renderLocationPlay(shell, world)}
+      </aside>
+      <section class="wm-game-center" data-game-center>
+        ${renderActionCenter(dialogueHtml, consequenceHtml)}
+        <div class="wm-hotspot-rail" data-hotspot-rail aria-label="Hotspots">
+          <h3>Hotspots</h3>
+          <div class="wm-hotspot-list" data-hotspot-list>${(shell?.location?.hotspots ?? []).map((h) => {
+    const evidence = (h.possibleEvidence ?? []).map((e) => `<code>${escapeHtml(e)}</code>`).join(' ');
+    return `<article class="wm-hotspot-card" data-hotspot-id="${escapeHtml(h.id)}">
+      ${h.icon ? `<img src="${escapeHtml(h.icon)}" alt="" class="wm-hotspot-icon" />` : '<span class="wm-hotspot-pin">◎</span>'}
+      <div class="wm-hotspot-body">
+        <strong>${escapeHtml(h.label)}</strong>
+        <p class="wm-hotspot-desc">${escapeHtml(h.description ?? h.preview ?? '')}</p>
+        <p class="wm-hotspot-meta">risk ${escapeHtml(h.risk)} · ${escapeHtml(h.command)}</p>
+        ${evidence ? `<p class="wm-hotspot-evidence">may reveal: ${evidence}</p>` : ''}
+        <button type="button" class="wm-hotspot-run" data-run-command="${escapeHtml(h.command)}">Inspect / Run</button>
       </div>
-      <div class="wm-col-right">
-        ${renderDialogueTurn(payload?.dialogue)}
-        ${renderConsequence(payload?.consequence)}
-        ${renderEvidence(payload)}
-        ${renderRumorTrail(payload)}
-        ${renderIncident(world)}
-        ${renderLeno(payload)}
-        ${renderFounderPanel(shell)}
+    </article>`;
+  }).join('') || '<p class="wm-empty">No hotspots at this location.</p>'}</div>
+        </div>
+      </section>
+      <aside class="wm-game-right" data-game-right>
+        ${renderNpcInteractionCards(shell)}
+        ${renderLenoGameplayPanel(payload, shell)}
+        ${renderCaseBoardGameplay(shell?.caseBoard ?? {}, shell?.assets ?? {})}
+        ${renderRumorTrailGameplay(shell)}
+        ${renderFounderGameplay(shell)}
         ${renderMajorDecisionPanel(shell)}
+      </aside>
+    </div>
+    ${renderGameBottomBar(eventFeedHtml, commandHtml)}
+    <details class="wm-ancillary-panels">
+      <summary>Tools &amp; saves</summary>
+      <div class="wm-ancillary-grid">
+        ${renderIncident(world)}
         ${renderPhoneTabs()}
-        ${renderEventFeed(payload?.events)}
         ${renderSaves(payload?.saves)}
         ${renderBranches(payload?.branches)}
         ${renderDiff()}
+        ${renderDemoPaths(payload?.demoPaths ?? [])}
       </div>
-    </div>
+    </details>
   </main>
+  ${renderMajorDecisionModal()}
   <script id="wm-state" type="application/json">${escapeHtml(stateJson)}</script>
   <script>${js}</script>
 </body>

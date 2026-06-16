@@ -22,6 +22,16 @@ interface CreateRumorOptions {
   originEventId?: string;
 }
 
+export function syncRumorRuntimeFields(rumor: RumorRecord): void {
+  const spread = clamp(rumor.spreadRate ?? 30, 0, 100);
+  const distortion = clamp(rumor.distortionLevel ?? 0, 0, 100);
+  rumor.spreadRate = spread;
+  rumor.spreadRisk = clamp(rumor.spreadRisk ?? spread, 0, 100);
+  rumor.distortionLevel = distortion;
+  rumor.sourceConfidence = clamp(rumor.sourceConfidence ?? rumor.truthLevel, 0, 100);
+  rumor.knownBy = [...(rumor.knownByAgentIds ?? [])];
+}
+
 export function createRumor(world: WorldRuntime, options: CreateRumorOptions): RumorRecord {
   const { claim, sourceAgentId, targetAgentIds = [], truthLevel = 50, emotionalTone = 'suspicion', spreadRate = 30, originEventId } = options;
   const rumor: RumorRecord = {
@@ -38,6 +48,7 @@ export function createRumor(world: WorldRuntime, options: CreateRumorOptions): R
     distortionLevel: 0,
     active: true
   };
+  syncRumorRuntimeFields(rumor);
   world.rumors[rumor.id] = rumor;
   return rumor;
 }
@@ -50,6 +61,7 @@ export function spreadRumorTo(world: WorldRuntime, rumorId: string, listenerAgen
   const relToTarget = target ? world.agents[listenerAgentId].relationships[target] : undefined;
   const belief = relToTarget ? rumorBeliefChance(relToTarget, rumor.truthLevel) : rumor.truthLevel;
   rumor.knownByAgentIds.push(listenerAgentId);
+  syncRumorRuntimeFields(rumor);
   if (target && belief > 50) {
     applyRelationshipImpact(world, listenerAgentId, target, { suspicion: 12, trust: -8 }, `believed rumor: ${rumor.claim}`, rumor.originEventId);
   }
@@ -99,9 +111,17 @@ export function counterRumor(world: WorldRuntime, rumorId: string, options: Coun
   const { counterClaim, evidenceStrength = 0, actorId = 'player' } = options;
   const rumor = world.rumors[rumorId];
   if (!rumor) throw new Error(`Rumor not found: ${rumorId}`);
+  const weakEvidence = evidenceStrength < 50;
   const reduction = 10 + evidenceStrength * 0.5;
   rumor.truthLevel = clamp(rumor.truthLevel - reduction, 0, 100);
   rumor.spreadRate = clamp((rumor.spreadRate ?? 0) - reduction * 0.5, 0, 100);
+  if (weakEvidence) {
+    // Weak counter-claims can unintentionally amplify attention to the rumor.
+    rumor.distortionLevel = clamp((rumor.distortionLevel ?? 0) + 10, 0, 100);
+    rumor.spreadRate = clamp((rumor.spreadRate ?? 0) + 8, 0, 100);
+    rumor.spreadRisk = clamp((rumor.spreadRisk ?? rumor.spreadRate ?? 0) + 8, 0, 100);
+  }
+  syncRumorRuntimeFields(rumor);
   return world.addEvent({
     type: 'counter_rumor',
     locationId: world.agents[actorId]?.locationId ?? 'market',
@@ -110,9 +130,19 @@ export function counterRumor(world: WorldRuntime, rumorId: string, options: Coun
     public: false,
     visibleToAgentIds: Object.keys(world.agents).filter((id) => rumor.knownByAgentIds.includes(id)),
     causes: [rumor.originEventId].filter((x): x is string => Boolean(x)),
-    consequences: [{ type: 'rumor_weakened', rumorId, reduction }],
+    consequences: [{ type: 'rumor_weakened', rumorId, reduction, backfire: weakEvidence }],
     importance: evidenceStrength > 50 ? 4 : 3,
-    payload: { rumorId, counterClaim, evidenceStrength, reduction, spreadRate: rumor.spreadRate, truthLevel: rumor.truthLevel }
+    payload: {
+      rumorId,
+      counterClaim,
+      evidenceStrength,
+      reduction,
+      backfire: weakEvidence,
+      spreadRate: rumor.spreadRate,
+      spreadRisk: rumor.spreadRisk,
+      truthLevel: rumor.truthLevel,
+      distortionLevel: rumor.distortionLevel
+    }
   });
 }
 

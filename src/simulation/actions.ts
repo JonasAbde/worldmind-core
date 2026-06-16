@@ -5,7 +5,7 @@
 import { ACTION_RISK_LIMIT_MVP, ACTIONS, PERMISSIONS, RISK } from './constants.js';
 import { applyRelationshipImpact, calculateAcceptance } from './relationships.ts';
 import { maybeCreateMemory, processEventMemory } from './memory.ts';
-import { counterRumor, createRumor, traceRumor } from './rumors.ts';
+import { counterRumor, createRumor, traceRumor, syncRumorRuntimeFields } from './rumors.ts';
 import { resolveIncident } from './incidents.ts';
 import type { AgentId, EventRecord } from '../contracts/types.ts';
 import type { WorldRuntime } from './state.ts';
@@ -163,6 +163,13 @@ function inspectLocation(world: WorldRuntime, { actorId, targetLocationId, focus
 
 function listenForRumors(world: WorldRuntime, { actorId, targetLocationId }: ActionRequest): EventRecord {
   const known = Object.values(world.rumors).filter((r) => r.knownByAgentIds.some((id) => world.agents[id]?.locationId === targetLocationId));
+  for (const r of known) {
+    syncRumorRuntimeFields(r);
+    if (!r.knownByAgentIds.includes(actorId)) {
+      r.knownByAgentIds.push(actorId);
+      syncRumorRuntimeFields(r);
+    }
+  }
   if (actorId === 'player') for (const r of known) if (!world.playerKnowledge.knownRumorIds.includes(r.id)) world.playerKnowledge.knownRumorIds.push(r.id);
   return world.addEvent({ type: 'rumors_listened', locationId: targetLocationId as string, actorIds: [actorId], description: `${world.agents[actorId].name} listened for rumors at ${world.locations[targetLocationId as string].name}.`, public: false, visibleToAgentIds: [actorId], importance: known.length ? 3 : 1, payload: { rumorIds: known.map((r) => r.id) } });
 }

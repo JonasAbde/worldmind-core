@@ -140,6 +140,10 @@ export interface RumorRecord {
   sourceAgentId: AgentId;
   truthLevel: number;
   knownByAgentIds: AgentId[];
+  /** Flat alias for UI/runtime clients (mirrors knownByAgentIds). */
+  knownBy?: AgentId[];
+  sourceConfidence?: number;
+  spreadRisk?: number;
   spreadRate?: number;
   targetAgentIds?: AgentId[];
   emotionalTone?: string;

@@ -66,68 +66,134 @@ function die(message, code = 1) {
 }
 
 const APP_CSS = `* { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0e1117; color: #e6e6e6; }
-.wm-main { max-width: 1200px; margin: 0 auto; padding: 16px; }
-.wm-header { padding: 16px 0; border-bottom: 1px solid #1f2937; margin-bottom: 16px; }
-.wm-header h1 { margin: 0; font-size: 1.5rem; }
-.wm-subtitle { color: #8b95a1; margin: 4px 0 0; font-size: 0.9rem; }
-.wm-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-.wm-col-left, .wm-col-right { display: flex; flex-direction: column; gap: 12px; }
-.wm-section { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 12px 16px; }
-.wm-section h2 { margin: 0 0 8px; font-size: 1.05rem; color: #58a6ff; }
-.wm-section h3 { margin: 8px 0 4px; font-size: 0.85rem; color: #8b95a1; text-transform: uppercase; letter-spacing: 0.05em; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0d12; color: #e6e6e6; }
+.wm-main { max-width: 1440px; margin: 0 auto; padding: 12px 16px 24px; }
+.wm-header { padding: 8px 0 12px; border-bottom: 1px solid #1f2937; margin-bottom: 8px; }
+.wm-header h1 { margin: 0; font-size: 1.25rem; }
+.wm-subtitle { color: #8b95a1; margin: 4px 0 0; font-size: 0.85rem; }
+.wm-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* Game topbar */
+.wm-game-topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); border: 1px solid #30363d; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+.wm-topbar-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.wm-topbar-logo { width: 24px; height: 24px; }
+.wm-topbar-stats { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 0.8rem; color: #c9d1d9; }
+.wm-topbar-stats strong { color: #58a6ff; margin-right: 2px; }
+
+/* Three-column game shell */
+.wm-game-shell { display: grid; grid-template-columns: minmax(220px, 28%) minmax(280px, 1fr) minmax(260px, 32%); gap: 12px; align-items: start; }
+.wm-game-left, .wm-game-center, .wm-game-right { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.wm-section { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 10px 12px; }
+.wm-section h2 { margin: 0 0 8px; font-size: 1rem; color: #58a6ff; }
+.wm-section h3 { margin: 8px 0 4px; font-size: 0.78rem; color: #8b95a1; text-transform: uppercase; letter-spacing: 0.05em; }
 .wm-empty { color: #6e7681; font-style: italic; }
-.wm-location-name { font-size: 1.1rem; font-weight: bold; margin: 4px 0; }
-.wm-agents-here, .wm-agent-list, .wm-demo-path-list { list-style: none; padding: 0; margin: 0; }
-.wm-agents-here li, .wm-agent-list li { padding: 4px 0; border-bottom: 1px solid #21262d; }
-.wm-agent { display: flex; flex-direction: column; gap: 2px; }
-.wm-agent-card { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: start; }
-.wm-agent-avatar { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; border: 1px solid #30363d; }
-.wm-agent-role { color: #8b95a1; font-size: 0.8rem; }
-.wm-agent-loc { color: #6e7681; font-size: 0.75rem; }
-.wm-agent-stats { color: #9fb4c8; font-size: 0.75rem; display: block; margin: 2px 0; }
+
+/* Location scene */
+.wm-location-name { font-size: 1.05rem; font-weight: bold; margin: 4px 0; }
+.wm-location-mood { color: #8b95a1; font-size: 0.8rem; margin: 0 0 6px; }
+.wm-scene-stage { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #30363d; background: #0d1117; }
+.wm-scene-img { width: 100%; display: block; max-height: 220px; object-fit: cover; }
+.wm-scene-placeholder { padding: 40px; text-align: center; color: #6e7681; }
+.wm-hotspot-overlay { display: none; }
+
+/* Hotspot cards */
+.wm-hotspot-list { display: grid; gap: 8px; }
+.wm-hotspot-card { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: start; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
+.wm-hotspot-icon { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; }
+.wm-hotspot-pin { font-size: 1.4rem; color: #f0883e; line-height: 1; }
+.wm-hotspot-desc { margin: 4px 0; font-size: 0.82rem; color: #c9d1d9; }
+.wm-hotspot-meta, .wm-hotspot-evidence { font-size: 0.72rem; color: #8b95a1; margin: 2px 0; }
+.wm-hotspot-run { background: #1f6feb; border: none; color: #fff; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.78rem; margin-top: 4px; }
+
+/* NPC cards */
+.wm-npc-grid { display: grid; gap: 8px; }
+.wm-npc-card { display: grid; grid-template-columns: 64px 1fr; gap: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
+.wm-npc-portrait { width: 64px; height: 64px; border-radius: 6px; object-fit: cover; border: 1px solid #21262d; }
+.wm-agent-role, .wm-agent-loc { display: block; color: #8b95a1; font-size: 0.75rem; }
+.wm-npc-mood { display: block; font-size: 0.72rem; color: #f0883e; margin: 2px 0; }
+.wm-agent-stats { display: block; color: #9fb4c8; font-size: 0.72rem; }
+.wm-npc-topics { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.wm-topic-chip { background: #21262d; border-radius: 999px; padding: 2px 6px; font-size: 0.68rem; color: #c9d1d9; }
 .wm-agent-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.wm-agent-actions button { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; cursor: pointer; }
-.wm-topbar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.85rem; }
-.wm-location-scene { margin: 8px 0; }
-.wm-scene-img { width: 100%; border-radius: 6px; border: 1px solid #30363d; }
-.wm-hotspot-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
-.wm-hotspot { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 6px; }
-.wm-hotspot button { background: #1f6feb; border: none; color: #fff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
-.wm-case-board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wm-agent-actions button { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; cursor: pointer; }
+
+/* Case board tabs */
+.wm-case-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.wm-case-tab { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer; }
+.wm-case-tab.active { background: #1f6feb; border-color: #388bfd; color: #fff; }
+.wm-case-pane { display: none; }
+.wm-case-pane.active { display: block; }
 .wm-case-board ul { list-style: none; padding: 0; margin: 0; }
-.wm-case-card { display: flex; align-items: center; gap: 6px; border: 1px solid #21262d; border-radius: 4px; padding: 4px; margin: 4px 0; background: #0d1117; }
-.wm-case-card img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-.wm-case-meta { display: block; color: #8b95a1; font-size: 0.72rem; margin-top: 2px; }
+.wm-case-card, .wm-suspect-card { display: flex; align-items: flex-start; gap: 8px; border: 1px solid #21262d; border-radius: 6px; padding: 6px; margin: 6px 0; background: #0d1117; }
+.wm-case-card img { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.wm-case-meta { display: block; color: #8b95a1; font-size: 0.7rem; margin-top: 2px; }
 .wm-case-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.wm-case-actions button, .wm-case-card button { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; cursor: pointer; }
-.wm-case-links-wrap { grid-column: 1 / -1; margin-top: 4px; }
-.wm-case-links { list-style: none; padding: 0; margin: 0; }
-.wm-case-link { border: 1px dashed #30363d; border-radius: 4px; padding: 4px 6px; margin: 4px 0; font-size: 0.78rem; background: #0d1117; }
-.wm-ticker { margin: 0; padding-left: 18px; font-size: 0.82rem; }
-.wm-decision-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.wm-decision-list button { background: #3d1f6b; color: #fff; border: 1px solid #5d2fa0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.78rem; }
+.wm-case-actions button, .wm-case-card button, .wm-leno-ask-btn { background: #1b2633; border: 1px solid #34495e; color: #dce6ef; border-radius: 4px; padding: 3px 8px; font-size: 0.72rem; cursor: pointer; }
+.wm-case-link { border: 1px dashed #30363d; border-radius: 4px; padding: 4px 6px; margin: 4px 0; font-size: 0.75rem; }
+.wm-lock-badge, .wm-redacted .wm-lock-badge { color: #f85149; font-size: 0.68rem; }
+.wm-case-card.wm-locked, .wm-suspect-card.wm-redacted { opacity: 0.75; border-style: dashed; }
+
+/* Rumor trail */
+.wm-rumor-trail-card { display: grid; grid-template-columns: 36px 1fr; gap: 8px; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 8px; background: #0d1117; }
+.wm-rumor-icon { width: 32px; height: 32px; }
+.wm-rumor-claim { margin: 0 0 4px; font-size: 0.85rem; }
+.wm-rumor-meta { margin: 2px 0; font-size: 0.72rem; color: #8b95a1; }
+.wm-rumor-warning { color: #f0883e; font-size: 0.75rem; margin: 4px 0; }
+
+/* Leno panel */
+.wm-leno-wrap { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: start; }
+.wm-leno-avatar { width: 56px; height: 56px; border-radius: 8px; }
+.wm-leno-summary { background: #0d1117; padding: 8px; border-radius: 4px; font-size: 0.78rem; white-space: pre-wrap; margin: 0 0 6px; }
+
+/* Founder */
+.wm-founder-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; background: #238636; color: #fff; }
+.wm-founder-badge.wm-locked-badge { background: #6e7681; }
+.wm-founder-stats { list-style: none; padding: 0; margin: 8px 0; font-size: 0.82rem; }
+.wm-founder-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.wm-founder-actions button { background: #3d1f6b; color: #fff; border: 1px solid #5d2fa0; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.78rem; }
+.wm-founder-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Action center + bottom bar */
+.wm-action-center { min-height: 120px; }
+.wm-game-bottom { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.wm-consequence-ticker-live { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; color: #f0883e; min-height: 28px; }
+.wm-consequence-ticker-live:empty::before { content: 'Consequence ticker — run a command to see live deltas.'; color: #6e7681; font-style: italic; }
+
+/* Modal */
+.wm-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+.wm-modal.hidden { display: none; }
+.wm-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.65); }
+.wm-modal-card { position: relative; background: #161b22; border: 1px solid #388bfd; border-radius: 8px; padding: 16px 20px; max-width: 420px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+.wm-modal-card h3 { margin: 0 0 8px; color: #58a6ff; }
+.wm-modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.wm-modal-actions button { border-radius: 4px; padding: 8px 12px; cursor: pointer; font-size: 0.82rem; border: 1px solid #30363d; }
+.wm-modal-actions button[data-modal-branch] { background: #1f6feb; color: #fff; border-color: #388bfd; }
+.wm-modal-actions button[data-modal-continue] { background: #21262d; color: #e6e6e6; }
+.wm-modal-actions button[data-modal-cancel] { background: transparent; color: #8b95a1; }
+
+/* District map */
+.wm-district-svg { width: 100%; height: auto; max-height: 160px; color: #58a6ff; }
+.wm-player-location circle { fill: #f0883e; stroke: #fff; stroke-width: 0.4; }
+
+/* Commands fallback */
 .wm-command-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.wm-cmd-btn { background: #21262d; color: #e6e6e6; border: 1px solid #30363d; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; }
-.wm-cmd-btn:hover { background: #30363d; }
+.wm-cmd-btn { background: #21262d; color: #e6e6e6; border: 1px solid #30363d; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 0.82rem; }
 .wm-cmd-form { display: flex; flex-direction: column; gap: 4px; }
 .wm-cmd-form input { background: #0d1117; color: #e6e6e6; border: 1px solid #30363d; border-radius: 4px; padding: 6px 8px; font-family: monospace; }
 .wm-cmd-form button { background: #1f6feb; color: white; border: none; border-radius: 4px; padding: 6px; cursor: pointer; }
-.wm-cmd-form label { font-size: 0.75rem; color: #8b95a1; }
-.wm-dialogue-agent { font-size: 0.95rem; }
 .wm-dialogue-agent em { color: #f0883e; }
-.wm-leno-summary, .wm-section pre { background: #0d1117; padding: 8px; border-radius: 4px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; }
-.wm-saves-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-.wm-saves-table th, .wm-saves-table td { border: 1px solid #21262d; padding: 4px 6px; text-align: left; }
-.wm-saves-table th { background: #21262d; }
-.wm-demo-path { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
-.wm-demo-path h3 { margin: 0 0 4px; font-size: 0.9rem; color: #f0883e; text-transform: none; letter-spacing: 0; }
-.wm-demo-steps { padding-left: 20px; margin: 4px 0; }
-.wm-demo-steps li { font-family: monospace; font-size: 0.8rem; }
-.wm-hint { color: #8b95a1; font-size: 0.8rem; font-style: italic; }
-.wm-incident-status { font-size: 1rem; margin: 4px 0; }
+.wm-ticker { margin: 0; padding-left: 18px; font-size: 0.8rem; }
+.wm-decision-list button { background: #3d1f6b; color: #fff; border: 1px solid #5d2fa0; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.75rem; }
+.wm-event-feed { list-style: none; padding: 0; margin: 0; max-height: 140px; overflow-y: auto; font-size: 0.78rem; }
+.wm-event-feed li { padding: 4px 0; border-bottom: 1px solid #21262d; }
+.wm-ancillary-panels { margin-top: 16px; }
+.wm-ancillary-panels summary { cursor: pointer; color: #8b95a1; font-size: 0.85rem; }
+.wm-ancillary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 8px; }
+.wm-saves-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.wm-saves-table th, .wm-saves-table td { border: 1px solid #21262d; padding: 4px; }
 code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.85em; }
-@media (max-width: 768px) { .wm-grid { grid-template-columns: 1fr; } }`;
+@media (max-width: 1024px) { .wm-game-shell { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .wm-topbar-stats { font-size: 0.72rem; } }`;
 
 const APP_JS = `(function () {
   'use strict';
@@ -135,6 +201,18 @@ const APP_JS = `(function () {
   if (!stateEl) return;
   var initial = JSON.parse(stateEl.textContent);
   var world = initial.world;
+  var majorDecisions = (initial.gameShell && initial.gameShell.majorDecisions) || [];
+
+  function matchMajorDecision(cmd) {
+    var n = String(cmd || '').trim().toLowerCase();
+    if (!n) return null;
+    for (var i = 0; i < majorDecisions.length; i++) {
+      var d = majorDecisions[i];
+      var dc = String(d.command || '').trim().toLowerCase();
+      if (dc && (n === dc || n.indexOf(dc) === 0)) return d;
+    }
+    return null;
+  }
 
   function escapeHtml(s) {
     if (s === null || s === undefined) return '';
@@ -178,10 +256,12 @@ const APP_JS = `(function () {
   }
 
   function renderCaseBoardHtml(caseBoard) {
+    var evIcon = 'assets/ui/evidence-card.png';
+    var ruIcon = 'assets/ui/rumor-card.png';
     var evidenceCards = (caseBoard && caseBoard.evidenceCards || []).map(function (card) {
       var c = typeof card === 'string' ? { id: card, label: card } : card;
-      return '<li class="wm-case-card" data-case-card-id="' + escapeHtml(c.id) + '">' +
-        '<img src="assets/ui/evidence-card.png" alt="Evidence card" />' +
+      return '<li class="wm-case-card' + (c.locked ? ' wm-locked' : '') + '" data-case-card-id="' + escapeHtml(c.id) + '">' +
+        '<img src="' + evIcon + '" alt="Evidence" />' +
         '<div><strong>' + escapeHtml(c.label || c.id) + '</strong>' +
         (c.locationId ? '<span class="wm-case-meta">@ ' + escapeHtml(c.locationId) + '</span>' : '') +
         (c.inspectCommand ? '<button type="button" data-run-command="' + escapeHtml(c.inspectCommand) + '">Inspect</button>' : '') +
@@ -189,49 +269,108 @@ const APP_JS = `(function () {
     }).join('');
     var rumorCards = (caseBoard && caseBoard.rumorCards || []).map(function (card) {
       var c = typeof card === 'string' ? { id: card, label: card } : card;
-      return '<li class="wm-case-card" data-case-card-id="' + escapeHtml(c.id) + '">' +
-        '<img src="assets/ui/rumor-card.png" alt="Rumor card" />' +
+      return '<li class="wm-case-card' + (c.sourceRedacted ? ' wm-redacted' : '') + '" data-case-card-id="' + escapeHtml(c.id) + '">' +
+        '<img src="' + ruIcon + '" alt="Rumor" />' +
         '<div><strong>' + escapeHtml(c.label || c.id) + '</strong>' +
-        (c.sourceRedacted ? '<span class="wm-case-meta">Source: REDACTED</span>' : '') +
+        (c.sourceRedacted ? '<span class="wm-lock-badge">Source locked</span>' : '') +
         '<div class="wm-case-actions">' +
         '<button type="button" data-run-command="' + escapeHtml(c.traceCommand) + '">Trace</button>' +
         '<button type="button" data-run-command="' + escapeHtml(c.counterCommand) + '">Counter</button>' +
         '</div></div></li>';
+    }).join('');
+    var suspects = (caseBoard && caseBoard.suspectCards || []).map(function (s) {
+      return '<li class="wm-suspect-card' + (s.redacted ? ' wm-redacted' : '') + '" data-suspect-id="' + escapeHtml(s.id) + '">' +
+        '<strong>' + (s.redacted ? 'REDACTED' : escapeHtml(s.label)) + '</strong>' +
+        '<span class="wm-case-meta">' + escapeHtml(s.role) + '</span>' +
+        (s.inspectCommand ? '<button type="button" data-run-command="' + escapeHtml(s.inspectCommand) + '">Investigate</button>' : '<span class="wm-lock-badge">Evidence required</span>') +
+        '</li>';
     }).join('');
     var links = (caseBoard && caseBoard.links || []).map(function (link) {
       return '<li class="wm-case-link" data-link-from="' + escapeHtml(link.from) + '" data-link-to="' + escapeHtml(link.to) + '">' +
         '<code>' + escapeHtml(link.from) + '</code> → <code>' + escapeHtml(link.to) + '</code>' +
         '<span class="wm-case-meta">' + escapeHtml(link.relation) + (link.redacted ? ' · REDACTED' : '') + '</span></li>';
     }).join('');
-    return '<div><h4>Evidence Cards</h4><ul>' + (evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>') + '</ul></div>' +
-      '<div><h4>Rumor Cards</h4><ul>' + (rumorCards || '<li class="wm-empty">No rumor cards yet.</li>') + '</ul></div>' +
-      (links ? '<div class="wm-case-links-wrap"><h4>Case Links</h4><ul class="wm-case-links">' + links + '</ul></div>' : '');
+    return '<div class="wm-case-pane active" data-case-pane="evidence"><ul>' + (evidenceCards || '<li class="wm-empty">No evidence cards yet.</li>') + '</ul></div>' +
+      '<div class="wm-case-pane" data-case-pane="rumors"><ul>' + (rumorCards || '<li class="wm-empty">No rumor cards yet.</li>') + '</ul></div>' +
+      '<div class="wm-case-pane" data-case-pane="suspects"><ul>' + (suspects || '<li class="wm-empty">No suspects profiled.</li>') + '</ul></div>' +
+      '<div class="wm-case-pane" data-case-pane="links"><ul class="wm-case-links">' + (links || '<li class="wm-empty">Collect more cards to reveal links.</li>') + '</ul></div>';
   }
 
-  function promptMajorDecisionBranch(decision) {
-    if (!decision || !decision.branchSuggested || !liveMode) return;
-    var label = decision.label || decision.id || 'decision';
-    if (!confirm('Major decision detected: "' + label + '". Save branch snapshot for timeline?')) {
-      showBanner('Major decision recorded without branch: ' + label);
+  function renderRumorTrailHtml(rumors) {
+    return (rumors || []).map(function (r) {
+      return '<article class="wm-rumor-trail-card" data-rumor-id="' + escapeHtml(r.id) + '">' +
+        '<img src="assets/ui/rumor-card.png" alt="" class="wm-rumor-icon" />' +
+        '<div><p class="wm-rumor-claim">' + escapeHtml(r.claim || r.id) + '</p>' +
+        '<p class="wm-rumor-meta">spread: ' + escapeHtml(r.spreadRisk) + ' · distortion: ' + escapeHtml(r.distortion || 'unknown') + ' · trace: ' + escapeHtml(r.traceState || 'untraced') + '</p>' +
+        (r.backfireWarning ? '<p class="wm-rumor-warning">⚠ Counter-rumor without source evidence can backfire.</p>' : '') +
+        '<div class="wm-case-actions">' +
+        '<button type="button" data-run-command="' + escapeHtml(r.traceCommand) + '">Trace</button>' +
+        '<button type="button" data-run-command="' + escapeHtml(r.counterCommand) + '">Counter</button>' +
+        '</div></div></article>';
+    }).join('') || '<p class="wm-empty">No known rumors yet.</p>';
+  }
+
+  var pendingCommand = null;
+  var pendingDecision = null;
+
+  function showMajorDecisionModal(decision, cmd) {
+    var modal = document.getElementById('wm-major-decision-modal');
+    if (!modal) {
+      if (confirm('Create branch before this decision?')) {
+        runBranchThenCommand(decision, cmd);
+      } else {
+        dispatch(cmd, true);
+      }
       return;
     }
-    api('POST', '/api/save', { branchName: 'main', note: 'post-decision:' + (decision.id || label) }).then(function (saveRes) {
+    pendingCommand = cmd;
+    pendingDecision = decision;
+    var title = modal.querySelector('[data-modal-title]');
+    var body = modal.querySelector('[data-modal-body]');
+    if (title) title.textContent = 'Major decision: ' + (decision.label || decision.id || 'choice');
+    if (body) body.textContent = 'Create a branch snapshot before "' + (decision.label || cmd) + '"? You can continue without branching if save fails.';
+    modal.classList.remove('hidden');
+  }
+
+  function hideMajorDecisionModal() {
+    var modal = document.getElementById('wm-major-decision-modal');
+    if (modal) modal.classList.add('hidden');
+    pendingCommand = null;
+    pendingDecision = null;
+  }
+
+  function runBranchThenCommand(decision, cmd) {
+    if (!liveMode) {
+      showBanner('Start play-server to branch before decision.');
+      dispatch(cmd, true);
+      return;
+    }
+    api('POST', '/api/save', { branchName: 'main', note: 'pre-decision:' + (decision && decision.id || cmd) }).then(function (saveRes) {
       if (!saveRes.body || !saveRes.body.ok) {
-        showBanner('Post-decision save failed: ' + (saveRes.body && saveRes.body.error || saveRes.status));
+        showBanner('Branch save failed — continuing without branch.');
+        dispatch(cmd, true);
         return;
       }
       var snapshotId = saveRes.body.snapshotId;
-      var branchName = 'decision_' + (decision.id || 'choice') + '_' + Date.now();
-      api('POST', '/api/branch', { name: branchName, snapshotId: snapshotId, note: 'after ' + label }).then(function (branchRes) {
+      var branchName = 'decision_' + ((decision && decision.id) || 'choice') + '_' + Date.now();
+      api('POST', '/api/branch', { name: branchName, snapshotId: snapshotId, note: 'before ' + (decision && decision.label || cmd) }).then(function (branchRes) {
         if (branchRes.body && branchRes.body.ok) {
-          showBanner('Branch saved for major decision: ' + branchName);
+          showBanner('Branch created: ' + branchName);
+          var branchEl = document.querySelector('[data-topbar-branch]');
+          if (branchEl) branchEl.innerHTML = '<strong>Branch</strong> ' + escapeHtml(branchName);
           refreshSaves();
           refreshBranches();
         } else {
-          showBanner('Branch create failed: ' + (branchRes.body && branchRes.body.error || branchRes.status));
+          showBanner('Branch create failed — continuing anyway.');
         }
+        dispatch(cmd, true);
       });
     });
+  }
+
+  function promptMajorDecisionBranch(decision, cmd) {
+    if (!decision || !decision.branchSuggested) return;
+    showMajorDecisionModal(decision, cmd || decision.command);
   }
 
   function applyCommandResult(result) {
@@ -252,6 +391,10 @@ const APP_JS = `(function () {
         'food scarcity: ' + (c.economyDelta && c.economyDelta.foodScarcity >= 0 ? '+' : '') + ((c.economyDelta && c.economyDelta.foodScarcity) || 0),
         'base progress: +' + ((c.founderDelta && c.founderDelta.contractsCompleted) || 0) + ' contracts'
       ];
+      var tickerEl = document.querySelector('[data-consequence-ticker]');
+      if (tickerEl) {
+        tickerEl.textContent = ticker.join(' · ');
+      }
       var consequenceEl = document.getElementById('wm-consequence');
       if (consequenceEl) {
         consequenceEl.innerHTML = '<h2>Consequence</h2>' +
@@ -277,31 +420,65 @@ const APP_JS = `(function () {
     if (result.leno && result.leno.summary) {
       var lenoEl = document.getElementById('wm-leno');
       if (lenoEl) {
-        lenoEl.innerHTML = '<h2>Leno Suggestions</h2><pre class="wm-leno-summary">' + escapeHtml(result.leno.summary) + '</pre>';
+        var content = lenoEl.querySelector('[data-leno-content]');
+        if (content) {
+          var summaryEl = content.querySelector('[data-leno-summary]');
+          if (summaryEl) summaryEl.textContent = result.leno.summary;
+          else content.innerHTML = '<pre class="wm-leno-summary" data-leno-summary>' + escapeHtml(result.leno.summary) + '</pre><button type="button" data-run-command="ask_leno">Ask Leno</button>';
+        } else {
+          lenoEl.innerHTML = '<h2>Leno</h2><pre class="wm-leno-summary">' + escapeHtml(result.leno.summary) + '</pre>';
+        }
       }
       var lenoTop = document.querySelector('[data-topbar-leno]');
-      if (lenoTop) lenoTop.innerHTML = '<strong>Leno:</strong> online';
+      if (lenoTop) lenoTop.innerHTML = '<strong>Leno</strong> online';
     }
 
     if (result.world) {
       var dayEl = document.querySelector('[data-topbar-day]');
       var timeEl = document.querySelector('[data-topbar-time]');
-      if (dayEl) dayEl.innerHTML = '<strong>Day:</strong> ' + escapeHtml(result.world.day ?? '?');
-      if (timeEl) timeEl.innerHTML = '<strong>Time:</strong> ' + escapeHtml(result.world.time ?? '?');
+      if (dayEl) dayEl.innerHTML = '<strong>Day</strong> ' + escapeHtml(result.world.day ?? '?');
+      if (timeEl) timeEl.innerHTML = '<strong>Time</strong> ' + escapeHtml(result.world.time ?? '?');
     }
 
     if (result.playerSnapshot) {
       var moneyEl = document.querySelector('[data-topbar-money]');
-      if (moneyEl) moneyEl.innerHTML = '<strong>Money:</strong> ' + escapeHtml(result.playerSnapshot.money ?? 0);
+      var repEl = document.querySelector('[data-topbar-reputation]');
+      var energyEl = document.querySelector('[data-topbar-energy]');
+      if (moneyEl) moneyEl.innerHTML = '<strong>Money</strong> ' + escapeHtml(result.playerSnapshot.money ?? 0);
+      if (repEl) repEl.innerHTML = '<strong>Rep</strong> ' + escapeHtml(result.playerSnapshot.reputation ?? 0);
+      if (energyEl) energyEl.innerHTML = '<strong>Energy</strong> ' + escapeHtml(result.playerSnapshot.energy ?? 0);
+    }
+
+    if (result.consequence) {
+      var c2 = result.consequence;
+      if (c2.reputationDelta !== undefined) {
+        var repTop = document.querySelector('[data-topbar-reputation]');
+        if (repTop && result.playerSnapshot) repTop.innerHTML = '<strong>Rep</strong> ' + escapeHtml(result.playerSnapshot.reputation ?? 0);
+      }
     }
 
     if (result.founder) {
       var contractsEl = document.querySelector('[data-founder-contracts]');
       var baseEl = document.querySelector('[data-founder-base-level]');
       var activeEl = document.querySelector('[data-founder-active-contract]');
+      var founderRep = document.querySelector('[data-founder-reputation]');
+      var founderMoney = document.querySelector('[data-founder-money]');
       if (contractsEl) contractsEl.textContent = String(result.founder.contractsCompleted ?? 0);
       if (baseEl) baseEl.textContent = String(result.founder.baseLevel ?? 0);
       if (activeEl) activeEl.textContent = result.founder.activeContract?.id ?? 'none';
+      if (founderRep) founderRep.textContent = String(result.founder.reputation ?? 0);
+      if (founderMoney) founderMoney.textContent = String(result.founder.money ?? 0);
+    }
+
+    if (result.gameShell) {
+      if (result.gameShell.caseBoard) {
+        var boardEl = document.querySelector('[data-case-board]');
+        if (boardEl) boardEl.innerHTML = renderCaseBoardHtml(result.gameShell.caseBoard);
+      }
+      if (result.gameShell.rumorTrail) {
+        var trailEl = document.querySelector('[data-rumor-trail]');
+        if (trailEl) trailEl.innerHTML = renderRumorTrailHtml(result.gameShell.rumorTrail);
+      }
     }
 
     if (result.text) {
@@ -311,11 +488,6 @@ const APP_JS = `(function () {
         li.innerHTML = '<code>' + escapeHtml(result.kind || 'command') + '</code> · ' + escapeHtml(result.text);
         feed.insertBefore(li, feed.firstChild);
       }
-    }
-
-    if (result.gameShell && result.gameShell.caseBoard) {
-      var boardEl = document.querySelector('[data-case-board]');
-      if (boardEl) boardEl.innerHTML = renderCaseBoardHtml(result.gameShell.caseBoard);
     }
 
     if (result.playerKnowledge) {
@@ -330,12 +502,16 @@ const APP_JS = `(function () {
       }
     }
 
-    if (result.majorDecisionPrompt) {
-      promptMajorDecisionBranch(result.majorDecisionPrompt);
-    }
   }
 
-  function dispatch(cmd) {
+  function dispatch(cmd, skipMajorCheck) {
+    if (!skipMajorCheck && liveMode) {
+      var preDecision = matchMajorDecision(cmd);
+      if (preDecision && preDecision.branchSuggested) {
+        showMajorDecisionModal(preDecision, cmd);
+        return;
+      }
+    }
     if (!liveMode) {
       showBanner('Static build: command "' + cmd + '" recorded. Run via: npm run play -- --command=' + escapeHtml(cmd.split(' ')[0]));
       return;
@@ -412,7 +588,30 @@ const APP_JS = `(function () {
       e.preventDefault();
       dispatch(runBtn.getAttribute('data-run-command'));
     }
+    var tabBtn = e.target.closest('[data-case-tab]');
+    if (tabBtn) {
+      var tab = tabBtn.getAttribute('data-case-tab');
+      document.querySelectorAll('[data-case-tab]').forEach(function (b) { b.classList.toggle('active', b === tabBtn); });
+      document.querySelectorAll('[data-case-pane]').forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-case-pane') === tab); });
+    }
   });
+
+  var modal = document.getElementById('wm-major-decision-modal');
+  if (modal) {
+    modal.querySelector('[data-modal-branch]')?.addEventListener('click', function () {
+      var cmd = pendingCommand;
+      var decision = pendingDecision;
+      hideMajorDecisionModal();
+      runBranchThenCommand(decision, cmd);
+    });
+    modal.querySelector('[data-modal-continue]')?.addEventListener('click', function () {
+      var cmd = pendingCommand;
+      hideMajorDecisionModal();
+      if (cmd) dispatch(cmd, true);
+    });
+    modal.querySelector('[data-modal-cancel]')?.addEventListener('click', hideMajorDecisionModal);
+    modal.querySelector('[data-modal-close]')?.addEventListener('click', hideMajorDecisionModal);
+  }
   document.querySelectorAll('[data-major-decision]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var choice = btn.getAttribute('data-major-decision');

@@ -1,4 +1,6 @@
-# 53 — Full Featured Gameplay Shell Report (v1.0-rc8)
+# 53 — Full Featured Gameplay Shell Report (v1.0-rc8 → Visual Shell v1)
+
+> **Update (Visual Gameplay Shell v1):** Three-column game layout, `visual-game-shell.js`, case board tabs, rumor trail cards, founder panel, major-decision modal, extended `validate:web-play`. Full spec: `docs/59_VISUAL_GAMEPLAY_SHELL_V1.md`.
 
 ## What was built
 
