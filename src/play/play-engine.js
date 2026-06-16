@@ -38,6 +38,12 @@ import {
   resolveFounderContractTemplate
 } from './founder-contracts.js';
 import { buildCommandText, resolveMajorDecisionPrompt } from './game-shell-model.js';
+import {
+  dialogueEntryFor,
+  dialogueUnlocksFor,
+  grantEvidence,
+  inspectPackRewards
+} from './content-pack-runtime.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -266,6 +272,7 @@ export function parseCommandText(text) {
       if (head === 'move' || head === 'talk' || head === 'ask' || head === 'inspect' || head === 'listen_rumors' || head === 'counter_rumor' || head === 'trace_rumor') {
         args.target = rest[0];
         if (head === 'ask' && rest[1]) args.topic = rest.slice(1).join(' ');
+        if (head === 'inspect' && rest[1]) args.focus = rest.slice(1).join(' ');
         if (head === 'talk' && rest[1]) args.message = rest.slice(1).join(' ');
         if (head === 'counter_rumor' && rest[1]) args.message = rest.slice(1).join(' ');
         if (head === 'trace_rumor' && rest[0]) args.rumor = rest[0];
@@ -372,18 +379,28 @@ function resolveCommandCore(world, command, effectiveArgs) {
           actorId, actionId: 'ask_about_topic', targetAgentId: targetId,
           topic, tone: effectiveArgs.tone || 'direct'
         });
-        const revealed = ev.payload?.evidenceRevealed;
+        const packEntry = dialogueEntryFor(targetId, topic);
+        const packUnlocks = dialogueUnlocksFor(targetId, topic);
+        const granted = grantEvidence(world, packUnlocks);
+        const revealed = ev.payload?.evidenceRevealed || granted.length > 0;
+        const evidenceIds = granted.length
+          ? granted
+          : revealed
+            ? packUnlocks.length ? packUnlocks : ['topic_evidence']
+            : [];
         return {
           ok: true, kind: 'dialogue', command,
           text: ev.description,
           dialogue: {
             agentName: world.agents[targetId].name,
             topic,
-            message: `Re: ${topic}`,
+            message: packEntry
+              ? `Re: ${topic} (${packEntry.tone ?? 'neutral'})`
+              : `Re: ${topic}`,
             revealedFacts: [revealed
               ? `${targetId} revealed useful information about "${topic}"`
               : `${targetId} gave a neutral answer about "${topic}"`],
-            evidenceIds: revealed ? ['topic_evidence'] : []
+            evidenceIds
           },
           consequence: diffConsequence(world, before, actorId, ev),
           world
@@ -395,14 +412,23 @@ function resolveCommandCore(world, command, effectiveArgs) {
         const targetLoc = targetAgent ? null : resolveLocation(world, effectiveArgs.target);
         if (!targetAgent && !targetLoc) return { ok: false, kind: 'error', error: `unknown target: ${effectiveArgs.target}` };
         const before = snapshotForDelta(world);
+        const focus = effectiveArgs.focus || effectiveArgs.topic || 'general';
         const request = targetAgent
           ? { actorId, actionId: 'ask_about_topic', targetAgentId: targetAgent, topic: 'general', tone: 'direct' }
-          : { actorId, actionId: 'inspect_location', targetLocationId: targetLoc, focus: effectiveArgs.topic || 'general' };
+          : { actorId, actionId: 'inspect_location', targetLocationId: targetLoc, focus };
         const ev = executeAction(world, request);
+        let findingExtra = '';
+        if (!targetAgent && targetLoc) {
+          const packRewards = inspectPackRewards(targetLoc, focus);
+          const granted = grantEvidence(world, packRewards.evidence);
+          if (packRewards.findingText) findingExtra = packRewards.findingText;
+          else if (granted.length) findingExtra = `Found: ${granted.join(', ')}`;
+        }
         const label = targetAgent ? world.agents[targetAgent].name : world.locations[targetLoc].name;
+        const detail = findingExtra || ev.description;
         return {
           ok: true, kind: 'inspect', command,
-          text: `Inspected ${label}: ${ev.description}`,
+          text: `Inspected ${label}: ${detail}`,
           consequence: diffConsequence(world, before, actorId, ev),
           world
         };
@@ -415,6 +441,7 @@ function resolveCommandCore(world, command, effectiveArgs) {
           actorId, actionId: 'listen_for_rumors', targetLocationId: targetLoc
         });
         const rumorIds = ev.payload?.rumorIds || [];
+        if (targetLoc === 'market') grantEvidence(world, ['market_rumor_chain']);
         const locName = world.locations[targetLoc]?.name ?? effectiveArgs.target;
         return {
           ok: true, kind: 'rumors', command,

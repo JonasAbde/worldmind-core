@@ -27,8 +27,8 @@
       "gameplayUse": "dialogue, inspection, incident start",
       "scene": "assets/locations/cafe.png",
       "hotspots": [
-        { "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "preview": "Inspect missing delivery crate", "description": "A sealed crate with missing shipment tags — Sara's supply gap started here.", "risk": 1, "possibleEvidence": ["cafe_delivery_gap"], "icon": "assets/items/delivery-crate/icon.png" },
-        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "preview": "Inspect low stock indicators", "description": "Nearly empty shelves show how the missing delivery hurt the café.", "risk": 1, "possibleEvidence": ["cafe_delivery_gap"] }
+        { "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "inspectFocus": "cafe_delivery_crate", "preview": "Inspect missing delivery crate", "description": "A sealed crate with missing shipment tags — Sara's supply gap started here.", "risk": 1, "possibleEvidence": ["cafe_delivery_gap"], "icon": "assets/items/delivery-crate/icon.png" },
+        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "inspectFocus": "cafe_stock_shelf", "preview": "Inspect low stock indicators", "description": "Nearly empty shelves show how the missing delivery hurt the café.", "risk": 1, "possibleEvidence": [] }
       ]
     },
     {

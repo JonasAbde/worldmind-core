@@ -9,24 +9,15 @@
  * scenario data without touching renderer code.
  */
 
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { CHARACTER_ASSETS, WORLD_ASSETS } from './assets.js';
 import { listFounderContractOffers, founderTierLabel } from './founder-contracts.js';
+import { getContentPack, hotspotCommandText } from './content-pack-runtime.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function loadContentPack() {
-  try {
-    const packPath = join(__dirname, '../../content/worldmind/content-pack-v1.json');
-    return JSON.parse(readFileSync(packPath, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-const _pack = loadContentPack();
+const _pack = getContentPack();
 
 // Build location index keyed by location id from authored content pack.
 // Falls back to hardcoded values if pack cannot be read.
@@ -59,12 +50,61 @@ function normalizeHotspot(h) {
   return {
     id: h.id,
     label: h.label,
-    command: h.command,
+    command: hotspotCommandText(h),
     preview: h.preview ?? h.description ?? '',
     description: h.description ?? h.preview ?? '',
     risk: h.risk ?? 1,
     possibleEvidence: h.possibleEvidence ?? [],
-    icon: h.icon ?? null
+    icon: h.icon ?? null,
+    inspectFocus: h.inspectFocus ?? h.id
+  };
+}
+
+/** Categorized aftermath panel from resolveCommand consequence envelope. */
+export function buildConsequenceBeat(consequence) {
+  if (!consequence || typeof consequence !== 'object') return null;
+  const bullets = [];
+
+  for (const id of consequence.evidenceDelta ?? []) {
+    bullets.push({ category: 'evidence', text: `Evidence discovered: ${id}` });
+  }
+  if (consequence.moneyDelta) {
+    bullets.push({ category: 'economy', text: `Money ${consequence.moneyDelta > 0 ? '+' : ''}${consequence.moneyDelta}` });
+  }
+  if (consequence.reputationDelta) {
+    bullets.push({ category: 'reputation', text: `Reputation ${consequence.reputationDelta > 0 ? '+' : ''}${consequence.reputationDelta}` });
+  }
+  if (consequence.energyDelta) {
+    bullets.push({ category: 'energy', text: `Energy ${consequence.energyDelta}` });
+  }
+  for (const r of consequence.rumorDelta ?? []) {
+    bullets.push({
+      category: 'rumors',
+      text: `Rumor truth ${r.before ?? '?'} → ${r.after ?? '?'}${r.backfire ? ' (backfire)' : ''}`
+    });
+  }
+  for (const ch of consequence.relationshipDelta?.changes ?? consequence.relationships ?? []) {
+    if (ch.trustDelta) bullets.push({ category: 'relationships', text: `Trust with ${ch.targetId ?? ch.agentId}: ${ch.trustDelta > 0 ? '+' : ''}${ch.trustDelta}` });
+  }
+  for (const ch of consequence.incidentDelta ?? []) {
+    bullets.push({ category: 'incident', text: `Incident ${ch.incidentId}: ${ch.beforeStatus} → ${ch.afterStatus}` });
+  }
+  for (const u of consequence.unlocks ?? []) {
+    bullets.push({ category: 'unlocks', text: `Unlocked: ${u}` });
+  }
+  if (consequence.founderDelta?.contractsCompleted) {
+    bullets.push({ category: 'founder', text: `Contracts completed +${consequence.founderDelta.contractsCompleted}` });
+  }
+  if (consequence.lastEvent?.description) {
+    bullets.push({ category: 'event', text: consequence.lastEvent.description });
+  }
+
+  if (!bullets.length) return null;
+  const categories = [...new Set(bullets.map((b) => b.category))];
+  return {
+    categories,
+    bullets,
+    summary: bullets.map((b) => b.text).join(' · ')
   };
 }
 

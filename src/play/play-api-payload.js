@@ -7,7 +7,7 @@
  */
 
 import { summarizeWorld } from './play-engine.js';
-import { buildGameplayShellModel } from './game-shell-model.js';
+import { buildGameplayShellModel, buildConsequenceBeat } from './game-shell-model.js';
 import { buildDistrictView } from './district-view.js';
 
 /** Bump when breaking response shapes documented in docs/PLAY_API_CONTRACT.md */
@@ -85,6 +85,9 @@ export function buildCommandResultPayload(world, result, options = {}) {
     clone.playerKnowledge = w?.playerKnowledge ?? null;
   }
   clone.gameShell = buildGameShell(world, { leno: result.leno });
+  if (result.consequence) {
+    clone.consequenceBeat = buildConsequenceBeat(result.consequence);
+  }
   if (options.majorDecisionPrompt) {
     clone.majorDecisionPrompt = options.majorDecisionPrompt;
   }

@@ -9,7 +9,15 @@
 - **Runtime + founder tiers + major decisions** — `docs/61_RC2_UNIFIED_PLAY_RELEASE.md`
 - **Site `/play`** — merged in `worldmind-site` `main` (PR #1)
 
-**303/303 tests grønne.** Work on **`master`** only (no long-lived feature branches unless explicitly requested).
+**307/307 tests grønne.** Work on **`master`** only (no long-lived feature branches unless explicitly requested).
+
+### v27 — content pack → runtime bridge
+
+- `src/play/content-pack-runtime.js` — shared pack loader, evidence grants, hotspot inspect rewards
+- Hotspot focus inspect (`inspect cafe cafe_delivery_crate`) grants pack evidence
+- Dialogue `unlocks` wired in `ask` (e.g. `ask rune nadia` → `market_rumor_chain`)
+- `buildConsequenceBeat()` on Play API command results
+- `test/v27-content-pack-evidence.test.js`
 
 ### Verification
 
