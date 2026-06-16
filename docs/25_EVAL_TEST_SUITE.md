@@ -33,6 +33,7 @@ npm run diff:event-log
 - v0.8 strict invariants: utils.ts is authoritative, strictNullChecks is true, validate:risk + validate:event-log + diff:event-log, hidden-truth regression test for Leno.
 - v0.9 per-event-type schemas: validateEventPayloadByType (soft + strict modes), validate:state, validate:risk --strict with permission audit, 100/100 tests grøn.
 - v1.0-rc1 typed payload migration: alle 9 event-emitters migreret til typed `payload`-felter, `validate:event-log` flipped til strict mode som default, Leno `lenoTickPayload` evidence gate, canonical 7-dages sim 0 violations / 123 events, 116/116 tests grøn.
+- v1.0-rc2 save browser + timeline UX: ny `worldmind saves` CLI med 4 subcommands (list/inspect/restore/timeline), deterministisk restore (byte-identical), auditerbar restore-log, branch/origin-kæde synlig, 126/126 tests grøn.
 
 ## Eval criteria
 

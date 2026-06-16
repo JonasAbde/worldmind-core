@@ -63,14 +63,17 @@
 
 ### v0.9 — Per-event-type schema + state validator + risk audit  ✅
 
-### v1.0-rc1 — Typed payload migration  *(current)*
-- 9 event-emitters migrated to typed `payload` fields
-- `validate:event-log` flipped to **strict mode** as default (was soft)
-- Canonical 7-day run: **0 violations / 123 events** (var 108 i v0.9)
-- Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate
-- 116/116 tests grønne, ci:gate 12/12 grønne
+### v1.0-rc1 — Typed payload migration  ✅
 
-### v1.0-rc2 — Save browser + timeline UX  *(næste)*
+### v1.0-rc2 — Save browser + timeline UX  *(current)*
+- Ny `worldmind saves` CLI: `list` / `inspect` / `restore` / `timeline` subcommands
+- Deterministisk restore (byte-identical mellem på hinanden følgende kald)
+- Auditerbar restore-log (action, snapshotId, actor, reason, restoredAtTick)
+- Branch/origin-kæde synlig i timeline med `parentSnapshotId` chain
+- Argument-parser understøtter nu både `--key value` og `--key=value`
+- 126/126 tests grønne, ci:gate 12/12 grønne
+
+### v1.0-rc3 — Leno policy + visual timeline  *(næste)*
 - React dashboard (optional companion).
 - Authoring tools (creator mode v0.1).
 - 2D district view.

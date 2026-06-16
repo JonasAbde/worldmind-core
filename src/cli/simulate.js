@@ -7,32 +7,69 @@ import { openSqliteWorldStore } from '../persistence/sqlite.js';
 import { diffWorldStates, formatBranchList, formatSnapshotList } from '../simulation/timeline-ux.js';
 
 const args = process.argv.slice(2);
-const daysArg = args.indexOf('--days');
-const days = daysArg >= 0 ? Number(args[daysArg + 1]) : 7;
-const scenarioArg = args.indexOf('--scenario');
-const scenarioPath = scenarioArg >= 0 ? args[scenarioArg + 1] : null;
+
+// Robust argument parser: supports both `--key value` (space) and
+// `--key=value` (equals). The v0.x CLI used the space form only;
+// v1.0-rc2 makes both forms work so the saves CLI can use equals.
+function getArg(name) {
+  const withEquals = `--${name}=`;
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === `--${name}`) {
+      const next = args[i + 1];
+      if (next !== undefined && !next.startsWith('--')) return next;
+      return '';
+    }
+    if (arg.startsWith(withEquals)) return arg.slice(withEquals.length);
+  }
+  return undefined;
+}
+
+function getArgs(name, count = 1) {
+  const result = [];
+  const withEquals = `--${name}=`;
+  for (let i = 0; i < args.length && result.length < count; i += 1) {
+    const arg = args[i];
+    if (arg === `--${name}`) {
+      // Consume up to `count - result.length` consecutive non-flag args.
+      const remaining = count - result.length;
+      let consumed = 0;
+      while (consumed < remaining && i + 1 < args.length) {
+        const next = args[i + 1];
+        if (next === undefined || next.startsWith('--')) break;
+        result.push(next);
+        i += 1;
+        consumed += 1;
+      }
+      if (consumed === 0) {
+        // --key with no value: treat as boolean (push empty string for
+        // compatibility with non-boolean args).
+        result.push('');
+      }
+    } else if (arg.startsWith(withEquals)) {
+      result.push(arg.slice(withEquals.length));
+    }
+  }
+  return result;
+}
+
+const days = (() => { const v = getArg('days'); return v !== undefined ? Number(v) : 7; })();
+const scenarioPath = getArg('scenario') ?? null;
 const persist = args.includes('--persist');
-const dbArg = args.indexOf('--db');
-const dbPath = dbArg >= 0 ? args[dbArg + 1] : undefined;
-const loadSnapshotArg = args.indexOf('--load-snapshot');
-const loadSnapshotId = loadSnapshotArg >= 0 ? args[loadSnapshotArg + 1] : null;
-const continueFromSnapshotArg = args.indexOf('--continue-from-snapshot');
-const continueFromSnapshotId = continueFromSnapshotArg >= 0 ? args[continueFromSnapshotArg + 1] : null;
+const dbPath = getArg('db') ?? undefined;
+const loadSnapshotId = getArg('load-snapshot') ?? null;
+const continueFromSnapshotId = getArg('continue-from-snapshot') ?? null;
 const saveSnapshot = args.includes('--save-snapshot');
 const withDashboard = args.includes('--dashboard');
 const withAssert = args.includes('--assert');
 const listSaves = args.includes('--list-saves');
 const listBranches = args.includes('--list-branches');
-const compareArg = args.indexOf('--compare-snapshots');
-const compareSnapshots = compareArg >= 0 ? [args[compareArg + 1], args[compareArg + 2]].filter(Boolean) : [];
-const createBranchArg = args.indexOf('--create-branch');
-const createBranchSnapshotId = createBranchArg >= 0 ? args[createBranchArg + 1] : null;
-const branchNameArg = args.indexOf('--branch-name');
-const branchName = branchNameArg >= 0 ? args[branchNameArg + 1] : null;
-const branchNoteArg = args.indexOf('--branch-note');
-const branchNote = branchNoteArg >= 0 ? args[branchNoteArg + 1] : '';
-const worldIdArg = args.indexOf('--world-id');
-const worldId = worldIdArg >= 0 ? args[worldIdArg + 1] : null;
+const [cmpA, cmpB] = getArgs('compare-snapshots', 2);
+const compareSnapshots = [cmpA, cmpB].filter(Boolean);
+const createBranchSnapshotId = getArg('create-branch') ?? null;
+const branchName = getArg('branch-name') ?? null;
+const branchNote = getArg('branch-note') ?? '';
+const worldId = getArg('world-id') ?? null;
 
 const storeRequired = persist || loadSnapshotId || continueFromSnapshotId || listSaves || listBranches || compareSnapshots.length === 2 || Boolean(createBranchSnapshotId);
 const store = storeRequired ? openSqliteWorldStore({ dbPath }).init() : null;
@@ -96,13 +133,14 @@ if (withDashboard) {
 }
 if (store && (saveSnapshot || persist || createBranchSnapshotId || activeSnapshotId)) {
   const branchFromSnapshot = createBranchSnapshotId ?? activeSnapshotId;
+  const effectiveBranchName = branchName ?? world.branchName ?? (branchFromSnapshot ? 'experiment' : 'main');
   const saved = store.saveSnapshot(world, {
-    branchName: branchName ?? world.branchName ?? 'main',
+    branchName: effectiveBranchName,
     originSnapshotId: branchFromSnapshot ?? world.branchOriginSnapshotId ?? null,
     parentSnapshotId: branchFromSnapshot ?? world.branchParentSnapshotId ?? null,
-    note: branchNote || (branchFromSnapshot ? 'continued from snapshot' : 'cli simulation run')
+    note: branchNote || (branchFromSnapshot ? `continued from snapshot ${branchFromSnapshot}` : 'cli simulation run')
   });
-  console.log(`\nSnapshot saved: ${saved.snapshotId} (branch ${saved.branchId})`);
+  console.log(`\nSnapshot saved: ${saved.snapshotId} (branch ${saved.branchId}, name ${saved.branchName})`);
   store.close();
 }
 if (withAssert && !evalResult.passed) {

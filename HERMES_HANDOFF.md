@@ -1,10 +1,20 @@
-# Hermes Handoff — WorldMind v1.0-rc1 typed payload
+# Hermes Handoff — WorldMind v1.0-rc2 save browser
 
 ## Status
 
-WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters er migreret til typed `payload`-felter, og `validate:event-log` kører nu i **strict mode** som default. 116/116 tests grønne, 12-trins `ci:gate`. Canonical 7-dages sim producerer **0 violations / 123 events** (var 108 i v0.9).
+WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters bruger typed `payload`-felter, `validate:event-log` kører i strict mode (0 violations / 123 events), og **save browser + timeline UX** er nu tilgængeligt via `node src/cli/saves.js`. 126/126 tests grønne, 12-trins `ci:gate`.
 
-## What is built (v1.0-rc1)
+## What is built (v1.0-rc2)
+
+Building on v1.0-rc1's typed payload foundation:
+
+- **`src/cli/saves.js`** (ny): 4-subcommand CLI: `list` / `inspect` / `restore` / `timeline`. Understøtter `--db=PATH`, `--branch=NAME`, `--actor=NAME`, `--reason=TEXT`, `--out=PATH`, `--json`.
+- **`src/cli/simulate.js`** (udvidet): robust argument-parser der understøtter både `--key value` (space) og `--key=value` (equals), plus korrekt multi-value handling for `--compare-snapshots a b`. Branch-name propagates nu fra `--branch-name` flag (tidligere hardcoded til `'main'`).
+- **`package.json`**: 3 nye scripts — `saves`, `saves:list`, `saves:timeline`.
+- **`test/v11-save-browser.test.js`** (ny): 10 tests der dækker alle 4 subcommands + determinism + audit + edge cases.
+- **`docs/41_SAVE_BROWSER_AND_TIMELINE.md`** (ny): CLI reference, determinism notes, restore-log schema.
+
+## What is built (v1.0-rc1) — recapped
 
 Building on v0.9's per-event-type schema:
 
@@ -128,7 +138,8 @@ npm run diff:event-log
 | `v08-strict-invariants.test.js` | 14 |
 || `v09-per-event-schemas.test.js` | 11 |
 || `v10-typed-payload.test.js` | 16 |
-|| **Total** | **116** |
+|| `v11-save-browser.test.js` | 10 |
+|| **Total** | **126** |
 
 ## Non-negotiables (bæret fra v0.7)
 
@@ -139,9 +150,9 @@ npm run diff:event-log
 - Add tests for every new core mechanic.
 - Risk 4/5 actions are forbidden in MVP (now enforced by `validate:risk`).
 
-## Næste skridt (v1.0-rc2 kandidater)
+## Næste skridt (v1.0-rc3 kandidater)
 
-1. **Save browser + timeline UX** — `worldmind saves list` / `inspect` / `restore` CLI; branch/origin kæde-visning; snapshot inspector uden restore.
+1. **Visual save browser dashboard** — HTML-side der viser saves + timeline visuelt (træ-layout, origin-pile).
 2. **`validate:leno` CLI** — auditerer Leno's prompt/model policy + evidence-guard end-to-end.
-3. **Tighten `noUncheckedIndexedAccess`** modul-for-modul med eksplicitte lookup-typer.
-4. **Udvid `diff:event-log`** med tolerance-vindue for stochastic content (e.g. timestamp deltas i dialoog).
+3. **Branch diff visualisation** — vis forskelle mellem to branches (location changes, relationship deltas, incident flows).
+4. **Tighten `noUncheckedIndexedAccess`** modul-for-modul med eksplicitte lookup-typer.
