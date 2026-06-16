@@ -7,8 +7,8 @@
   <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
       }
     }
   </script>
@@ -102,12 +102,24 @@
       color: #9fb0c4;
     }
     .legend strong { color: #d6ecff; }
-    .err { color: #ff9d9d; }
-    .ok { color: #9dffca; }
+    .boot-error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #12080b;
+      color: #ffb4b4;
+      z-index: 20;
+      text-align: center;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
   <div id="app">
+    <div id="boot-error" class="boot-error"></div>
     <canvas id="viewport"></canvas>
     <aside class="hud">
       <h1>WorldMind 3D Playable Prototype</h1>
@@ -122,6 +134,16 @@
       <div id="mode"></div>
     </section>
   </div>
-  <script type="module" src="./3d-client.js"></script>
+  <script type="module">
+    const bootErr = document.getElementById("boot-error");
+    function showBootError(err) {
+      bootErr.style.display = "flex";
+      bootErr.textContent = `3D client failed to load:\n\n${err?.message || err}\n\nTry opening / (2D play) or refresh.`;
+      document.getElementById("status").textContent = "Boot error";
+    }
+    import("./3d-client.js").catch(showBootError);
+    window.addEventListener("error", (e) => showBootError(e.error || e.message));
+    window.addEventListener("unhandledrejection", (e) => showBootError(e.reason));
+  </script>
 </body>
 </html>
