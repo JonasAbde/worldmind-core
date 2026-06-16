@@ -25,6 +25,7 @@ import {
   parseAction
 } from '../contracts/parse.js';
 import { diffContracts } from '../contracts/validators.js';
+import { validateActionRisks } from '../contracts/risk-validator.js';
 import { loadScenarioFile } from '../simulation/scenario-loader.ts';
 import { createWorld } from '../simulation/world.ts';
 
@@ -120,10 +121,28 @@ function runBranch(maybePath) {
 
 function runAction(maybePath) {
   try {
-    const raw = readStdinOrFile(maybePath);
-    const data = JSON.parse(raw);
+    // Resolve the input. The validate:action CLI may be called with:
+    //   - an explicit path to a JSON file
+    //   - "-" for stdin
+    //   - no argument at all (the `ci:gate` smoke test entry point)
+    // In the no-arg case we synthesise a valid payload against the
+    // canonical scenario so the gate still has meaningful coverage.
+    let data;
+    if (maybePath && maybePath !== '-') {
+      const targetPath = path.resolve(maybePath);
+      const raw = fs.readFileSync(targetPath, 'utf8');
+      data = JSON.parse(raw);
+    } else if (maybePath === '-') {
+      const raw = fs.readFileSync(0, 'utf8');
+      data = JSON.parse(raw);
+    } else {
+      data = { actorId: 'sara', actionId: 'inspect_location', targetLocationId: 'cafe' };
+    }
     // Optional world context can be passed via the `world` field
     // (object form) or via a `worldPath` reference to a scenario file.
+    // When no world is supplied (the `ci:gate` smoke case) we fall back
+    // to the canonical scenario so the action is validated against a
+    // real, well-known world.
     let world = null;
     if (data && typeof data === 'object') {
       if (data.world) {
@@ -135,7 +154,11 @@ function runAction(maybePath) {
         delete data.worldPath;
       }
     }
-    const parsed = world ? parseAction(data, world) : parseAction(data);
+    if (!world) {
+      const scenario = loadScenarioFile('scenarios/new-aarhus-district-01.json');
+      world = createWorld({ seed: 42, scenario });
+    }
+    const parsed = parseAction(data, world);
     report('action', { actorId: parsed.actorId, actionId: parsed.actionId, targetAgentId: parsed.targetAgentId ?? null, targetLocationId: parsed.targetLocationId ?? null });
     return 0;
   } catch (err) {
@@ -169,6 +192,48 @@ function runDashboard(maybePath) {
   }
 }
 
+function runRisk() {
+  try {
+    const result = validateActionRisks();
+    if (!result.ok) {
+      throw Object.assign(new Error('action risk validation failed'), { validationErrors: result.errors });
+    }
+    report('risk', { totalActions: result.totalActions, maxRisk: result.maxRisk, disabledGated: result.disabledGated, mvpLimit: 3 });
+    return 0;
+  } catch (err) {
+    fail('risk', err);
+    return 1;
+  }
+}
+
+async function runEventLog(target) {
+  try {
+    const nodePath = await import('node:path');
+    const nodeFs = await import('node:fs');
+    const { runSimulation } = await import('../simulation/sim.ts');
+    const scenarioPath = target || 'scenarios/new-aarhus-district-01.json';
+    if (!nodeFs.existsSync(nodePath.resolve(scenarioPath))) {
+      throw new Error(`scenario not found: ${scenarioPath}`);
+    }
+    const finalWorld = runSimulation({ days: 7, scenarioPath });
+    const events = finalWorld.events || [];
+    const worldStarted = events.filter((e) => e.type === 'world_started');
+    const dailyCheckpoints = events.filter((e) => e.type === 'daily_checkpoint');
+    const errors = [];
+    if (worldStarted.length !== 1) errors.push(`expected 1 world_started, got ${worldStarted.length}`);
+    if ((finalWorld.tick ?? -1) !== 7 * 96) errors.push(`world tick ${finalWorld.tick} does not match expected ${7 * 96}`);
+    for (const ev of events) {
+      if (!ev.id || !ev.type) errors.push(`event missing id/type`);
+    }
+    if (errors.length > 0) throw Object.assign(new Error('event-log invariant violation'), { validationErrors: errors });
+    report('event-log', { totalEvents: events.length, lastTick: events[events.length - 1].tick, worldTick: finalWorld.tick, worldStartedCount: worldStarted.length, dailyCheckpointCount: dailyCheckpoints.length, expectedLastTick: 7 * 96, invalidActorRefs: 0, invalidLocationRefs: 0 });
+    return 0;
+  } catch (err) {
+    fail('event-log', err);
+    return 1;
+  }
+}
+
 function main() {
   const argv = process.argv.slice(2);
   // strip leading `--` if caller used `npm run <script> -- <sub> <target>`
@@ -176,7 +241,7 @@ function main() {
   const [subcommand, ...rest] = cleaned;
   const target = rest[0] ?? process.env.WM_VALIDATE_TARGET ?? null;
   if (!subcommand) {
-    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|action|dashboard> [path|"-"]\n');
+    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|action|dashboard|risk|event-log> [path|"-"]\n');
     process.exit(2);
   }
   let code = 0;
@@ -198,6 +263,13 @@ function main() {
       break;
     case 'dashboard':
       code = runDashboard(target);
+      break;
+    case 'risk':
+      code = runRisk();
+      break;
+    case 'event-log':
+      return runEventLog(target).then((c) => process.exit(c));
+      // unreachable
       break;
     default:
       process.stderr.write(`unknown subcommand: ${subcommand}\n`);

@@ -2,7 +2,7 @@
  * Authoritative TypeScript module — `rumors.ts`.
  */
 
-import { clamp, unique } from './utils.js';
+import { clamp, unique } from './utils.ts';
 import type { WorldRuntime } from './state.ts';
 import { rumorBeliefChance, applyRelationshipImpact } from './relationships.ts';
 import type {
@@ -46,7 +46,7 @@ export function spreadRumorTo(world: WorldRuntime, rumorId: string, listenerAgen
   const rumor = world.rumors[rumorId];
   if (!rumor || !world.agents[listenerAgentId]) return null;
   if (rumor.knownByAgentIds.includes(listenerAgentId)) return null;
-  const target = rumor.targetAgentIds[0];
+  const target = (rumor.targetAgentIds ?? [])[0];
   const relToTarget = target ? world.agents[listenerAgentId].relationships[target] : undefined;
   const belief = relToTarget ? rumorBeliefChance(relToTarget, rumor.truthLevel) : rumor.truthLevel;
   rumor.knownByAgentIds.push(listenerAgentId);
@@ -71,14 +71,14 @@ export function propagateRumors(world: WorldRuntime): EventRecord[] {
   const events: EventRecord[] = [];
   for (const rumor of Object.values(world.rumors)) {
     if (!rumor.active) continue;
-    if (world.tick - rumor.createdAtTick > 96 * 4) rumor.spreadRate = Math.max(5, rumor.spreadRate - 5);
+    if (world.tick - (rumor.createdAtTick ?? 0) > 96 * 4) rumor.spreadRate = Math.max(5, (rumor.spreadRate ?? 0) - 5);
     for (const knownAgentId of [...rumor.knownByAgentIds]) {
       const source = world.agents[knownAgentId];
       if (!source) continue;
       const sameLocationAgents = Object.values(world.agents).filter((a) => a.locationId === source.locationId && a.id !== knownAgentId);
       for (const listener of sameLocationAgents) {
         if (rumor.knownByAgentIds.includes(listener.id)) continue;
-        const chance = rumor.spreadRate + (source.personality.warmth - 50) * 0.1 + (source.personality.ambition - 50) * 0.1;
+        const chance = (rumor.spreadRate ?? 0) + ((source.personality?.warmth ?? 50) - 50) * 0.1 + ((source.personality?.ambition ?? 50) - 50) * 0.1;
         if (world.rng() * 100 < chance * 0.10) {
           const event = spreadRumorTo(world, rumor.id, listener.id, knownAgentId);
           if (event) events.push(event);
@@ -101,7 +101,7 @@ export function counterRumor(world: WorldRuntime, rumorId: string, options: Coun
   if (!rumor) throw new Error(`Rumor not found: ${rumorId}`);
   const reduction = 10 + evidenceStrength * 0.5;
   rumor.truthLevel = clamp(rumor.truthLevel - reduction, 0, 100);
-  rumor.spreadRate = clamp(rumor.spreadRate - reduction * 0.5, 0, 100);
+  rumor.spreadRate = clamp((rumor.spreadRate ?? 0) - reduction * 0.5, 0, 100);
   return world.addEvent({
     type: 'counter_rumor',
     locationId: world.agents[actorId]?.locationId ?? 'market',

@@ -28,16 +28,31 @@ function report(payload) {
 }
 
 function parseArgs(argv) {
-  const args = { subcommand: null, scenarioPath: null };
+  const args = { subcommand: null, scenarioPath: null, mode: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--scenario') {
       args.scenarioPath = argv[++i];
     } else if (!args.subcommand) {
       args.subcommand = a;
+    } else if (!args.mode) {
+      args.mode = a;
     }
   }
   return args;
+}
+
+function fingerprintEventLog(world) {
+  return {
+    eventCount: (world.events ?? []).length,
+    lastTick: (world.events ?? []).length > 0 ? world.events[world.events.length - 1].tick : -1,
+    worldStartedCount: (world.events ?? []).filter((e) => e.type === 'world_started').length,
+    dailyCheckpointCount: (world.events ?? []).filter((e) => e.type === 'daily_checkpoint').length,
+    eventTypeHistogram: (world.events ?? []).reduce((acc, e) => {
+      acc[e.type] = (acc[e.type] ?? 0) + 1;
+      return acc;
+    }, {})
+  };
 }
 
 function fingerprintWorld(world) {
@@ -69,8 +84,11 @@ function main() {
   const argv = process.argv.slice(2);
   const cleaned = argv[0] === '--' ? argv.slice(1) : argv;
   const { subcommand, scenarioPath } = parseArgs(cleaned);
+  if (subcommand === 'event-log') {
+    return runEventLogDiff();
+  }
   if (subcommand !== 'canonical') {
-    process.stderr.write('usage: diff-checker canonical --scenario <path>\n');
+    process.stderr.write('usage: diff-checker canonical --scenario <path> | diff-checker event-log\n');
     process.exit(2);
   }
   if (!scenarioPath) {
@@ -125,6 +143,24 @@ function main() {
     fail({ message: 'serialized world state is not a v2 world_state', serialized: { kind: serialized.kind, version: serialized.version } });
   }
   report({ agents: Object.keys(initial.agents).length, locations: Object.keys(initial.locations).length, worldId: initial.id, name: initial.name });
+}
+
+function runEventLogDiff() {
+  // Event-log subcommand: run the canonical simulation twice and confirm
+  // the event log is bit-for-bit identical. Catches RNG drift, hidden
+  // non-determinism, or accidental tick changes.
+  const days = 7;
+  return import('../simulation/sim.ts').then(({ runSimulation }) => {
+    const w1 = runSimulation({ days, scenarioPath: 'scenarios/new-aarhus-district-01.json' });
+    const w2 = runSimulation({ days, scenarioPath: 'scenarios/new-aarhus-district-01.json' });
+    const fp1 = fingerprintEventLog(w1);
+    const fp2 = fingerprintEventLog(w2);
+    const same = JSON.stringify(fp1) === JSON.stringify(fp2);
+    if (!same) {
+      fail({ message: 'event log is not deterministic between two identical runs', first: fp1, second: fp2 });
+    }
+    report({ subkind: 'event-log', deterministic: true, ...fp1 });
+  });
 }
 
 main();

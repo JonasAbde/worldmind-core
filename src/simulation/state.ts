@@ -2,7 +2,7 @@
  * Authoritative TypeScript module — `state.ts`.
  */
 
-import { deepClone } from './utils.js';
+import { deepClone } from './utils.ts';
 import type {
   ScenarioContract,
   WorldState,

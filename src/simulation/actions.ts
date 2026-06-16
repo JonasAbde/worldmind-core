@@ -142,14 +142,16 @@ function askAboutTopic(world: WorldRuntime, { actorId, targetAgentId, topic = 'd
   const rel = target.relationships[actorId];
   const topicText = topic.toLowerCase();
   const runeLead = targetAgentId === 'rune' && topicText.includes('nadia');
-  const reveals = (topicText.includes('nadia') && (rel.trust > 35 || rel.fear > 60)) || (runeLead && rel.trust > 0);
+  const reveals = (topicText.includes('nadia') && (rel.trust > 35 || (rel.fear ?? 0) > 60)) || (runeLead && rel.trust > 0);
   if (targetAgentId === 'rune' && reveals && !world.playerKnowledge.evidenceIds.includes('rune_statement_nadia_workshop')) world.playerKnowledge.evidenceIds.push('rune_statement_nadia_workshop');
   return world.addEvent({ type: 'topic_discussed', locationId: target.locationId, actorIds: [actorId, targetAgentId], description: `${target.name} discussed topic: ${topic}${reveals ? ' and revealed useful evidence.' : '.'}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: reveals ? 4 : 2, payload: { topic, tone, evidenceRevealed: reveals } });
 }
 
 function offerHelp(world: WorldRuntime, { actorId, targetAgentId, problemId = 'missing_delivery', offer = 'help' }: ActionRequest): EventRecord {
   applyRelationshipImpact(world, targetAgentId as AgentId, actorId, { trust: 10, respect: 5, debt: 5, tags: ['offered_help'] }, `offered help with ${problemId}`);
-  return world.addEvent({ type: 'help_offered', locationId: world.agents[targetAgentId as AgentId].locationId, actorIds: [actorId, targetAgentId], description: `${world.agents[actorId].name} offered help to ${world.agents[targetAgentId as AgentId].name}: ${offer}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: 3, payload: { problemId } });
+  const targetAgent = world.agents[targetAgentId as AgentId];
+  const safeTargetAgentId = targetAgentId as AgentId;
+  return world.addEvent({ type: 'help_offered', locationId: targetAgent.locationId, actorIds: [actorId, safeTargetAgentId], description: `${world.agents[actorId].name} offered help to ${targetAgent.name}: ${offer}`, public: false, visibleToAgentIds: [actorId, safeTargetAgentId], importance: 3, payload: { problemId } });
 }
 
 function inspectLocation(world: WorldRuntime, { actorId, targetLocationId, focus = 'general' }: ActionRequest): EventRecord {
@@ -175,8 +177,8 @@ function payAgent(world: WorldRuntime, { actorId, targetAgentId, amount = 10, re
   if (!targetAgentId) throw new Error('pay_agent requires targetAgentId');
   if (!Number.isFinite(amount) || amount <= 0) throw new Error('pay_agent amount must be a positive number');
   const target = world.agents[targetAgentId];
-  if ((actor.stats.money ?? 0) < amount) throw new Error(`${actor.name} does not have enough money`);
-  actor.stats.money -= amount;
+  if (((actor.stats.money ?? 0) < amount)) throw new Error(`${actor.name} does not have enough money`);
+  actor.stats.money = (actor.stats.money ?? 0) - amount;
   target.stats.money = (target.stats.money ?? 0) + amount;
   applyRelationshipImpact(world, targetAgentId, actorId, { trust: 5, debt: -5 }, `paid ${amount} for ${reason}`);
   return world.addEvent({ type: 'payment_made', locationId: target.locationId, actorIds: [actorId, targetAgentId], description: `${actor.name} paid ${target.name} ${amount} for ${reason}.`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: 3, payload: { amount, reason } });
@@ -188,10 +190,10 @@ function deliverGoods(world: WorldRuntime, { actorId, fromLocationId = 'workshop
   if (!fromLocationId || !toLocationId) throw new Error('deliver_goods requires fromLocationId and toLocationId');
   const risk = world.agents.malik.relationships.sara.suspicion > 50 ? 4 : 2;
   if (risk > 3 && actorId === 'malik') {
-    world.agents.sara.stats.stock = Math.max(0, world.agents.sara.stats.stock - 8);
+    world.agents.sara.stats.stock = Math.max(0, (world.agents.sara.stats.stock ?? 0) - 8);
     return world.addEvent({ type: 'delivery_failed', locationId: 'workshop', actorIds: [actorId, 'sara'], description: `${actor.name} refused delivery to Sara because trust collapsed.`, public: false, visibleToAgentIds: ['sara', 'malik', 'rune'], importance: 4, payload: { fromLocationId, toLocationId, itemIds } });
   }
-  world.agents.sara.stats.stock = Math.min(100, world.agents.sara.stats.stock + 30);
+  world.agents.sara.stats.stock = Math.min(100, (world.agents.sara.stats.stock ?? 0) + 30);
   return world.addEvent({ type: 'delivery_completed', locationId: toLocationId, actorIds: [actorId, 'sara'], description: `${actor.name} delivered goods to Sara's Caf\u00e9.`, public: true, visibleToAgentIds: Object.keys(world.agents), importance: 4, payload: { fromLocationId, toLocationId, itemIds } });
 }
 

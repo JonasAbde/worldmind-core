@@ -1,4 +1,4 @@
-import { deepClone } from '../simulation/utils.js';
+import { deepClone } from '../simulation/utils.ts';
 
 const relationshipFields = ['trust', 'suspicion', 'respect', 'affection', 'influence'];
 

@@ -1,4 +1,4 @@
-# WorldMind v0.2 foundation
+# WorldMind v0.8 strict invariants
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -30,12 +30,19 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - Deterministic regression tests.
 - Eval/test suite.
 - Dokumentation til Hermes.
+- **v0.4** data contracts + scenario/snapshot/diff/branch validators.
+- **v0.5** TypeScript runtime migration foundation + `tsc --noEmit` gate.
+- **v0.6** authoritative `.ts` runtime for contracts + simulator + dashboard.
+- **v0.7** all 9 simulation modules migrated to `.ts` with `strict: true` default.
+- **v0.8** `strictNullChecks: true` + `utils.ts` + `validate:risk` + `validate:event-log` + `diff:event-log` (10-step `ci:gate`, 89/89 tests).
 
 ## Kør projektet
 
 ```bash
 npm test
+npm run typecheck
 npm run check
+npm run ci:gate
 npm start
 ```
 
@@ -52,6 +59,21 @@ Efter `npm start` kan dashboard åbnes her:
 ```txt
 static-dashboard/index.html
 ```
+
+## Validators (v0.8)
+
+```bash
+npm run validate:scenario     # canonical scenario JSON
+npm run validate:branch       # canonical branch JSON
+npm run validate:dashboard    # dashboard HTML har alle 15 sektioner
+npm run validate:action       # action payload mod canonical world
+npm run validate:risk         # Risk 4/5 actions er forbudt i MVP
+npm run validate:event-log    # event-log invariants på 7-dages sim
+npm run diff:canonical        # scenario vs runtime drift-check
+npm run diff:event-log        # deterministisk event-log dobbeltkørsel
+```
+
+`ci:gate` kører alle ovenstående i sekvens og fejler på første regression.
 
 ## Foundation-succeskriterier
 
@@ -78,7 +100,8 @@ Læs i denne rækkefølge:
 2. `AGENTS.md`
 3. `docs/00_INDEX.md`
 4. `docs/24_MVP_BUILD_PLAN.md`
-5. `docs/26_PERSISTENCE_AND_TIMELINES.md`
-6. `docs/27_SCENARIO_LOADER.md`
-7. Kør `npm test` og `npm run check`
-8. Fortsæt med issues i `docs/26_ROADMAP.md`
+5. `docs/32_STRICT_NULL_CHECKS.md` (v0.8)
+6. `docs/33_EVENT_LOG_INVARIANTS.md` (v0.8)
+7. `docs/34_RISK_VALIDATION.md` (v0.8)
+8. Kør `npm run ci:gate`
+9. Fortsæt med issues i `docs/26_ROADMAP.md`

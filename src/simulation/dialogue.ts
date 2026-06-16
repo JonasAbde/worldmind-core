@@ -37,7 +37,7 @@ export function generateDialogueReply(world: WorldRuntime, options: DialogueOpti
       ? 'Der er noget galt med Sara og Registry. Jeg leverer ikke, f\u00f8r jeg ved mere.'
       : 'Sara har altid betalt til tiden. Hvis noget er galt, vil jeg h\u00f8re beviser f\u00f8rst.';
   } else if (speakerId === 'rune' && topic.includes('nadia')) {
-    reply = rel.trust > 30 || rel.fear > 60
+    reply = (rel.trust > 30 || (rel.fear ?? 0) > 60)
       ? 'Okay. Jeg s\u00e5 Nadia ved workshoppen f\u00f8r Malik n\u00e6gtede leveringen.'
       : 'Jeg s\u00e5 m\u00e5ske noget, men jeg blander mig ikke uden grund.';
   } else if (speakerId === 'nadia') {

@@ -109,12 +109,12 @@ export function retrieveMemories(
 
 function scoreRetrievedMemory(world: WorldRuntime, memory: MemoryRecord, options: { targetAgentId?: AgentId; locationId?: string; topic?: string } = {}): number {
   const { targetAgentId, locationId, topic } = options;
-  let score = memory.importance * 20 + memory.emotionalWeight * 0.5 + memory.confidence * 0.2;
-  if (targetAgentId && memory.relatedAgentIds.includes(targetAgentId)) score += 30;
-  if (locationId && memory.relatedLocationIds.includes(locationId)) score += 15;
+  let score = memory.importance * 20 + (memory.emotionalWeight ?? 0) * 0.5 + (memory.confidence ?? 0) * 0.2;
+  if (targetAgentId && (memory.relatedAgentIds ?? []).includes(targetAgentId)) score += 30;
+  if (locationId && (memory.relatedLocationIds ?? []).includes(locationId)) score += 15;
   if (topic && memory.content.toLowerCase().includes(topic.toLowerCase())) score += 20;
   const age = world.tick - memory.createdAtTick;
-  score -= age * memory.decayRate * 0.01;
+  score -= age * (memory.decayRate ?? 0) * 0.01;
   return score;
 }
 

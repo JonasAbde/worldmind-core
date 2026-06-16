@@ -38,6 +38,9 @@
 31. `31_TYPESCRIPT_RUNTIME_MIGRATION.md` — v0.5 gradual migration to TypeScript + CLI validation gates.
 32. `32_AUTHORITATIVE_TYPESCRIPT_RUNTIME.md` — v0.6 authoritative `.ts` runtime + strict gates + `validate:branch` and `validate:dashboard`.
 33. `33_STRICT_TYPESCRIPT_DEFAULT.md` — v0.7 legacy runtime fully migrated to `.ts`, `strict: true` enabled, `runtime.d.ts` removed, `validate:action` and typed diff-checker.
+34. `32_STRICT_NULL_CHECKS.md` — v0.8 full strictNullChecks audit, `utils.js` → `utils.ts`, 26 nullable-access fixes with explicit defaults.
+35. `33_EVENT_LOG_INVARIANTS.md` — v0.8 `validate:event-log` CLI plus `diff:event-log` subcommand. Event log is the canonical truth.
+36. `34_RISK_VALIDATION.md` — v0.8 `validate:risk` CLI. Risk 4/5 actions forbidden in MVP, source-parsed from `actions.ts`.
 
 ## Roadmap
 

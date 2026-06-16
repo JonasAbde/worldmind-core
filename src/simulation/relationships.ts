@@ -5,7 +5,7 @@
  * here. The sibling `relationships.js` is removed in v0.7.
  */
 
-import { clamp } from './utils.js';
+import { clamp } from './utils.ts';
 import type { WorldRuntime } from './state.ts';
 import type {
   AgentId,
@@ -90,7 +90,7 @@ export function calculateAcceptance(options: {
   let score = 0;
   score += r.trust * 0.4;
   score += r.respect * 0.2;
-  score += r.debt * 0.3;
+  score += (r.debt ?? 0) * 0.3;
   score -= r.suspicion * 0.4;
   score -= taskRisk * 15;
   score += Math.min(reward / 10, 20);
@@ -117,7 +117,8 @@ export function decayRelationships(world: WorldRuntime): void {
       rel.fear = clamp((rel.fear ?? 0) - 2, 0, 100);
       rel.suspicion = clamp((rel.suspicion ?? 0) - 1, 0, 100);
       rel.affection += rel.affection > 0 ? -1 : rel.affection < 0 ? 1 : 0;
-      rel.debt += rel.debt > 0 ? -0.5 : rel.debt < 0 ? 0.5 : 0;
+      const debt = rel.debt ?? 0;
+      rel.debt = debt + (debt > 0 ? -0.5 : debt < 0 ? 0.5 : 0);
       rel.influence = calculateInfluence(rel);
     }
   }

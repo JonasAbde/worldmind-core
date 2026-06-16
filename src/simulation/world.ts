@@ -7,7 +7,7 @@
  * path.
  */
 
-import { createId, deepClone, makeRng, tickToDayTime } from './utils.js';
+import { createId, deepClone, makeRng, tickToDayTime } from './utils.ts';
 import { createInitialAgents, createInitialFactions, createInitialItems, createInitialLocations, createInitialRelationships } from './seed.js';
 import { scenarioToWorldState } from './state.ts';
 import type { EventRecord, WorldState, ScenarioContract } from '../contracts/types.ts';

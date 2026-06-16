@@ -115,3 +115,18 @@ Any failure breaks the gate.
   declarations.
 - Extend the CI gate with a typed `validate:dashboard` check that asserts
   the static HTML still renders all expected sections.
+
+## v0.8 update
+
+Sprint 0.8 extended the migration to its natural conclusion:
+
+- `src/simulation/utils.js` (the last remaining JS file in `src/simulation/`)
+  was migrated to `src/simulation/utils.ts`. See `docs/32_STRICT_NULL_CHECKS.md`.
+- `strictNullChecks: true` was flipped on. 26 nullable-access sites across
+  `actions.ts`, `dialogue.ts`, `economy.ts`, `memory.ts`, `relationships.ts`,
+  `rumors.ts` were fixed with explicit `?? 0` / `?? ''` / `?? []` defaults.
+- `ci:gate` was extended to 10 steps: `validate:risk`, `validate:event-log`,
+  and `diff:event-log` were added. See `docs/33_EVENT_LOG_INVARIANTS.md` and
+  `docs/34_RISK_VALIDATION.md`.
+
+The TypeScript runtime is now the only runtime.
