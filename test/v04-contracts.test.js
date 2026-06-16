@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { runSimulation } from '../src/simulation/sim.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
-import { executeAction } from '../src/simulation/actions.js';
+import { executeAction } from '../src/simulation/actions.ts';
 import { ACTIONS } from '../src/simulation/constants.js';
 import {
   validateActionRequest,

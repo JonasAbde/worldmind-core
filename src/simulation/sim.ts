@@ -9,14 +9,14 @@
 
 import { TICKS_PER_DAY } from './constants.js';
 import { createWorld } from './world.ts';
-import { executeAction } from './actions.js';
+import { executeAction } from './actions.ts';
 import { ACTIONS } from './constants.js';
-import { seedSecretMemories, processEventMemory } from './memory.js';
-import { spreadRumorTo, propagateRumors } from './rumors.js';
-import { applyRelationshipImpact, decayRelationships } from './relationships.js';
-import { updateEconomy } from './economy.js';
-import { detectIncidents } from './incidents.js';
-import { lenoSummarize } from './leno.js';
+import { seedSecretMemories, processEventMemory } from './memory.ts';
+import { spreadRumorTo, propagateRumors } from './rumors.ts';
+import { applyRelationshipImpact, decayRelationships } from './relationships.ts';
+import { updateEconomy } from './economy.ts';
+import { detectIncidents } from './incidents.ts';
+import { lenoSummarize } from './leno.ts';
 import { loadScenarioFile } from './scenario-loader.ts';
 import type { ScenarioContract } from '../contracts/types.ts';
 import type { WorldRuntime } from './state.ts';

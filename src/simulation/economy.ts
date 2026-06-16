@@ -1,10 +1,16 @@
-import { clamp } from './utils.js';
+/**
+ * Authoritative TypeScript module — `economy.ts`.
+ */
 
-export function updateEconomy(world) {
+import { clamp } from './utils.js';
+import type { EventRecord } from '../contracts/types.ts';
+import type { WorldRuntime } from './state.ts';
+
+export function updateEconomy(world: WorldRuntime): EventRecord[] {
   const sara = world.agents.sara;
   const yasin = world.agents.yasin;
   if (!sara || !yasin) return [];
-  const events = [];
+  const events: EventRecord[] = [];
   if (world.tick % 8 === 0) {
     sara.stats.stock = clamp((sara.stats.stock ?? 35) - 1, 0, 100);
   }
@@ -16,10 +22,14 @@ export function updateEconomy(world) {
     sara.stats.revenue = clamp((sara.stats.revenue ?? 100) - 5, 0, 200);
     sara.stats.stress = clamp(sara.stats.stress + 3, 0, 100);
     events.push(world.addEvent({
-      type: 'economy_pressure', locationId: 'cafe', actorIds: ['sara', 'yasin'],
+      type: 'economy_pressure',
+      locationId: 'cafe',
+      actorIds: ['sara', 'yasin'],
       description: `Food scarcity increased. Market food price is now ${yasin.stats.foodPrice}.`,
-      public: true, visibleToAgentIds: ['sara', 'yasin', 'rune', 'amina', 'player'],
-      consequences: [{ type: 'food_price_changed', foodPrice: yasin.stats.foodPrice }], importance: 3
+      public: true,
+      visibleToAgentIds: ['sara', 'yasin', 'rune', 'amina', 'player'],
+      consequences: [{ type: 'food_price_changed', foodPrice: yasin.stats.foodPrice }],
+      importance: 3
     }));
   }
   return events;

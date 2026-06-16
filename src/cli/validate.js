@@ -21,9 +21,12 @@ import {
   parseScenario,
   parseSnapshot,
   parseDiff,
-  parseBranch
+  parseBranch,
+  parseAction
 } from '../contracts/parse.js';
 import { diffContracts } from '../contracts/validators.js';
+import { loadScenarioFile } from '../simulation/scenario-loader.ts';
+import { createWorld } from '../simulation/world.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -115,6 +118,32 @@ function runBranch(maybePath) {
   }
 }
 
+function runAction(maybePath) {
+  try {
+    const raw = readStdinOrFile(maybePath);
+    const data = JSON.parse(raw);
+    // Optional world context can be passed via the `world` field
+    // (object form) or via a `worldPath` reference to a scenario file.
+    let world = null;
+    if (data && typeof data === 'object') {
+      if (data.world) {
+        world = data.world;
+        delete data.world;
+      } else if (typeof data.worldPath === 'string') {
+        const scenario = loadScenarioFile(data.worldPath);
+        world = createWorld({ seed: 42, scenario });
+        delete data.worldPath;
+      }
+    }
+    const parsed = world ? parseAction(data, world) : parseAction(data);
+    report('action', { actorId: parsed.actorId, actionId: parsed.actionId, targetAgentId: parsed.targetAgentId ?? null, targetLocationId: parsed.targetLocationId ?? null });
+    return 0;
+  } catch (err) {
+    fail('action', err);
+    return 1;
+  }
+}
+
 function runDashboard(maybePath) {
   try {
     if (!maybePath) {
@@ -147,7 +176,7 @@ function main() {
   const [subcommand, ...rest] = cleaned;
   const target = rest[0] ?? process.env.WM_VALIDATE_TARGET ?? null;
   if (!subcommand) {
-    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|dashboard> [path|"-"]\n');
+    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|action|dashboard> [path|"-"]\n');
     process.exit(2);
   }
   let code = 0;
@@ -163,6 +192,9 @@ function main() {
       break;
     case 'branch':
       code = runBranch(target);
+      break;
+    case 'action':
+      code = runAction(target);
       break;
     case 'dashboard':
       code = runDashboard(target);

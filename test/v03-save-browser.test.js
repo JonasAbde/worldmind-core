@@ -6,7 +6,7 @@ import path from 'node:path';
 import { runSimulation } from '../src/simulation/sim.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 import { diffSnapshots } from '../src/persistence/timeline.js';
-import { generateDashboard } from '../src/simulation/dashboard.js';
+import { generateDashboard } from '../src/simulation/dashboard.ts';
 
 function tempDbPath(prefix) {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), prefix)), 'worldmind.sqlite');

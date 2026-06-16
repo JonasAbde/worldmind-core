@@ -1,3 +1,9 @@
+/**
+ * Authoritative TypeScript module — `leno.ts`.
+ */
+
+import type { WorldState } from '../contracts/types.ts';
+
 export const LENO_MODEL_POLICY = {
   role: 'player_companion_and_world_analyst',
   capabilities: ['summarize_known_events', 'explain_visible_relationships', 'suggest_actions', 'trace_known_rumors', 'compare_risk'],
@@ -15,22 +21,29 @@ export const LENO_MODEL_POLICY = {
   }
 };
 
-export function lenoSummarize(world, { scope = 'world' } = {}) {
-  const activeIncidents = Object.values(world.incidents).filter(i => i.status === 'active');
-  const resolvedIncidents = Object.values(world.incidents).filter(i => i.status === 'resolved');
-  const publicEvents = world.events.filter(e => e.public || e.visibleToAgentIds.includes('player')).slice(-8);
-  const lines = [];
+export function lenoSummarize(world: WorldState, options: { scope?: 'world' | 'agent' | 'incident' } = {}): string {
+  const { scope = 'world' } = options;
+  const activeIncidents = Object.values(world.incidents).filter((i) => i.status === 'active');
+  const resolvedIncidents = Object.values(world.incidents).filter((i) => i.status === 'resolved');
+  const publicEvents = world.events.filter((e) => e.public || e.visibleToAgentIds.includes('player')).slice(-8);
+  const lines: string[] = [];
   lines.push(`World: ${world.name}, Day ${world.day}, ${world.time}.`);
   lines.push(`State: ${Object.keys(world.agents).length} agents | ${Object.keys(world.memories).length} memories | ${Object.keys(world.rumors).length} rumors | ${Object.keys(world.incidents).length} incidents.`);
 
-  const incident = activeIncidents[0] ?? resolvedIncidents.at(-1);
+  if (scope === 'agent') {
+    lines.push(`Agent focus: ${Object.values(world.agents).map((a) => a.name).join(', ')}.`);
+  }
+
+  const incident = activeIncidents[0] ?? resolvedIncidents[resolvedIncidents.length - 1];
   if (incident) {
     const statusLabel = incident.status === 'active' ? 'Active incident' : 'Resolved incident';
     lines.push(`${statusLabel}: ${incident.title}. Known facts: ${incident.knownFacts.join(' | ')}.`);
     if (incident.status === 'resolved') {
       lines.push(`Resolution path: ${incident.resolutionState}.`);
     }
-    if (world.playerKnowledge.evidenceIds.includes(`rumor_source_${incident.hiddenCause?.match?.(/Nadia/) ? 'nadia' : 'unknown'}`) || world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
+    // Hidden truth must NEVER be revealed without player evidence. The only
+    // way Leno is allowed to name a source is via an explicit evidenceId.
+    if (world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
       lines.push('Evidence level: Nadia is a probable source of the false rumor.');
     } else {
       lines.push('Evidence level: there is not enough proof to name the source yet. Nadia may be relevant, but that remains speculation.');
@@ -39,15 +52,16 @@ export function lenoSummarize(world, { scope = 'world' } = {}) {
     lines.push('No active incident detected yet.');
   }
 
-  lines.push(`Recent visible events: ${publicEvents.map(e => e.description).join(' / ') || 'none'}.`);
+  lines.push(`Recent visible events: ${publicEvents.map((e) => e.description).join(' / ') || 'none'}.`);
   return lines.join('\n');
 }
 
-export function lenoSuggestActions(world, { incidentId = 'missing_delivery' } = {}) {
+export function lenoSuggestActions(world: WorldState, options: { incidentId?: string } = {}): string[] {
+  const { incidentId = 'missing_delivery' } = options;
   const incident = world.incidents[incidentId];
-  if (!incident) return ['Inspect Sara’s Café.', 'Talk to Sara.', 'Listen for rumors at Market Street.'];
+  if (!incident) return ['Inspect Sara\u2019s Caf\u00e9.', 'Talk to Sara.', 'Listen for rumors at Market Street.'];
   return [
-    'Safe: talk to Sara again and inspect the café stock.',
+    'Safe: talk to Sara again and inspect the caf\u00e9 stock.',
     'Social: ask Amina to mediate between Sara and Malik.',
     'Risky: pay Rune for information about Nadia and the workshop.'
   ];

@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { initializeScenario, runSimulation } from '../src/simulation/sim.ts';
-import { lenoSummarize } from '../src/simulation/leno.js';
+import { lenoSummarize } from '../src/simulation/leno.ts';
 import { ACTIONS } from '../src/simulation/constants.js';
-import { executeAction } from '../src/simulation/actions.js';
+import { executeAction } from '../src/simulation/actions.ts';
 import { loadScenarioFile, validateScenarioSchema } from '../src/simulation/scenario-loader.ts';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 

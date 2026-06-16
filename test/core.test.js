@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { initializeScenario, runSimulation, evaluateWorld, tickWorld } from '../src/simulation/sim.ts';
-import { executeAction, validateAction } from '../src/simulation/actions.js';
+import { executeAction, validateAction } from '../src/simulation/actions.ts';
 import { ACTIONS } from '../src/simulation/constants.js';
-import { lenoSummarize } from '../src/simulation/leno.js';
-import { generateDialogueReply } from '../src/simulation/dialogue.js';
-import { generateDashboard } from '../src/simulation/dashboard.js';
+import { lenoSummarize } from '../src/simulation/leno.ts';
+import { generateDialogueReply } from '../src/simulation/dialogue.ts';
+import { generateDashboard } from '../src/simulation/dashboard.ts';
 
 test('initial world has MVP agents, locations and secret memories', () => {
   const world = initializeScenario();

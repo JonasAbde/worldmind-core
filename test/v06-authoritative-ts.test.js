@@ -12,7 +12,7 @@ import {
 import { serializeWorldState, validateScenarioSchema } from '../src/simulation/state.ts';
 import { createWorld } from '../src/simulation/world.ts';
 import { runSimulation, initializeScenario, evaluateWorld } from '../src/simulation/sim.ts';
-import { generateDashboard } from '../src/simulation/dashboard.js';
+import { generateDashboard } from '../src/simulation/dashboard.ts';
 import { parseBranch } from '../src/contracts/parse.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,12 +45,20 @@ test('v0.6: scenario-loader.ts is authoritative (loadScenarioWorldState returns 
 });
 
 test('v0.6: runtime.d.ts declarations exist for memory, rumors, actions, relationships, economy, incidents, dashboard, dialogue, leno', () => {
+  // In v0.7 the runtime is fully TypeScript and `runtime.d.ts` is no
+  // longer needed. This assertion is preserved as a smoke check that
+  // the v0.5 → v0.6 → v0.7 migration chain is intact (the v0.7 test
+  // suite asserts the inverse — that runtime.d.ts is gone).
   const declPath = path.join(repoRoot, 'src/contracts/runtime.d.ts');
-  assert.equal(existsSync(declPath), true, 'runtime.d.ts must exist');
-  const content = readFileSync(declPath, 'utf8');
-  for (const name of ['memory.js', 'rumors.js', 'actions.js', 'relationships.js', 'economy.js', 'incidents.js', 'dashboard.js', 'dialogue.js', 'leno.js']) {
-    assert.equal(content.includes(name), true, 'runtime.d.ts must reference ' + name);
-  }
+  // v0.7: file is intentionally removed. The smoke check is the
+  // presence of authoritative .ts modules for all 9 names instead.
+  const authoritative = [
+    'memory.ts', 'rumors.ts', 'actions.ts', 'relationships.ts',
+    'economy.ts', 'incidents.ts', 'dashboard.ts', 'dialogue.ts', 'leno.ts'
+  ].every((name) => existsSync(path.join(repoRoot, 'src/simulation', name)));
+  assert.equal(authoritative, true, 'v0.7 must have authoritative .ts files for all 9 runtime modules');
+  // legacy declaration file should be gone
+  assert.equal(existsSync(declPath), false, 'runtime.d.ts must be deleted in v0.7');
 });
 
 test('v0.6: parseBranch wrapper accepts a valid branch and rejects missing fields', () => {

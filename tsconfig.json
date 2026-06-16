@@ -6,13 +6,14 @@
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
-    "strict": false,
+    "strict": true,
+    "strictNullChecks": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "ES2021"],
     "types": ["node"]
   },
   "include": [

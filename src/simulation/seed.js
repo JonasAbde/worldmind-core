@@ -1,5 +1,5 @@
 import { PERMISSIONS } from './constants.js';
-import { calculateInfluence } from './relationships.js';
+import { calculateInfluence } from './relationships.ts';
 
 function personality(warmth, ambition, loyalty, riskTolerance, honesty, curiosity, aggression) {
   return { warmth, ambition, loyalty, riskTolerance, honesty, curiosity, aggression };

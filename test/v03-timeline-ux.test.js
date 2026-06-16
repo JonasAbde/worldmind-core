@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { runSimulation } from '../src/simulation/sim.ts';
-import { generateDashboard } from '../src/simulation/dashboard.js';
+import { generateDashboard } from '../src/simulation/dashboard.ts';
 import { buildTimelineUxModel, diffWorldStates, filterWorldEvents, formatSnapshotList, formatBranchList } from '../src/simulation/timeline-ux.js';
 import { openSqliteWorldStore } from '../src/persistence/sqlite.js';
 

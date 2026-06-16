@@ -1,10 +1,5 @@
 /**
  * Authoritative TypeScript module — `state.ts`.
- *
- * The body of the original `state.js` has been promoted here. The
- * sibling `state.js` is now a thin re-export shim that remains so
- * existing callers keep working while we migrate the codebase to
- * TypeScript imports.
  */
 
 import { deepClone } from './utils.js';
@@ -14,21 +9,25 @@ import type {
   EventRecord
 } from '../contracts/types.ts';
 
-export type { WorldState, ScenarioContract } from '../contracts/types.ts';
+export type { WorldState, ScenarioContract, EventRecord } from '../contracts/types.ts';
+
+export type WorldRuntime = WorldState & {
+  rng: { (): number; getState: () => number | { state: number } | null; setState: (nextState: number | null | undefined) => number; snapshot: () => { seed: number; state: number } };
+  addEvent: (event: Partial<EventRecord>) => EventRecord;
+  nextId: (prefix: string) => string;
+  advanceTick: () => void;
+};
+
+// Type-guard helper that re-exposes the WorldRuntime type for
+// `import type { WorldRuntime }` callers. The export value is
+// unused at runtime; it exists only so the TypeScript compiler
+// treats the symbol as reachable in module-resolution.
+export const __WORLD_RUNTIME_TYPE__: WorldRuntime = {} as WorldRuntime;
 
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
 }
-
-export type WorldRuntime = WorldState & {
-  seed?: number;
-  rng: { getState: () => number | { state: number } | null };
-  advanceTick: () => void;
-  addEvent: (event: Partial<EventRecord>) => EventRecord;
-  nextId: (prefix: string) => string;
-  idCounters: Record<string, number>;
-};
 
 const requiredTopLevelKeys: Array<keyof ScenarioContract> = [
   'id',

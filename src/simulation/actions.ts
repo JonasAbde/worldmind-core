@@ -1,10 +1,47 @@
-import { ACTION_RISK_LIMIT_MVP, ACTIONS, PERMISSIONS, RISK } from './constants.js';
-import { applyRelationshipImpact, calculateAcceptance } from './relationships.js';
-import { maybeCreateMemory, processEventMemory } from './memory.js';
-import { counterRumor, createRumor, traceRumor } from './rumors.js';
-import { resolveIncident } from './incidents.js';
+/**
+ * Authoritative TypeScript module — `actions.ts`.
+ */
 
-const registry = {
+import { ACTION_RISK_LIMIT_MVP, ACTIONS, PERMISSIONS, RISK } from './constants.js';
+import { applyRelationshipImpact, calculateAcceptance } from './relationships.ts';
+import { maybeCreateMemory, processEventMemory } from './memory.ts';
+import { counterRumor, createRumor, traceRumor } from './rumors.ts';
+import { resolveIncident } from './incidents.ts';
+import type { AgentId, EventRecord } from '../contracts/types.ts';
+import type { WorldRuntime } from './state.ts';
+
+interface ActionRequest {
+  actorId: AgentId;
+  actionId: string;
+  targetAgentId?: AgentId;
+  targetLocationId?: string;
+  message?: string;
+  tone?: 'direct' | 'friendly' | 'threatening' | string;
+  focus?: string;
+  problemId?: string;
+  offer?: string;
+  topic?: string;
+  claim?: string;
+  targetAgentIds?: AgentId[];
+  truthLevel?: number;
+  emotionalTone?: string;
+  amount?: number;
+  reason?: string;
+  fromLocationId?: string;
+  toLocationId?: string;
+  itemIds?: string[];
+  rumorId?: string;
+  counterClaim?: string;
+  evidenceStrength?: number;
+  [key: string]: unknown;
+}
+
+interface ActionSpec {
+  permission: string;
+  risk: number;
+}
+
+const registry: Record<string, ActionSpec> = {
   [ACTIONS.MOVE_TO_LOCATION]: { permission: PERMISSIONS.MOVE, risk: RISK.OBSERVE },
   [ACTIONS.TALK_TO_AGENT]: { permission: PERMISSIONS.TALK, risk: RISK.SMALL_SOCIAL },
   [ACTIONS.ASK_ABOUT_TOPIC]: { permission: PERMISSIONS.TALK, risk: RISK.SMALL_SOCIAL },
@@ -26,7 +63,7 @@ const registry = {
   [ACTIONS.ASK_LENO]: { permission: PERMISSIONS.LENO_ACCESS, risk: RISK.OBSERVE }
 };
 
-const targetAgentRequired = new Set([
+const targetAgentRequired = new Set<string>([
   ACTIONS.TALK_TO_AGENT,
   ACTIONS.ASK_ABOUT_TOPIC,
   ACTIONS.OFFER_HELP,
@@ -38,13 +75,14 @@ const targetAgentRequired = new Set([
   ACTIONS.REPAIR_ITEM
 ]);
 
-const targetLocationRequired = new Set([
+const targetLocationRequired = new Set<string>([
   ACTIONS.MOVE_TO_LOCATION,
   ACTIONS.INSPECT_LOCATION,
   ACTIONS.LISTEN_FOR_RUMORS
 ]);
 
-export function validateAction(world, { actorId, actionId, targetAgentId, targetLocationId }) {
+export function validateAction(world: WorldRuntime, request: ActionRequest): true {
+  const { actorId, actionId, targetAgentId, targetLocationId } = request;
   const actor = world.agents[actorId];
   if (!actor) throw new Error(`Actor not found: ${actorId}`);
   const spec = registry[actionId];
@@ -58,10 +96,10 @@ export function validateAction(world, { actorId, actionId, targetAgentId, target
   return true;
 }
 
-export function executeAction(world, request) {
+export function executeAction(world: WorldRuntime, request: ActionRequest): EventRecord {
   validateAction(world, request);
-  const { actionId } = request;
-  let event;
+  const { actionId, actorId } = request;
+  let event: EventRecord;
   switch (actionId) {
     case ACTIONS.MOVE_TO_LOCATION: event = moveToLocation(world, request); break;
     case ACTIONS.TALK_TO_AGENT: event = talkToAgent(world, request); break;
@@ -70,35 +108,36 @@ export function executeAction(world, request) {
     case ACTIONS.INSPECT_LOCATION: event = inspectLocation(world, request); break;
     case ACTIONS.LISTEN_FOR_RUMORS: event = listenForRumors(world, request); break;
     case ACTIONS.SPREAD_RUMOR: event = spreadRumor(world, request); break;
-    case ACTIONS.COUNTER_RUMOR: event = counterRumor(world, request.rumorId, { actorId: request.actorId, counterClaim: request.counterClaim, evidenceStrength: request.evidenceStrength ?? 0 }); break;
-    case ACTIONS.TRACE_RUMOR: event = traceRumor(world, request.rumorId, { actorId: request.actorId, evidenceStrength: request.evidenceStrength ?? 0 }); break;
+    case ACTIONS.COUNTER_RUMOR: event = counterRumor(world, request.rumorId as string, { actorId, counterClaim: request.counterClaim as string, evidenceStrength: request.evidenceStrength ?? 0 }); break;
+    case ACTIONS.TRACE_RUMOR: event = traceRumor(world, request.rumorId as string, { actorId, evidenceStrength: request.evidenceStrength ?? 0 }); break;
     case ACTIONS.PAY_AGENT: event = payAgent(world, request); break;
     case ACTIONS.DELIVER_GOODS: event = deliverGoods(world, request); break;
     default:
-      event = world.addEvent({ type: actionId, locationId: world.agents[request.actorId].locationId, actorIds: [request.actorId], description: `Action executed: ${actionId}`, importance: 2 });
+      event = world.addEvent({ type: actionId, locationId: world.agents[actorId].locationId, actorIds: [actorId], description: `Action executed: ${actionId}`, importance: 2 });
   }
   processEventMemory(world, event);
   return event;
 }
 
-function moveToLocation(world, { actorId, targetLocationId }) {
+function moveToLocation(world: WorldRuntime, { actorId, targetLocationId }: ActionRequest): EventRecord {
   const actor = world.agents[actorId];
   const old = actor.locationId;
-  world.locations[old].agentsPresent = world.locations[old].agentsPresent.filter(id => id !== actorId);
-  actor.locationId = targetLocationId;
-  world.locations[targetLocationId].agentsPresent.push(actorId);
-  return world.addEvent({ type: 'agent_moved', locationId: targetLocationId, actorIds: [actorId], description: `${actor.name} moved to ${world.locations[targetLocationId].name}.`, public: false, visibleToAgentIds: [actorId], importance: 1 });
+  world.locations[old].agentsPresent = world.locations[old].agentsPresent.filter((id) => id !== actorId);
+  actor.locationId = targetLocationId as string;
+  world.locations[targetLocationId as string].agentsPresent.push(actorId);
+  return world.addEvent({ type: 'agent_moved', locationId: targetLocationId as string, actorIds: [actorId], description: `${actor.name} moved to ${world.locations[targetLocationId as string].name}.`, public: false, visibleToAgentIds: [actorId], importance: 1 });
 }
 
-function talkToAgent(world, { actorId, targetAgentId, message = '', tone = 'direct' }) {
+function talkToAgent(world: WorldRuntime, { actorId, targetAgentId, message = '', tone = 'direct' }: ActionRequest): EventRecord {
   const actor = world.agents[actorId];
-  const target = world.agents[targetAgentId];
+  const target = world.agents[targetAgentId as AgentId];
   const impact = tone === 'friendly' ? { trust: 3, affection: 2 } : tone === 'threatening' ? { fear: 15, trust: -10, suspicion: 8 } : { trust: 1 };
-  applyRelationshipImpact(world, targetAgentId, actorId, impact, `talk tone: ${tone}`);
-  return world.addEvent({ type: 'dialogue', locationId: actor.locationId, actorIds: [actorId, targetAgentId], description: `${actor.name} talked to ${target.name}: ${message || '(conversation)'}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: tone === 'threatening' ? 3 : 2, payload: { tone, message } });
+  applyRelationshipImpact(world, targetAgentId as AgentId, actorId, impact, `talk tone: ${tone}`);
+  return world.addEvent({ type: 'dialogue', locationId: actor.locationId, actorIds: [actorId, targetAgentId as AgentId], description: `${actor.name} talked to ${target.name}: ${message || '(conversation)'}`, public: false, visibleToAgentIds: [actorId, targetAgentId as AgentId], importance: tone === 'threatening' ? 3 : 2, payload: { tone, message } });
 }
-function askAboutTopic(world, { actorId, targetAgentId, topic = 'delivery', tone = 'direct' }) {
-  const target = world.agents[targetAgentId];
+
+function askAboutTopic(world: WorldRuntime, { actorId, targetAgentId, topic = 'delivery', tone = 'direct' }: ActionRequest): EventRecord {
+  const target = world.agents[targetAgentId as AgentId];
   if (!targetAgentId) throw new Error('ask_about_topic requires targetAgentId');
   const rel = target.relationships[actorId];
   const topicText = topic.toLowerCase();
@@ -108,30 +147,30 @@ function askAboutTopic(world, { actorId, targetAgentId, topic = 'delivery', tone
   return world.addEvent({ type: 'topic_discussed', locationId: target.locationId, actorIds: [actorId, targetAgentId], description: `${target.name} discussed topic: ${topic}${reveals ? ' and revealed useful evidence.' : '.'}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: reveals ? 4 : 2, payload: { topic, tone, evidenceRevealed: reveals } });
 }
 
-function offerHelp(world, { actorId, targetAgentId, problemId = 'missing_delivery', offer = 'help' }) {
-  applyRelationshipImpact(world, targetAgentId, actorId, { trust: 10, respect: 5, debt: 5, tags: ['offered_help'] }, `offered help with ${problemId}`);
-  return world.addEvent({ type: 'help_offered', locationId: world.agents[targetAgentId].locationId, actorIds: [actorId, targetAgentId], description: `${world.agents[actorId].name} offered help to ${world.agents[targetAgentId].name}: ${offer}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: 3, payload: { problemId } });
+function offerHelp(world: WorldRuntime, { actorId, targetAgentId, problemId = 'missing_delivery', offer = 'help' }: ActionRequest): EventRecord {
+  applyRelationshipImpact(world, targetAgentId as AgentId, actorId, { trust: 10, respect: 5, debt: 5, tags: ['offered_help'] }, `offered help with ${problemId}`);
+  return world.addEvent({ type: 'help_offered', locationId: world.agents[targetAgentId as AgentId].locationId, actorIds: [actorId, targetAgentId], description: `${world.agents[actorId].name} offered help to ${world.agents[targetAgentId as AgentId].name}: ${offer}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: 3, payload: { problemId } });
 }
 
-function inspectLocation(world, { actorId, targetLocationId, focus = 'general' }) {
-  const loc = world.locations[targetLocationId];
+function inspectLocation(world: WorldRuntime, { actorId, targetLocationId, focus = 'general' }: ActionRequest): EventRecord {
+  const loc = world.locations[targetLocationId as string];
   let finding = `Inspected ${loc.name}.`;
-  if (targetLocationId === 'cafe' && focus === 'stock') finding = 'Sara’s stock is low and delivery crates are missing.';
-  return world.addEvent({ type: 'location_inspected', locationId: targetLocationId, actorIds: [actorId], description: finding, public: false, visibleToAgentIds: [actorId], importance: targetLocationId === 'cafe' ? 3 : 2, payload: { focus } });
+  if (targetLocationId === 'cafe' && focus === 'stock') finding = 'Sara\u2019s stock is low and delivery crates are missing.';
+  return world.addEvent({ type: 'location_inspected', locationId: targetLocationId as string, actorIds: [actorId], description: finding, public: false, visibleToAgentIds: [actorId], importance: targetLocationId === 'cafe' ? 3 : 2, payload: { focus } });
 }
 
-function listenForRumors(world, { actorId, targetLocationId }) {
-  const known = Object.values(world.rumors).filter(r => r.knownByAgentIds.some(id => world.agents[id]?.locationId === targetLocationId));
+function listenForRumors(world: WorldRuntime, { actorId, targetLocationId }: ActionRequest): EventRecord {
+  const known = Object.values(world.rumors).filter((r) => r.knownByAgentIds.some((id) => world.agents[id]?.locationId === targetLocationId));
   if (actorId === 'player') for (const r of known) if (!world.playerKnowledge.knownRumorIds.includes(r.id)) world.playerKnowledge.knownRumorIds.push(r.id);
-  return world.addEvent({ type: 'rumors_listened', locationId: targetLocationId, actorIds: [actorId], description: `${world.agents[actorId].name} listened for rumors at ${world.locations[targetLocationId].name}.`, public: false, visibleToAgentIds: [actorId], importance: known.length ? 3 : 1, payload: { rumorIds: known.map(r => r.id) } });
+  return world.addEvent({ type: 'rumors_listened', locationId: targetLocationId as string, actorIds: [actorId], description: `${world.agents[actorId].name} listened for rumors at ${world.locations[targetLocationId as string].name}.`, public: false, visibleToAgentIds: [actorId], importance: known.length ? 3 : 1, payload: { rumorIds: known.map((r) => r.id) } });
 }
 
-function spreadRumor(world, { actorId, claim, targetAgentIds = [], truthLevel = 50, emotionalTone = 'suspicion' }) {
-  const rumor = createRumor(world, { claim, sourceAgentId: actorId, targetAgentIds, truthLevel, emotionalTone, spreadRate: 55 });
+function spreadRumor(world: WorldRuntime, { actorId, claim, targetAgentIds = [], truthLevel = 50, emotionalTone = 'suspicion' }: ActionRequest): EventRecord {
+  const rumor = createRumor(world, { claim: claim as string, sourceAgentId: actorId, targetAgentIds: targetAgentIds as AgentId[], truthLevel, emotionalTone, spreadRate: 55 });
   return world.addEvent({ type: 'rumor_created', locationId: world.agents[actorId].locationId, actorIds: [actorId], description: `${world.agents[actorId].name} started rumor: ${claim}`, public: false, visibleToAgentIds: [actorId], importance: 4, payload: { rumorId: rumor.id } });
 }
 
-function payAgent(world, { actorId, targetAgentId, amount = 10, reason = 'payment' }) {
+function payAgent(world: WorldRuntime, { actorId, targetAgentId, amount = 10, reason = 'payment' }: ActionRequest): EventRecord {
   const actor = world.agents[actorId];
   if (!targetAgentId) throw new Error('pay_agent requires targetAgentId');
   if (!Number.isFinite(amount) || amount <= 0) throw new Error('pay_agent amount must be a positive number');
@@ -143,7 +182,7 @@ function payAgent(world, { actorId, targetAgentId, amount = 10, reason = 'paymen
   return world.addEvent({ type: 'payment_made', locationId: target.locationId, actorIds: [actorId, targetAgentId], description: `${actor.name} paid ${target.name} ${amount} for ${reason}.`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: 3, payload: { amount, reason } });
 }
 
-function deliverGoods(world, { actorId, fromLocationId = 'workshop', toLocationId = 'cafe', itemIds = ['delivery_crate'] }) {
+function deliverGoods(world: WorldRuntime, { actorId, fromLocationId = 'workshop', toLocationId = 'cafe', itemIds = ['delivery_crate'] }: ActionRequest): EventRecord {
   const actor = world.agents[actorId];
   if (!Array.isArray(itemIds) || !itemIds.length) throw new Error('deliver_goods requires at least one itemId');
   if (!fromLocationId || !toLocationId) throw new Error('deliver_goods requires fromLocationId and toLocationId');
@@ -153,16 +192,16 @@ function deliverGoods(world, { actorId, fromLocationId = 'workshop', toLocationI
     return world.addEvent({ type: 'delivery_failed', locationId: 'workshop', actorIds: [actorId, 'sara'], description: `${actor.name} refused delivery to Sara because trust collapsed.`, public: false, visibleToAgentIds: ['sara', 'malik', 'rune'], importance: 4, payload: { fromLocationId, toLocationId, itemIds } });
   }
   world.agents.sara.stats.stock = Math.min(100, world.agents.sara.stats.stock + 30);
-  return world.addEvent({ type: 'delivery_completed', locationId: toLocationId, actorIds: [actorId, 'sara'], description: `${actor.name} delivered goods to Sara's Café.`, public: true, visibleToAgentIds: Object.keys(world.agents), importance: 4, payload: { fromLocationId, toLocationId, itemIds } });
+  return world.addEvent({ type: 'delivery_completed', locationId: toLocationId, actorIds: [actorId, 'sara'], description: `${actor.name} delivered goods to Sara's Caf\u00e9.`, public: true, visibleToAgentIds: Object.keys(world.agents), importance: 4, payload: { fromLocationId, toLocationId, itemIds } });
 }
 
-export function helpSaraPeacefully(world) {
+export function helpSaraPeacefully(world: WorldRuntime): EventRecord {
   applyRelationshipImpact(world, 'sara', 'player', { trust: 25, respect: 10, debt: 20, tags: ['trusted', 'saved_me'] }, 'player restored delivery');
   applyRelationshipImpact(world, 'malik', 'player', { trust: 10, respect: 10, suspicion: -10 }, 'player mediated honestly');
   applyRelationshipImpact(world, 'nadia', 'player', { suspicion: 25, respect: 10, affection: -20, tags: ['rival'] }, 'player disrupted manipulation');
   return resolveIncident(world, 'missing_delivery', 'peaceful_mediation', 'player');
 }
 
-export function acceptTaskScore(world, agentId, requesterId, { taskRisk = 1, reward = 0, taskMatchesGoal = false, factionConflict = false } = {}) {
-  return calculateAcceptance({ agent: world.agents[agentId], requesterId, taskRisk, reward, taskMatchesGoal, factionConflict });
+export function acceptTaskScore(world: WorldRuntime, agentId: AgentId, requesterId: AgentId, options: { taskRisk?: number; reward?: number; taskMatchesGoal?: boolean; factionConflict?: boolean } = {}): number {
+  return calculateAcceptance({ agent: world.agents[agentId] as unknown as { relationships: Record<AgentId, import('../contracts/types.ts').Relationship>; personality: { riskTolerance: number; loyalty: number } }, requesterId, ...options });
 }

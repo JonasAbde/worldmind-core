@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import { runSimulation, evaluateWorld } from '../simulation/sim.ts';
-import { generateDashboard } from '../simulation/dashboard.js';
-import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.js';
+import { generateDashboard } from '../simulation/dashboard.ts';
+import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.ts';
 import { openSqliteWorldStore } from '../persistence/sqlite.js';
 import { diffWorldStates, formatBranchList, formatSnapshotList } from '../simulation/timeline-ux.js';
 

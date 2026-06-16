@@ -17,7 +17,7 @@ export type RngStateNumber = number;
 
 export type RiskLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export type IncidentStatus = 'active' | 'investigating' | 'resolved' | 'open';
-export type MemoryVisibility = 'public' | 'private' | 'faction' | 'agent';
+export type MemoryVisibility = 'public' | 'private' | 'faction' | 'agent' | 'secret';
 export type BranchName = string;
 
 export interface AgentStats {
@@ -27,6 +27,9 @@ export interface AgentStats {
   foodPrice?: number;
   laborSkill?: number;
   foodPriceIndex?: number;
+  energy?: number;
+  reputation?: number;
+  revenue?: number;
 }
 
 export interface Relationship {
@@ -41,6 +44,19 @@ export interface Relationship {
   fear?: number;
   tags?: string[];
   relationshipTags?: string[];
+  lastInteractionTick?: number;
+}
+
+export interface RelationshipEvent {
+  id: string;
+  tick: number;
+  sourceAgentId: AgentId;
+  targetAgentId: AgentId;
+  changes: Partial<Relationship>;
+  reason: string;
+  sourceEventId: string | null;
+  oldSnapshot: Partial<Relationship>;
+  newSnapshot: Partial<Relationship>;
 }
 
 export interface Agent {
@@ -57,6 +73,10 @@ export interface Agent {
   stats: AgentStats;
   factionIds?: string[];
   relationshipTags?: string[];
+  personality?: { warmth: number; ambition: number; loyalty: number; riskTolerance: number; honesty: number; curiosity: number; aggression: number };
+  skills?: string[];
+  inventory?: string[];
+  secrets?: string[];
 }
 
 export interface Location {
@@ -95,10 +115,10 @@ export interface MemoryRecord {
   visibility?: MemoryVisibility;
   confidence?: number;
   decayRate?: number;
-  importance?: number;
+  importance: number;
   lastAccessedTick?: number;
   emotionalWeight?: number;
-  sentiment?: number;
+  sentiment?: string;
   sourceAgentId?: AgentId;
   sourceEventId?: string;
   locked?: boolean;
@@ -123,6 +143,10 @@ export interface RumorRecord {
   spreadRate?: number;
   targetAgentIds?: AgentId[];
   emotionalTone?: string;
+  originEventId?: string;
+  createdAtTick?: number;
+  distortionLevel?: number;
+  active?: boolean;
   resolvedAtTick?: number;
   resolvedByEventId?: string;
 }
@@ -132,6 +156,7 @@ export interface IncidentRecord {
   title: string;
   status: IncidentStatus;
   createdAtTick?: number;
+  resolvedAtTick?: number;
   visibleProblem?: string;
   hiddenCause?: string;
   knownFacts: string[];
@@ -163,7 +188,7 @@ export interface EventRecord {
   public: boolean;
   visibleToAgentIds: AgentId[];
   causes: string[];
-  consequences: string[];
+  consequences: Array<Record<string, unknown>>;
   importance: number;
   locationId?: LocationId;
   actorIds: AgentId[];
@@ -243,7 +268,7 @@ export interface WorldState {
   incidents: Record<string, IncidentRecord>;
   tasks: Record<string, TaskRecord>;
   events: EventRecord[];
-  relationshipEvents: Relationship[];
+  relationshipEvents: RelationshipEvent[];
   playerKnowledge: PlayerKnowledge;
   economy: EconomyState;
   branchOriginSnapshotId?: SnapshotId | null;
@@ -253,7 +278,16 @@ export interface WorldState {
   currentSnapshotId?: SnapshotId | null;
   source?: 'scenario' | 'snapshot' | 'runtime';
   createdAtTick?: number;
+  seed?: number;
 }
+
+export type WorldRuntime = WorldState & {
+  seed?: number;
+  rng: { (): number; getState: () => number | { state: number } | null; setState: (nextState: number | null | undefined) => number; snapshot: () => { seed: number; state: number } };
+  addEvent: (event: Partial<EventRecord>) => EventRecord;
+  nextId: (prefix: string) => string;
+  advanceTick: () => void;
+};
 
 export interface ScenarioContract {
   id: string;

@@ -37,6 +37,7 @@
 30. `30_DATA_CONTRACTS_AND_VALIDATION.md`
 31. `31_TYPESCRIPT_RUNTIME_MIGRATION.md` — v0.5 gradual migration to TypeScript + CLI validation gates.
 32. `32_AUTHORITATIVE_TYPESCRIPT_RUNTIME.md` — v0.6 authoritative `.ts` runtime + strict gates + `validate:branch` and `validate:dashboard`.
+33. `33_STRICT_TYPESCRIPT_DEFAULT.md` — v0.7 legacy runtime fully migrated to `.ts`, `strict: true` enabled, `runtime.d.ts` removed, `validate:action` and typed diff-checker.
 
 ## Roadmap
 
