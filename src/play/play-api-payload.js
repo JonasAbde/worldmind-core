@@ -9,6 +9,7 @@
 import { summarizeWorld } from './play-engine.js';
 import { buildGameplayShellModel, buildConsequenceBeat } from './game-shell-model.js';
 import { buildDistrictView } from './district-view.js';
+import { build3DVisualCues } from './district-3d-layout.js';
 
 /** Bump when breaking response shapes documented in docs/PLAY_API_CONTRACT.md */
 export const PLAY_API_VERSION = '1.0.0';
@@ -56,6 +57,7 @@ export function buildPlayStatePayload(world, options = {}) {
     founder: world?.founder ?? null,
     gameShell: buildGameShell(world, { leno }),
     districtView: options.includeDistrictView === false ? undefined : buildDistrictView(world),
+    visualCues: options.includeVisualCues === false ? undefined : build3DVisualCues(world, { leno }),
     redaction: {
       hiddenCause: 'never_in_api',
       agentSecrets: 'never_in_api',

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorldMind — 3D District Play</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: #0a0e14; color: #e6edf3; font-family: ui-monospace, monospace; }
+    #wm-3d-canvas { display: block; width: 100%; height: 100%; }
+    #wm-3d-hud {
+      position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column;
+      justify-content: space-between; padding: 12px 16px;
+    }
+    #wm-3d-topbar {
+      pointer-events: auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      background: rgba(13,17,23,0.85); border: 1px solid #30363d; border-radius: 8px; padding: 8px 12px;
+      backdrop-filter: blur(8px); max-width: 900px;
+    }
+    #wm-3d-topbar a { color: #58a6ff; text-decoration: none; font-size: 0.75rem; }
+    #wm-3d-topbar .stat { font-size: 0.72rem; color: #8b949e; }
+    #wm-3d-topbar .stat strong { color: #f59e0b; }
+    #wm-3d-panel {
+      pointer-events: auto; align-self: flex-end; width: min(420px, 100%);
+      background: rgba(13,17,23,0.92); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+    #wm-3d-panel h2 { font-size: 0.85rem; color: #58a6ff; margin-bottom: 6px; }
+    #wm-3d-panel p { font-size: 0.75rem; color: #8b949e; line-height: 1.45; margin-bottom: 8px; }
+    #wm-3d-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    #wm-3d-actions button {
+      font: inherit; font-size: 0.68rem; padding: 5px 8px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #388bfd44; background: #161b22; color: #79c0ff;
+    }
+    #wm-3d-actions button:hover { background: #1f6feb33; }
+    #wm-3d-form { display: flex; gap: 6px; }
+    #wm-3d-form input {
+      flex: 1; font: inherit; font-size: 0.72rem; padding: 6px 8px; border-radius: 4px;
+      border: 1px solid #30363d; background: #0d1117; color: #c9d1d9;
+    }
+    #wm-3d-form button {
+      font: inherit; font-size: 0.72rem; padding: 6px 10px; border-radius: 4px; cursor: pointer;
+      border: none; background: linear-gradient(90deg, #d97706, #f59e0b); color: #0d1117; font-weight: 600;
+    }
+    #wm-3d-output { margin-top: 8px; font-size: 0.68rem; color: #c9d1d9; white-space: pre-wrap; max-height: 120px; overflow: auto; }
+    #wm-3d-banner {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%); font-size: 0.68rem;
+      padding: 4px 10px; border-radius: 4px; background: #1f6feb; color: white; z-index: 20;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <canvas id="wm-3d-canvas"></canvas>
+  <div id="wm-3d-banner" class="hidden"></div>
+  <div id="wm-3d-hud">
+    <div id="wm-3d-topbar">
+      <a href="/index.html">← 2D play</a>
+      <span class="stat"><strong>WorldMind 3D</strong></span>
+      <span class="stat" id="wm-3d-day">Day —</span>
+      <span class="stat" id="wm-3d-money">¢ 0</span>
+      <span class="stat" id="wm-3d-loc">@ —</span>
+    </div>
+    <div id="wm-3d-panel">
+      <h2 id="wm-3d-selection-title">Click a building or agent</h2>
+      <p id="wm-3d-selection-desc">WASD / drag to orbit · click location to move · agents for talk/ask</p>
+      <div id="wm-3d-actions"></div>
+      <form id="wm-3d-form">
+        <input id="wm-3d-command" type="text" placeholder="inspect cafe cafe_delivery_crate" autocomplete="off" spellcheck="false" />
+        <button type="submit">Run</button>
+      </form>
+      <div id="wm-3d-output"></div>
+    </div>
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.172.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="/3d-client.js"></script>
+</body>
+</html>

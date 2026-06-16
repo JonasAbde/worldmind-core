@@ -169,17 +169,23 @@ Visual shell branch adds `description`, `possibleEvidence[]`, `icon`.
 
 Do **not** embed `play-engine` in site. Do **not** mutate world in browser.
 
-## Future: `visualCues` (post-v1.0)
+## `visualCues` (3D clients — v1.0.0+)
 
-Reserved extension on `gameShell` for 3D/Babylon clients:
+Implemented in `src/play/district-3d-layout.js`. Returned on `GET /api/state` as `visualCues`.
 
 ```json
 "visualCues": {
-  "entities": [{ "id": "cafe_delivery_crate", "mesh": "...", "position": [0,0,0] }]
+  "kind": "worldmind_3d_visual_cues",
+  "version": 1,
+  "playerLocationId": "cafe",
+  "camera": { "target": [0, 1.5, 0], "distance": 16 },
+  "locations": [{ "id": "cafe", "position": [0,0,0], "scale": [2.5,3,2.5], "command": "move cafe", "agents": [] }],
+  "hotspots": [],
+  "edges": []
 }
 ```
 
-Not implemented in v1.0.0 — contract slot only.
+Clients: `static-play/3d.html`, worldmind-site `/play/3d`. See `docs/62_3D_PLAY_CLIENT_V1.md`.
 
 ## Verification
 
