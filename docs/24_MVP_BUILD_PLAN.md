@@ -16,22 +16,24 @@
 - Leno policy.
 - Static dashboard.
 - Tests/evals.
+- Optional SQLite persistence foundation.
+- World snapshots and timeline branches.
+- JSON scenario loader.
+- Deterministic regression coverage.
 
 ## Next build order
 
-1. Add SQLite persistence.
-2. Add TypeScript types.
-3. Add JSON scenario loader.
-4. Build React dashboard.
-5. Add save snapshots/timeline branch.
-6. Add richer dialogue package.
-7. Add agent schedule system.
-8. Add faction pressure mechanics.
-9. Add creator mode prototype.
-10. Add model router abstraction.
-11. Add LLM integration behind deterministic mocks.
-12. Add 2D map view.
-13. Then evaluate 3D client.
+1. Add richer save browser / timeline UI.
+2. Add incremental event replay / diff saves.
+3. Add TypeScript types.
+4. Add richer dialogue package.
+5. Add agent schedule system.
+6. Add faction pressure mechanics.
+7. Add creator mode prototype.
+8. Add model router abstraction.
+9. Add LLM integration behind deterministic mocks.
+10. Add 2D map view.
+11. Then evaluate 3D client.
 
 ## Development gate
 

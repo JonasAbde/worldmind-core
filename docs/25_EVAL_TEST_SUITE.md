@@ -16,6 +16,10 @@ npm run check
 - malformed / missing-target / zero-value actions are blocked.
 - dashboard export includes overview, incident and event-log sections.
 - dialogue is topic/relationship aware.
+- scenario loader validates the canonical JSON world.
+- SQLite persistence can save, restore, and branch a snapshot.
+- event-log metadata carries branch origin information.
+- Rune evidence can unlock Nadia-source tracing without secret-memory leaks.
 
 ## Eval criteria
 
@@ -29,6 +33,9 @@ After 7 simulated days:
 - 3+ economy pressure events.
 - Missing Delivery detected.
 - 3+ quest resolutions available.
+- snapshot round-trip works.
+- scenario-loaded world matches canonical invariants.
+- hidden truth stays locked until evidence exists.
 
 ## Future tests
 
@@ -38,3 +45,4 @@ After 7 simulated days:
 - locked memories persist.
 - timeline branch restore works.
 - creator-generated agent cannot receive admin tools.
+- diff-based save replay stays deterministic.

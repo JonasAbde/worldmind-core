@@ -8,18 +8,20 @@ import { applyRelationshipImpact, decayRelationships } from './relationships.js'
 import { updateEconomy } from './economy.js';
 import { detectIncidents } from './incidents.js';
 import { lenoSummarize } from './leno.js';
+import { loadScenarioFile } from './scenario-loader.js';
 
-export function initializeScenario({ seed = 42 } = {}) {
-  const world = createWorld({ seed });
-  seedSecretMemories(world);
+export function initializeScenario({ seed = 42, scenario = null, scenarioPath = null } = {}) {
+  const loadedScenario = scenario ?? (scenarioPath ? loadScenarioFile(scenarioPath) : null);
+  const world = loadedScenario ? createWorld({ seed, scenario: loadedScenario }) : createWorld({ seed });
+  if (!loadedScenario) seedSecretMemories(world);
   return world;
 }
 
-export function runSimulation({ days = 7, seed = 42 } = {}) {
-  const world = initializeScenario({ seed });
+export function runSimulation({ days = 7, seed = 42, scenario = null, scenarioPath = null, world = null } = {}) {
+  const activeWorld = world ?? initializeScenario({ seed, scenario, scenarioPath });
   const totalTicks = days * TICKS_PER_DAY;
-  for (let i = 0; i < totalTicks; i++) tickWorld(world);
-  return world;
+  for (let i = 0; i < totalTicks; i++) tickWorld(activeWorld);
+  return activeWorld;
 }
 
 export function tickWorld(world) {

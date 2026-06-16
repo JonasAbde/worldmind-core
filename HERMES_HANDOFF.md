@@ -1,14 +1,14 @@
-# Hermes Handoff — WorldMind MVP v0.1
+# Hermes Handoff — WorldMind v0.2 foundation
 
 ## Status
 
-Denne mappe indeholder en første bygbar prototype og komplet designpakke for WorldMind.
+WorldMind is still a **simulation-first foundation**. The engine is now beyond the initial MVP baseline and has an optional persistence/snapshot/scenario layer on top of the in-memory sim.
 
-Kode er ikke en færdig game client. Det er en **simulation-first foundation**, som skal bevise at engine-kernen virker før 3D, Godot/Unreal eller multiplayer.
+## What is built
 
-## Hvad der er bygget
-
-- `src/simulation/world.js`: world state + event log.
+- `src/simulation/world.js`: world state + event log + branch-aware events.
+- `src/simulation/state.js`: world serialization + scenario normalization.
+- `src/simulation/scenario-loader.js`: JSON scenario validation/loading.
 - `src/simulation/seed.js`: 10 agents, 4 locations, items, factions.
 - `src/simulation/actions.js`: action/tool validation + handlers.
 - `src/simulation/memory.js`: memory creation/retrieval/secret handling.
@@ -19,8 +19,10 @@ Kode er ikke en færdig game client. Det er en **simulation-first foundation**, 
 - `src/simulation/dialogue.js`: relationship/topic-aware dialogue v0.1.
 - `src/simulation/leno.js`: Leno prompt/model policy + known-info summaries.
 - `src/simulation/sim.js`: scenario runner and evals.
+- `src/persistence/sqlite.js`: optional SQLite persistence + snapshots + branches.
 - `src/simulation/dashboard.js`: static dashboard output.
 - `test/core.test.js`: MVP acceptance tests.
+- `test/v02-foundation.test.js`: persistence/scenario/snapshot/evidence regressions.
 
 ## Runbook
 
@@ -30,24 +32,33 @@ npm run check
 npm start
 ```
 
+Optional foundation flows:
+
+```bash
+node src/cli/simulate.js --days 7 --dashboard --persist --db data/worldmind.sqlite
+node src/cli/simulate.js --scenario scenarios/new-aarhus-district-01.json --days 7
+node src/cli/simulate.js --load-snapshot snapshot_00001 --days 7 --persist
+```
+
 Expected:
 
 - Tests pass.
 - Eval passes.
 - Dashboard generated at `static-dashboard/index.html`.
+- SQLite database initializes cleanly when requested.
+- Snapshot save/load round-trips.
+- Timeline branch metadata is visible in event log and save view.
 
 ## Next engineering tasks
 
-1. Split action handlers into individual files.
-2. Add persistent SQLite adapter.
-3. Add save snapshots/timeline branches.
-4. Add richer dialogue prompt packaging.
-5. Add explicit TypeScript types or migrate to TS.
-6. Add dashboard React app.
-7. Add scenario loader from JSON/YAML.
-8. Add local model/provider router abstraction.
-9. Add deterministic eval snapshots.
-10. Add creator mode prototype.
+1. Expand persistence from foundation to full save browser / timeline UI.
+2. Add incremental event replay / diff-based saves.
+3. Add richer scenario authoring tooling.
+4. Add explicit TypeScript types or migrate to TS.
+5. Add dashboard React app.
+6. Add local model/provider router abstraction.
+7. Add deterministic eval snapshots for more scenarios.
+8. Add creator mode prototype.
 
 ## Non-negotiables
 

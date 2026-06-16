@@ -68,7 +68,7 @@ export function counterRumor(world, rumorId, { counterClaim, evidenceStrength = 
     description: `Counter-rumor introduced: ${counterClaim}`,
     public: false, visibleToAgentIds: Object.keys(world.agents).filter(id => rumor.knownByAgentIds.includes(id)),
     causes: [rumor.originEventId].filter(Boolean), consequences: [{ type: 'rumor_weakened', rumorId, reduction }],
-    importance: evidenceStrength > 50 ? 4 : 3, payload: { rumorId, counterClaim, evidenceStrength }
+    importance: evidenceStrength > 50 ? 4 : 3, payload: { rumorId, counterClaim, evidenceStrength, reduction, spreadRate: rumor.spreadRate, truthLevel: rumor.truthLevel }
   });
 }
 

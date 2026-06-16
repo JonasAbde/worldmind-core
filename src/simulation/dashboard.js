@@ -38,7 +38,7 @@ export function generateDashboard(world, outDir = 'static-dashboard') {
   const eventRows = world.events
     .slice(-40)
     .reverse()
-    .map(e => `<tr><td>D${e.day} ${e.time}</td><td>${escapeHtml(e.type)}</td><td>${escapeHtml(e.description)}</td></tr>`)
+    .map(e => `<tr><td>D${e.day} ${e.time}</td><td>${escapeHtml(e.type)}</td><td>${escapeHtml(e.description)}</td><td>${escapeHtml(e.branchName ?? 'main')}</td><td>${escapeHtml(e.branchOriginSnapshotId ?? e.branchParentSnapshotId ?? 'n/a')}</td></tr>`)
     .join('');
 
   const overviewCards = [
@@ -60,6 +60,9 @@ export function generateDashboard(world, outDir = 'static-dashboard') {
     memories: Object.keys(world.memories).length,
     rumors: Object.keys(world.rumors).length,
     incidents: Object.keys(world.incidents).length,
+    branchName: world.branchName ?? 'main',
+    branchOriginSnapshotId: world.branchOriginSnapshotId ?? null,
+    branchParentSnapshotId: world.branchParentSnapshotId ?? null,
     passed: evalResult.passed
   };
 
@@ -103,7 +106,7 @@ code,pre{background:#0c1117;border-radius:10px;padding:12px;display:block;white-
   <section class="card"><h2>Save / Timeline View</h2><pre>${escapeHtml(JSON.stringify(snapshot, null, 2))}</pre></section>
 </div>
 <section class="card" style="margin-top:16px;"><h2>Eval</h2><pre class="${evalResult.passed ? 'pass' : 'fail'}">${escapeHtml(JSON.stringify(evalResult, null, 2))}</pre></section>
-<section class="card" style="margin-top:16px;"><h2>Event Log</h2><table><thead><tr><th>Time</th><th>Type</th><th>Description</th></tr></thead><tbody>${eventRows}</tbody></table></section>
+<section class="card" style="margin-top:16px;"><h2>Event Log</h2><table><thead><tr><th>Time</th><th>Type</th><th>Description</th><th>Branch</th><th>Origin Snapshot</th></tr></thead><tbody>${eventRows}</tbody></table></section>
 <p class="small muted">Raw world state: <a href="world-state.json">world-state.json</a></p></body></html>`;
   fs.writeFileSync(path.join(outDir, 'index.html'), html);
   return { htmlPath: path.join(outDir, 'index.html'), dataPath };

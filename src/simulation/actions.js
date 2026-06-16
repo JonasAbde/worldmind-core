@@ -97,11 +97,13 @@ function talkToAgent(world, { actorId, targetAgentId, message = '', tone = 'dire
   applyRelationshipImpact(world, targetAgentId, actorId, impact, `talk tone: ${tone}`);
   return world.addEvent({ type: 'dialogue', locationId: actor.locationId, actorIds: [actorId, targetAgentId], description: `${actor.name} talked to ${target.name}: ${message || '(conversation)'}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: tone === 'threatening' ? 3 : 2, payload: { tone, message } });
 }
-
 function askAboutTopic(world, { actorId, targetAgentId, topic = 'delivery', tone = 'direct' }) {
   const target = world.agents[targetAgentId];
+  if (!targetAgentId) throw new Error('ask_about_topic requires targetAgentId');
   const rel = target.relationships[actorId];
-  const reveals = topic.toLowerCase().includes('nadia') && (rel.trust > 35 || rel.fear > 60);
+  const topicText = topic.toLowerCase();
+  const runeLead = targetAgentId === 'rune' && topicText.includes('nadia');
+  const reveals = (topicText.includes('nadia') && (rel.trust > 35 || rel.fear > 60)) || (runeLead && rel.trust > 0);
   if (targetAgentId === 'rune' && reveals && !world.playerKnowledge.evidenceIds.includes('rune_statement_nadia_workshop')) world.playerKnowledge.evidenceIds.push('rune_statement_nadia_workshop');
   return world.addEvent({ type: 'topic_discussed', locationId: target.locationId, actorIds: [actorId, targetAgentId], description: `${target.name} discussed topic: ${topic}${reveals ? ' and revealed useful evidence.' : '.'}`, public: false, visibleToAgentIds: [actorId, targetAgentId], importance: reveals ? 4 : 2, payload: { topic, tone, evidenceRevealed: reveals } });
 }

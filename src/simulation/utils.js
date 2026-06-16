@@ -14,12 +14,19 @@ export function unique(values) {
   return [...new Set(values)];
 }
 
-export function makeRng(seed = 42) {
-  let state = seed >>> 0;
-  return function rng() {
+export function makeRng(seed = 42, initialState = null) {
+  let state = (initialState ?? seed) >>> 0;
+  function rng() {
     state = (1664525 * state + 1013904223) >>> 0;
     return state / 0x100000000;
+  }
+  rng.getState = () => state >>> 0;
+  rng.setState = nextState => {
+    state = (nextState ?? state) >>> 0;
+    return state;
   };
+  rng.snapshot = () => ({ seed: seed >>> 0, state: state >>> 0 });
+  return rng;
 }
 
 export function tickToDayTime(tick) {
