@@ -92,6 +92,18 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
   if (world.agents.player && !world.agents.player.locationId) {
     world.agents.player.locationId = 'cafe';
   }
+
+  if (!world.founder) {
+    const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
+    world.founder = {
+      unlocked: Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation'),
+      baseLevel: 0,
+      reputation: world.agents?.player?.stats?.reputation ?? 0,
+      contractsCompleted: 0,
+      activeContract: null
+    };
+  }
+
   return world;
 }
 
@@ -416,6 +428,84 @@ export function resolveCommand(world, commandOrText, args = {}) {
           ok: true, kind: 'transaction', command,
           text: ev.description,
           consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'start_delivery_workflow': {
+        const before = snapshotForDelta(world);
+        const founder = world.founder ?? (world.founder = {
+          unlocked: false,
+          baseLevel: 0,
+          reputation: world.agents?.player?.stats?.reputation ?? 0,
+          contractsCompleted: 0,
+          activeContract: null
+        });
+        if (!founder.unlocked) {
+          return { ok: false, kind: 'error', error: 'founder loop is locked until Missing Delivery is resolved' };
+        }
+        if (founder.activeContract) {
+          return {
+            ok: true,
+            kind: 'founder',
+            command,
+            text: `Contract already active: ${founder.activeContract.id}`,
+            consequence: diffConsequence(world, before, actorId, null),
+            world
+          };
+        }
+        founder.activeContract = {
+          id: `delivery_contract_${world.tick ?? 0}`,
+          customer: 'Sara',
+          payout: 25,
+          reputationGain: 3,
+          stockImpact: -4,
+          status: 'active'
+        };
+        return {
+          ok: true,
+          kind: 'founder',
+          command,
+          text: 'Founder workflow started: deliver emergency stock to Sara.',
+          consequence: diffConsequence(world, before, actorId, {
+            type: 'founder.contract_started',
+            description: 'Delivery contract started',
+            importance: 6
+          }),
+          world
+        };
+      }
+      case 'run_delivery_contract': {
+        const before = snapshotForDelta(world);
+        const founder = world.founder;
+        if (!founder?.activeContract) {
+          return { ok: false, kind: 'error', error: 'no active founder contract; run start_delivery_workflow first' };
+        }
+        const contract = founder.activeContract;
+        founder.contractsCompleted = (founder.contractsCompleted ?? 0) + 1;
+        founder.baseLevel = founder.contractsCompleted >= 3 ? 1 : founder.baseLevel ?? 0;
+        founder.reputation = (founder.reputation ?? 0) + (contract.reputationGain ?? 2);
+        founder.activeContract = null;
+
+        if (world.agents?.player?.stats) {
+          world.agents.player.stats.money = (world.agents.player.stats.money ?? 0) + (contract.payout ?? 20);
+          world.agents.player.stats.reputation = (world.agents.player.stats.reputation ?? 0) + (contract.reputationGain ?? 2);
+          world.agents.player.stats.energy = Math.max(0, (world.agents.player.stats.energy ?? 100) - 6);
+        }
+        if (world.economy) {
+          world.economy.foodScarcity = Math.max(0, (world.economy.foodScarcity ?? 0) + (contract.stockImpact ?? -3));
+          world.economy.trustPressure = Math.max(0, (world.economy.trustPressure ?? 0) - 1);
+        }
+
+        return {
+          ok: true,
+          kind: 'founder',
+          command,
+          text: `Contract delivered. +${contract.payout} money, +${contract.reputationGain} reputation.`,
+          consequence: diffConsequence(world, before, actorId, {
+            type: 'founder.contract_completed',
+            description: 'Delivery contract completed',
+            importance: 8
+          }),
           world
         };
       }

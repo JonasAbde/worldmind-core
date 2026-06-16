@@ -171,6 +171,86 @@ const APP_JS = `(function () {
     }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
   }
 
+  function applyCommandResult(result) {
+    if (!result) return;
+
+    if (result.consequence) {
+      var c = result.consequence;
+      var rels = (c.relationships || []).map(function (r) {
+        return '<li>' + escapeHtml(r.agentId) + ': trust ' + (r.trustDelta >= 0 ? '+' : '') + r.trustDelta + ', fear ' + (r.fearDelta >= 0 ? '+' : '') + r.fearDelta + '</li>';
+      }).join('');
+      var ticker = [
+        'relationships: ' + (rels ? 'updated' : 'no change'),
+        'memories: ' + (c.newMemories >= 0 ? '+' : '') + (c.newMemories ?? 0),
+        'rumors: ' + (c.newRumors >= 0 ? '+' : '') + (c.newRumors ?? 0),
+        'money: ' + (c.moneyDelta >= 0 ? '+' : '') + (c.moneyDelta ?? 0),
+        'reputation: ' + (c.reputationDelta >= 0 ? '+' : '') + (c.reputationDelta ?? 0),
+        'energy: ' + (c.energyDelta >= 0 ? '+' : '') + (c.energyDelta ?? 0),
+        'food scarcity: ' + (c.economyDelta && c.economyDelta.foodScarcity >= 0 ? '+' : '') + ((c.economyDelta && c.economyDelta.foodScarcity) || 0),
+        'base progress: +' + ((c.founderDelta && c.founderDelta.contractsCompleted) || 0) + ' contracts'
+      ];
+      var consequenceEl = document.getElementById('wm-consequence');
+      if (consequenceEl) {
+        consequenceEl.innerHTML = '<h2>Consequence</h2>' +
+          (rels ? '<h3>Relationships</h3><ul>' + rels + '</ul>' : '') +
+          '<p>New memories: <strong>' + (c.newMemories >= 0 ? '+' : '') + (c.newMemories ?? 0) + '</strong></p>' +
+          '<p>Rumor changes: <strong>' + (c.newRumors >= 0 ? '+' : '') + (c.newRumors ?? 0) + '</strong></p>' +
+          '<p>Money: <strong>' + (c.moneyDelta >= 0 ? '+' : '') + (c.moneyDelta ?? 0) + '</strong></p>' +
+          '<h3>Consequence Ticker</h3><ul class="wm-ticker">' +
+          ticker.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('') +
+          '</ul>';
+      }
+    }
+
+    if (result.dialogue) {
+      var d = result.dialogue;
+      var dialogueEl = document.getElementById('wm-dialogue');
+      if (dialogueEl) {
+        dialogueEl.innerHTML = '<h2>Dialogue</h2><p class="wm-dialogue-agent"><strong>' +
+          escapeHtml(d.agentName) + '</strong> says: <em>' + escapeHtml(d.message ?? '') + '</em></p>';
+      }
+    }
+
+    if (result.leno && result.leno.summary) {
+      var lenoEl = document.getElementById('wm-leno');
+      if (lenoEl) {
+        lenoEl.innerHTML = '<h2>Leno Suggestions</h2><pre class="wm-leno-summary">' + escapeHtml(result.leno.summary) + '</pre>';
+      }
+      var lenoTop = document.querySelector('[data-topbar-leno]');
+      if (lenoTop) lenoTop.innerHTML = '<strong>Leno:</strong> online';
+    }
+
+    if (result.world) {
+      var dayEl = document.querySelector('[data-topbar-day]');
+      var timeEl = document.querySelector('[data-topbar-time]');
+      if (dayEl) dayEl.innerHTML = '<strong>Day:</strong> ' + escapeHtml(result.world.day ?? '?');
+      if (timeEl) timeEl.innerHTML = '<strong>Time:</strong> ' + escapeHtml(result.world.time ?? '?');
+    }
+
+    if (result.playerSnapshot) {
+      var moneyEl = document.querySelector('[data-topbar-money]');
+      if (moneyEl) moneyEl.innerHTML = '<strong>Money:</strong> ' + escapeHtml(result.playerSnapshot.money ?? 0);
+    }
+
+    if (result.founder) {
+      var contractsEl = document.querySelector('[data-founder-contracts]');
+      var baseEl = document.querySelector('[data-founder-base-level]');
+      var activeEl = document.querySelector('[data-founder-active-contract]');
+      if (contractsEl) contractsEl.textContent = String(result.founder.contractsCompleted ?? 0);
+      if (baseEl) baseEl.textContent = String(result.founder.baseLevel ?? 0);
+      if (activeEl) activeEl.textContent = result.founder.activeContract?.id ?? 'none';
+    }
+
+    if (result.text) {
+      var feed = document.querySelector('[data-event-feed]');
+      if (feed) {
+        var li = document.createElement('li');
+        li.innerHTML = '<code>' + escapeHtml(result.kind || 'command') + '</code> · ' + escapeHtml(result.text);
+        feed.insertBefore(li, feed.firstChild);
+      }
+    }
+  }
+
   function dispatch(cmd) {
     if (!liveMode) {
       showBanner('Static build: command "' + cmd + '" recorded. Run via: npm run play -- --command=' + escapeHtml(cmd.split(' ')[0]));
@@ -178,7 +258,8 @@ const APP_JS = `(function () {
     }
     api('POST', '/api/command', { text: cmd }).then(function (r) {
       if (r.status === 200 && r.body.ok) {
-        showBanner('Command "' + cmd + '" executed. Result: ' + JSON.stringify(r.body.result).slice(0, 200));
+        applyCommandResult(r.body.result);
+        showBanner('Command "' + cmd + '" executed.');
       } else {
         showBanner('Command failed: ' + (r.body.error || r.status));
       }

@@ -183,17 +183,23 @@ function redactWorldState(state) {
 function sanitizeCommandResult(result) {
   if (!result || typeof result !== 'object') return result;
   const clone = { ...result };
-  // Do not echo the full mutable world graph from command endpoints.
-  // Clients can call /api/state after command execution for the current state.
   if ('world' in clone) {
+    const w = result.world;
     clone.world = {
-      id: result.world?.id,
-      tick: result.world?.tick,
-      day: result.world?.day,
-      time: result.world?.time,
-      currentSnapshotId: result.world?.currentSnapshotId ?? null,
-      branchName: result.world?.branchName ?? 'main'
+      id: w?.id,
+      tick: w?.tick,
+      day: w?.day,
+      time: w?.time,
+      currentSnapshotId: w?.currentSnapshotId ?? null,
+      branchName: w?.branchName ?? 'main'
     };
+    clone.playerSnapshot = {
+      money: w?.agents?.player?.stats?.money ?? 0,
+      reputation: w?.agents?.player?.stats?.reputation ?? 0,
+      energy: w?.agents?.player?.stats?.energy ?? 0
+    };
+    clone.founder = w?.founder ?? null;
+    clone.playerKnowledge = w?.playerKnowledge ?? null;
   }
   return clone;
 }

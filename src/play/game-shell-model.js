@@ -53,20 +53,42 @@ const LOCATION_INDEX = (() => {
   };
 })();
 
-// Major decision ids — authored in quest resolution paths.
-const MAJOR_DECISIONS = (() => {
-  const fromPack = _pack?.quests
+function buildMajorDecisions(playerKnowledge = {}) {
+  const evidenceIds = playerKnowledge.evidenceIds ?? [];
+  const fromQuest = _pack?.quests?.flatMap((q) => q.majorDecisions ?? []) ?? [];
+  if (fromQuest.length) {
+    return fromQuest
+      .filter((d) => {
+        const required = d.requiredEvidence ?? [];
+        return required.every((id) => evidenceIds.includes(id));
+      })
+      .map((d) => ({
+        id: d.id,
+        label: d.label ?? d.id,
+        command: d.command ?? d.decisionCommand ?? d.id,
+        branchSuggested: d.branchSuggested ?? true
+      }));
+  }
+
+  const fromPaths = _pack?.quests
     ?.flatMap((q) => q.resolutionPaths ?? [])
-    .map((p) => p.id)
-    .filter(Boolean);
-  return Object.freeze(fromPack?.length ? fromPack : [
-    'expose_nadia',
-    'protect_sara_privately',
-    'sell_info_registry',
-    'negotiate_malik',
-    'start_delivery_workflow'
-  ]);
-})();
+    .map((p) => ({
+      id: p.id,
+      label: p.label ?? p.id,
+      command: p.decisionCommand ?? p.steps?.[p.steps.length - 1] ?? p.id,
+      branchSuggested: true
+    })) ?? [];
+
+  if (fromPaths.length) return fromPaths;
+
+  return [
+    { id: 'expose_nadia', label: 'Expose Nadia', command: 'counter_rumor', branchSuggested: true },
+    { id: 'protect_sara_privately', label: 'Protect Sara privately', command: 'talk sara', branchSuggested: true },
+    { id: 'sell_info_registry', label: 'Sell info to Registry', command: 'inspect apartment', branchSuggested: true },
+    { id: 'negotiate_malik', label: 'Negotiate with Malik', command: 'pay malik 15', branchSuggested: true },
+    { id: 'start_delivery_workflow', label: 'Start delivery workflow', command: 'start_delivery_workflow', branchSuggested: true }
+  ];
+}
 
 export function buildGameplayShellModel(world, payload = {}) {
   const playerLocationId = world?.agents?.player?.locationId ?? null;
@@ -136,6 +158,6 @@ export function buildGameplayShellModel(world, payload = {}) {
         ? 'Founder loop unlocked.'
         : 'Resolve The Missing Delivery to unlock founder loop.'
     },
-    majorDecisions: MAJOR_DECISIONS.map((id) => ({ id, command: id }))
+    majorDecisions: buildMajorDecisions(playerKnowledge)
   };
 }

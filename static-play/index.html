@@ -71,10 +71,10 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
     <section class="wm-section wm-topbar" id="wm-topbar">
   <h2>Game Shell</h2>
   <div class="wm-topbar-grid">
-    <span><strong>Day:</strong> 2</span>
-    <span><strong>Time:</strong> 00:00</span>
-    <span><strong>Money:</strong> 150</span>
-    <span><strong>Leno:</strong> standby</span>
+    <span data-topbar-day><strong>Day:</strong> 2</span>
+    <span data-topbar-time><strong>Time:</strong> 00:00</span>
+    <span data-topbar-money><strong>Money:</strong> 150</span>
+    <span data-topbar-leno><strong>Leno:</strong> standby</span>
   </div>
 </section>
     <div class="wm-grid">
@@ -343,16 +343,16 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
   <h2>Founder/Base</h2>
   <p>Founder loop unlocked.</p>
        <ul>
-         <li>Contracts completed: <strong>0</strong></li>
-         <li>Base level: <strong>0</strong></li>
-         <li>Active contract: <strong>none</strong></li>
+         <li>Contracts completed: <strong data-founder-contracts>0</strong></li>
+         <li>Base level: <strong data-founder-base-level>0</strong></li>
+         <li>Active contract: <strong data-founder-active-contract>none</strong></li>
          <li><button type="button" data-run-command="start_delivery_workflow">Start workflow</button> <button type="button" data-run-command="run_delivery_contract">Run contract</button></li>
        </ul>
 </section>
         <section class="wm-section wm-major-decisions" id="wm-major-decisions">
   <h2>Major Decisions</h2>
   <p>Create branch before high-impact choices.</p>
-  <div class="wm-decision-list"><button type="button" data-major-decision="peaceful_mediation" data-run-after-branch="peaceful_mediation">peaceful_mediation</button><button type="button" data-major-decision="investigation_and_counter_rumor" data-run-after-branch="investigation_and_counter_rumor">investigation_and_counter_rumor</button><button type="button" data-major-decision="founder_negotiation" data-run-after-branch="founder_negotiation">founder_negotiation</button></div>
+  <div class="wm-decision-list"><button type="button" data-major-decision="peaceful_mediation" data-run-after-branch="pay malik 5">Peaceful mediation</button><button type="button" data-major-decision="investigation_and_counter_rumor" data-run-after-branch="ask rune nadia">Investigation and counter-rumor</button><button type="button" data-major-decision="founder_negotiation" data-run-after-branch="pay malik 15">Founder/business negotiation</button><button type="button" data-major-decision="expose_nadia" data-run-after-branch="counter_rumor">Expose Nadia</button><button type="button" data-major-decision="protect_sara_privately" data-run-after-branch="talk sara">Protect Sara privately</button><button type="button" data-major-decision="sell_info_registry" data-run-after-branch="inspect apartment">Sell info to Registry</button><button type="button" data-major-decision="negotiate_malik" data-run-after-branch="pay malik 15">Negotiate with Malik</button><button type="button" data-major-decision="start_delivery_workflow" data-run-after-branch="start_delivery_workflow">Start delivery workflow</button></div>
 </section>
         <section class="wm-section wm-phone" id="section-phone">
     <h2>Phone</h2>
@@ -488,6 +488,86 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
     }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
   }
 
+  function applyCommandResult(result) {
+    if (!result) return;
+
+    if (result.consequence) {
+      var c = result.consequence;
+      var rels = (c.relationships || []).map(function (r) {
+        return '<li>' + escapeHtml(r.agentId) + ': trust ' + (r.trustDelta >= 0 ? '+' : '') + r.trustDelta + ', fear ' + (r.fearDelta >= 0 ? '+' : '') + r.fearDelta + '</li>';
+      }).join('');
+      var ticker = [
+        'relationships: ' + (rels ? 'updated' : 'no change'),
+        'memories: ' + (c.newMemories >= 0 ? '+' : '') + (c.newMemories ?? 0),
+        'rumors: ' + (c.newRumors >= 0 ? '+' : '') + (c.newRumors ?? 0),
+        'money: ' + (c.moneyDelta >= 0 ? '+' : '') + (c.moneyDelta ?? 0),
+        'reputation: ' + (c.reputationDelta >= 0 ? '+' : '') + (c.reputationDelta ?? 0),
+        'energy: ' + (c.energyDelta >= 0 ? '+' : '') + (c.energyDelta ?? 0),
+        'food scarcity: ' + (c.economyDelta && c.economyDelta.foodScarcity >= 0 ? '+' : '') + ((c.economyDelta && c.economyDelta.foodScarcity) || 0),
+        'base progress: +' + ((c.founderDelta && c.founderDelta.contractsCompleted) || 0) + ' contracts'
+      ];
+      var consequenceEl = document.getElementById('wm-consequence');
+      if (consequenceEl) {
+        consequenceEl.innerHTML = '<h2>Consequence</h2>' +
+          (rels ? '<h3>Relationships</h3><ul>' + rels + '</ul>' : '') +
+          '<p>New memories: <strong>' + (c.newMemories >= 0 ? '+' : '') + (c.newMemories ?? 0) + '</strong></p>' +
+          '<p>Rumor changes: <strong>' + (c.newRumors >= 0 ? '+' : '') + (c.newRumors ?? 0) + '</strong></p>' +
+          '<p>Money: <strong>' + (c.moneyDelta >= 0 ? '+' : '') + (c.moneyDelta ?? 0) + '</strong></p>' +
+          '<h3>Consequence Ticker</h3><ul class="wm-ticker">' +
+          ticker.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('') +
+          '</ul>';
+      }
+    }
+
+    if (result.dialogue) {
+      var d = result.dialogue;
+      var dialogueEl = document.getElementById('wm-dialogue');
+      if (dialogueEl) {
+        dialogueEl.innerHTML = '<h2>Dialogue</h2><p class="wm-dialogue-agent"><strong>' +
+          escapeHtml(d.agentName) + '</strong> says: <em>' + escapeHtml(d.message ?? '') + '</em></p>';
+      }
+    }
+
+    if (result.leno && result.leno.summary) {
+      var lenoEl = document.getElementById('wm-leno');
+      if (lenoEl) {
+        lenoEl.innerHTML = '<h2>Leno Suggestions</h2><pre class="wm-leno-summary">' + escapeHtml(result.leno.summary) + '</pre>';
+      }
+      var lenoTop = document.querySelector('[data-topbar-leno]');
+      if (lenoTop) lenoTop.innerHTML = '<strong>Leno:</strong> online';
+    }
+
+    if (result.world) {
+      var dayEl = document.querySelector('[data-topbar-day]');
+      var timeEl = document.querySelector('[data-topbar-time]');
+      if (dayEl) dayEl.innerHTML = '<strong>Day:</strong> ' + escapeHtml(result.world.day ?? '?');
+      if (timeEl) timeEl.innerHTML = '<strong>Time:</strong> ' + escapeHtml(result.world.time ?? '?');
+    }
+
+    if (result.playerSnapshot) {
+      var moneyEl = document.querySelector('[data-topbar-money]');
+      if (moneyEl) moneyEl.innerHTML = '<strong>Money:</strong> ' + escapeHtml(result.playerSnapshot.money ?? 0);
+    }
+
+    if (result.founder) {
+      var contractsEl = document.querySelector('[data-founder-contracts]');
+      var baseEl = document.querySelector('[data-founder-base-level]');
+      var activeEl = document.querySelector('[data-founder-active-contract]');
+      if (contractsEl) contractsEl.textContent = String(result.founder.contractsCompleted ?? 0);
+      if (baseEl) baseEl.textContent = String(result.founder.baseLevel ?? 0);
+      if (activeEl) activeEl.textContent = result.founder.activeContract?.id ?? 'none';
+    }
+
+    if (result.text) {
+      var feed = document.querySelector('[data-event-feed]');
+      if (feed) {
+        var li = document.createElement('li');
+        li.innerHTML = '<code>' + escapeHtml(result.kind || 'command') + '</code> · ' + escapeHtml(result.text);
+        feed.insertBefore(li, feed.firstChild);
+      }
+    }
+  }
+
   function dispatch(cmd) {
     if (!liveMode) {
       showBanner('Static build: command "' + cmd + '" recorded. Run via: npm run play -- --command=' + escapeHtml(cmd.split(' ')[0]));
@@ -495,7 +575,8 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
     }
     api('POST', '/api/command', { text: cmd }).then(function (r) {
       if (r.status === 200 && r.body.ok) {
-        showBanner('Command "' + cmd + '" executed. Result: ' + JSON.stringify(r.body.result).slice(0, 200));
+        applyCommandResult(r.body.result);
+        showBanner('Command "' + cmd + '" executed.');
       } else {
         showBanner('Command failed: ' + (r.body.error || r.status));
       }

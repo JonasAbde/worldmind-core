@@ -75,10 +75,10 @@ export function renderTopBar(_world, _payload, shell) {
   return `<section class="wm-section wm-topbar" id="wm-topbar">
   <h2>Game Shell</h2>
   <div class="wm-topbar-grid">
-    <span><strong>Day:</strong> ${escapeHtml(shell?.topbar?.day ?? '?')}</span>
-    <span><strong>Time:</strong> ${escapeHtml(shell?.topbar?.time ?? '?')}</span>
-    <span><strong>Money:</strong> ${escapeHtml(shell?.topbar?.money ?? 0)}</span>
-    <span><strong>Leno:</strong> ${escapeHtml(shell?.topbar?.lenoStatus ?? 'standby')}</span>
+    <span data-topbar-day><strong>Day:</strong> ${escapeHtml(shell?.topbar?.day ?? '?')}</span>
+    <span data-topbar-time><strong>Time:</strong> ${escapeHtml(shell?.topbar?.time ?? '?')}</span>
+    <span data-topbar-money><strong>Money:</strong> ${escapeHtml(shell?.topbar?.money ?? 0)}</span>
+    <span data-topbar-leno><strong>Leno:</strong> ${escapeHtml(shell?.topbar?.lenoStatus ?? 'standby')}</span>
   </div>
 </section>`;
 }
@@ -262,9 +262,9 @@ export function renderFounderPanel(shell) {
   ${unlocked
     ? `<p>Founder loop unlocked.</p>
        <ul>
-         <li>Contracts completed: <strong>${escapeHtml(shell?.founder?.contractsCompleted ?? 0)}</strong></li>
-         <li>Base level: <strong>${escapeHtml(shell?.founder?.baseLevel ?? 0)}</strong></li>
-         <li>Active contract: <strong>${escapeHtml(shell?.founder?.activeContract?.id ?? 'none')}</strong></li>
+         <li>Contracts completed: <strong data-founder-contracts>${escapeHtml(shell?.founder?.contractsCompleted ?? 0)}</strong></li>
+         <li>Base level: <strong data-founder-base-level>${escapeHtml(shell?.founder?.baseLevel ?? 0)}</strong></li>
+         <li>Active contract: <strong data-founder-active-contract>${escapeHtml(shell?.founder?.activeContract?.id ?? 'none')}</strong></li>
          <li><button type="button" data-run-command="start_delivery_workflow">Start workflow</button> <button type="button" data-run-command="run_delivery_contract">Run contract</button></li>
        </ul>`
     : `<p class="wm-empty">${escapeHtml(shell?.founder?.unlockText ?? 'Resolve The Missing Delivery to unlock founder loop.')}</p>`}
@@ -279,7 +279,8 @@ export function renderMajorDecisionPanel(shell) {
   <div class="wm-decision-list">${choices.map((c) => {
     const id = typeof c === 'string' ? c : c.id;
     const cmd = typeof c === 'string' ? c : c.command;
-    return `<button type="button" data-major-decision="${escapeHtml(id)}" data-run-after-branch="${escapeHtml(cmd)}">${escapeHtml(id)}</button>`;
+    const label = typeof c === 'string' ? c : (c.label ?? c.id);
+    return `<button type="button" data-major-decision="${escapeHtml(id)}" data-run-after-branch="${escapeHtml(cmd)}">${escapeHtml(label)}</button>`;
   }).join('')}</div>
 </section>`;
 }

@@ -260,6 +260,46 @@ test('v1.0-rc5: validate:web-play reads --json from a custom page', () => {
   assert.ok(json.runtimeMarkersChecked >= 3);
 });
 
+test('v1.0-rc9: founder workflow commands start and complete delivery contract', async () => {
+  const engine = await import(pathToFileURL(PLAY_ENGINE).href);
+  const world = engine.bootstrapWorld();
+  world.founder = { unlocked: true, baseLevel: 0, contractsCompleted: 0, activeContract: null, reputation: 0 };
+  const moneyBefore = world.agents.player.stats.money;
+  const start = engine.resolveCommand(world, 'start_delivery_workflow', {});
+  assert.equal(start.ok, true, start.error);
+  assert.ok(world.founder.activeContract);
+  const run = engine.resolveCommand(world, 'run_delivery_contract', {});
+  assert.equal(run.ok, true, run.error);
+  assert.equal(world.founder.activeContract, null);
+  assert.equal(world.founder.contractsCompleted, 1);
+  assert.ok(world.agents.player.stats.money > moneyBefore);
+});
+
+test('v1.0-rc9: game-shell-model maps major decisions to authored commands', async () => {
+  const { buildGameplayShellModel } = await import(pathToFileURL(path.join(REPO, 'src/play/game-shell-model.js')).href);
+  const shell = buildGameplayShellModel(
+    { agents: { player: { locationId: 'cafe', stats: { money: 100 } } }, incidents: {}, founder: { unlocked: true } },
+    { playerKnowledge: { evidenceIds: [], knownRumorIds: [] } }
+  );
+  const peaceful = shell.majorDecisions.find((d) => d.id === 'peaceful_mediation');
+  assert.equal(peaceful?.command, 'pay malik 5');
+  assert.equal(shell.majorDecisions.find((d) => d.id === 'expose_nadia'), undefined);
+  const withEvidence = buildGameplayShellModel(
+    { agents: { player: { locationId: 'cafe', stats: { money: 100 } } }, incidents: {}, founder: { unlocked: true } },
+    { playerKnowledge: { evidenceIds: ['rumor_source_nadia'], knownRumorIds: [] } }
+  );
+  assert.ok(withEvidence.majorDecisions.find((d) => d.id === 'expose_nadia'));
+});
+
+test('v1.0-rc9: play:web includes live shell update markers', async () => {
+  const res = runScript(PLAY_WEB, []);
+  assert.equal(res.status, 0);
+  const html = fs.readFileSync(path.join(REPO, 'static-play/index.html'), 'utf8');
+  assert.match(html, /data-topbar-money/);
+  assert.match(html, /applyCommandResult/);
+  assert.match(html, /data-founder-contracts/);
+});
+
 test('v1.0-rc5: ci:gate includes play:web and validate:web-play', async () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
   assert.match(pkg.scripts['ci:gate'] || '', /play:web|play-web/i, 'ci:gate should run play:web');

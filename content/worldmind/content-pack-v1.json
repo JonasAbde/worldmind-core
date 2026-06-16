@@ -110,8 +110,19 @@
           "id": "founder_negotiation",
           "label": "Founder/business negotiation",
           "steps": ["inspect workshop", "pay malik 15", "talk sara"],
+          "decisionCommand": "pay malik 15",
           "reward": { "xp": 45, "districtInfluence": 6, "badge": "district-investor" }
         }
+      ],
+      "majorDecisions": [
+        { "id": "peaceful_mediation", "label": "Peaceful mediation", "command": "pay malik 5", "branchSuggested": true },
+        { "id": "investigation_and_counter_rumor", "label": "Investigation and counter-rumor", "command": "ask rune nadia", "branchSuggested": true },
+        { "id": "founder_negotiation", "label": "Founder/business negotiation", "command": "pay malik 15", "branchSuggested": true },
+        { "id": "expose_nadia", "label": "Expose Nadia", "command": "counter_rumor", "branchSuggested": true, "requiredEvidence": ["rumor_source_nadia"] },
+        { "id": "protect_sara_privately", "label": "Protect Sara privately", "command": "talk sara", "branchSuggested": true },
+        { "id": "sell_info_registry", "label": "Sell info to Registry", "command": "inspect apartment", "branchSuggested": true },
+        { "id": "negotiate_malik", "label": "Negotiate with Malik", "command": "pay malik 15", "branchSuggested": true },
+        { "id": "start_delivery_workflow", "label": "Start delivery workflow", "command": "start_delivery_workflow", "branchSuggested": true }
       ]
     }
   ],
