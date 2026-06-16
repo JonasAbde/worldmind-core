@@ -1,10 +1,59 @@
-# Hermes Handoff — WorldMind v1.0-rc3 visual save browser
+# Hermes Handoff — WorldMind v1.0-rc4 playable vertical slice
 
 ## Status
 
-WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters bruger typed `payload`-felter, `validate:event-log` kører i strict mode (0 violations / 123 events), **save browser + timeline UX** er tilgængeligt via `node src/cli/saves.js`, og **visual save browser + branch diff + QA inspector** er nu tilgængeligt i dashboardet. 137/137 tests grønne, 12-trins `ci:gate`.
+WorldMind er nu **spillable**. Spilleren kan udføre handlinger i verden
+via `worldmind play` CLI (14 player commands), og *The Missing Delivery*
+kan løses via **3 forskellige resolution paths** — alle deterministiske.
+Ny `worldmind demo:play` kører alle 3 paths i en byte-identical
+walkthrough. Ny `worldmind validate:leno` auditerer Leno-summaries for
+hidden-truth leaks. 153/153 tests grønne, 13-trins `ci:gate` grøn
+(inkl. `validate:leno` og `demo:play`).
 
-## What is built (v1.0-rc3)
+## What is built (v1.0-rc4)
+
+Building on v1.0-rc3's visual dashboard foundation:
+
+- **`src/cli/play.js`** (ny): playable CLI med 14 player commands. Hver
+  command mapper til en autoritativ `ActionRequest` der sendes gennem
+  `validateAction` + `executeAction`. Output: dialogue turn (agent
+  says, revealed facts, evidence collected, player options) + consequence
+  panel (relationship deltas, memories, rumors, money, incident). Save
+  og branch integrerer med eksisterende SQLite persistence.
+- **`src/cli/demo-play.js`** (ny): deterministisk 3-path walkthrough
+  (`--path=peaceful|investigation|founder|all`) mod canonical scenariet.
+  Output er byte-identisk mellem kørsler. Persisterer en snapshot til
+  `data/demo-play.sqlite`. Tilføjet til `ci:gate`.
+- **`src/cli/validate-leno.js`** (ny): Leno evidence-guard auditor CLI.
+  Læser en summary (fil, stdin, eller canonical scenario's leno output)
+  og rapporterer 3 typer leaks: source-defining Nadia mentions (HARD),
+  hidden cause literal (HARD), plain Nadia mentions (soft warning).
+- **`src/contracts/leno-validator.js`** (ny): pure API version af
+  validateLenoSummary så andre CLIs/tests kan importere uden at
+  køre CLI'ens main().
+- **`src/simulation/utils.ts`** (udvidet): `deepClone` gjort cykel-sikker
+  (WeakMap tracking) og funktion-sikker (skipper funktioner). Nødvendig
+  fordi world-state indeholder `agent.relationships[otherId]` →
+  `otherAgent.relationships[firstId]` cykler som JSON.parse fejlede på.
+- **`src/cli/simulate.js`** og **saves.js**: argument-parser forbedringer
+  (allerede på plads i v1.0-rc3).
+- **`package.json`**: 3 nye scripts — `play`, `demo:play`, `validate:leno`.
+  `ci:gate` udvidet til 13 steps.
+- **`test/v14-playable-vertical-slice.test.js`** (ny): 16 tests der
+  dækker play --help, alle 13 commands, 3 resolution paths, demo:play
+  determinism, validate:leno clean/leak/evidence cases, ci:gate wiring.
+- **`docs/44_PLAYABLE_VERTICAL_SLICE.md`** (ny): playable loop spec,
+  resolution paths, dialogue turn format, Leno evidence guard docs.
+
+## Resolution Paths (3)
+
+| Path | Steps | Resolution |
+|---|---|---|
+| Peaceful | inspect cafe → talk sara → ask amina mediation → pay malik 5 | `peaceful_mediation` |
+| Investigation | inspect cafe → listen market → ask rune "nadia" → trace rumor → counter rumor | `investigation_and_counter_rumor` |
+| Founder | inspect workshop → pay malik 15 → talk sara (alt delivery) | `founder_negotiation` |
+
+## What is built (v1.0-rc3) — recapped
 
 Building on v1.0-rc2's save browser CLI:
 

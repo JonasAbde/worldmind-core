@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc3 visual save browser
+# WorldMind v1.0-rc4 playable vertical slice
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -39,6 +39,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v1.0-rc1** all 9 event-emitters migrated to typed `payload` fields; `validate:event-log` flipped to **strict mode** as default; canonical 7-day run: **0 violations / 123 events** (var 108 i v0.9); Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate; 116/116 tests grønne.
 - **v1.0-rc2** ny `worldmind saves` CLI med `list` / `inspect` / `restore` / `timeline` subcommands; deterministisk restore (byte-identical); auditerbar restore-log (actor/reason); branch/origin-kæde synlig; 126/126 tests grønne.
 - **v1.0-rc3** visuelt dashboard med Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery) og Visual Diff Panel. Ny `worldmind saves diff` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas). 137/137 tests grønne.
+- **v1.0-rc4** playable vertical slice. Ny `worldmind play` CLI med 14 player commands (look/move/talk/ask/inspect/listen_rumors/trace_rumor/counter_rumor/pay/ask_leno/status/save/branch/quit) der alle mapper til autoritative ActionRequests. Dialogue turn + consequence panel rendering. 3 resolution paths (peaceful / investigation / founder) — alle løser *The Missing Delivery* deterministisk. Ny `worldmind demo:play` (deterministisk 3-path walkthrough, byte-identical output) og `worldmind validate:leno` (Leno evidence-guard auditor der fanger hidden-truth leaks). 153/153 tests grønne, 13-trins `ci:gate` grøn.
 
 ## Kør projektet
 
@@ -116,5 +117,29 @@ Læs i denne rækkefølge:
 14. `docs/41_SAVE_BROWSER_AND_TIMELINE.md` (v1.0-rc2)
 15. `docs/42_VISUAL_SAVE_BROWSER.md` (v1.0-rc3)
 16. `docs/43_BRANCH_DIFF_AND_QA_INSPECTOR.md` (v1.0-rc3)
+17. `docs/44_PLAYABLE_VERTICAL_SLICE.md` (v1.0-rc4)
 13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`
+
+## Spil WorldMind (v1.0-rc4)
+
+```bash
+# Interaktiv playable CLI
+npm run play -- --help
+
+# Deterministisk 3-path walkthrough (løser The Missing Delivery)
+npm run demo:play
+
+# Én specifik path
+npm run demo:play -- --path=peaceful
+npm run demo:play -- --path=investigation
+npm run demo:play -- --path=founder
+
+# Ét enkelt player command
+npm run play -- --command=look
+npm run play -- --command=ask --target=rune --topic=nadia
+npm run play -- --command=save --branch=player_arc
+
+# Leno evidence-guard
+npm run validate:leno
+```

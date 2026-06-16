@@ -31,7 +31,42 @@ export function createId(prefix: string, counter: number): string {
 }
 
 export function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  // Cycle-safe, function-safe deep clone.
+  // - Tracks seen objects to break circular references (e.g.
+  //   agent.relationships[otherId] -> otherAgent.relationships[firstId]).
+  // - Strips functions and undefined values so the result is always
+  //   JSON-serializable.
+  const seen = new WeakMap();
+  function walk(v: unknown): unknown {
+    if (v === null || v === undefined) return v;
+    const t = typeof v;
+    if (t === 'string' || t === 'number' || t === 'boolean') return v;
+    if (t === 'function' || t === 'symbol' || t === 'bigint') return undefined;
+    if (v instanceof Date) return new Date(v.getTime());
+    if (Array.isArray(v)) {
+      if (seen.has(v)) return seen.get(v);
+      const arr: unknown[] = [];
+      seen.set(v, arr);
+      for (const item of v) {
+        const cloned = walk(item);
+        if (cloned !== undefined) arr.push(cloned);
+      }
+      return arr;
+    }
+    if (typeof v === 'object') {
+      const obj = v as Record<string, unknown>;
+      if (seen.has(obj)) return seen.get(obj);
+      const out: Record<string, unknown> = {};
+      seen.set(obj, out);
+      for (const [k, val] of Object.entries(obj)) {
+        const cloned = walk(val);
+        if (cloned !== undefined) out[k] = cloned;
+      }
+      return out;
+    }
+    return undefined;
+  }
+  return walk(value) as T;
 }
 
 export function unique<T>(values: T[]): T[] {

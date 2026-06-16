@@ -73,20 +73,36 @@
 - Argument-parser understøtter nu både `--key value` og `--key=value`
 ### v1.0-rc2 — Save browser + timeline UX  ✅
 
-### v1.0-rc3 — Visual save browser + branch diff + QA inspector  *(current)*
+### v1.0-rc3 — Visual save browser + branch diff + QA inspector  ✅
 - Dashboard med 20 sektioner inkl. Save Browser, Visual Timeline Tree, State Inspector, Incident Flow, Visual Diff Panel
 - `worldmind saves diff <a> <b>` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas)
 - Incident flow viser The Missing Delivery's 5-step trace (detected → evidence → counter → restored → resolved)
 - State inspector med 8 KPI tiles + top-3 memories + top-3 rumors
 - 137/137 tests grønne, ci:gate 12/12 grønne
 
-### v1.0-rc4 — Leno policy audit + interactive dashboard  *(næste)*
-- React dashboard (optional companion).
+### v1.0-rc4 — Playable Vertical Slice Interaction Loop  ✅ *(current)*
+- `worldmind play` CLI: 14 player commands (`look`, `move`, `talk`, `ask`, `inspect`, `listen_rumors`, `trace_rumor`, `counter_rumor`, `pay`, `ask_leno`, `status`, `save`, `branch`, `quit`) der alle mapper til autoritative ActionRequests via World Engine.
+- Dialogue turn rendering: `<agent> says`, `Revealed facts`, `Evidence collected`, `Player options`.
+- Consequence panel: relationship deltas, new memories, rumor changes, money, incident progress.
+- Status panel: world, evidence, suspected causes, unresolved questions, known rumors.
+- 3 resolution paths som spilleren kan løse *The Missing Delivery* igennem:
+  - **Peaceful mediation**: help Sara, ask Amina, pay Malik → `peaceful_mediation`
+  - **Investigation & counter-rumor**: ask Rune about Nadia, trace + counter rumor → `investigation_and_counter_rumor` (canonical path)
+  - **Founder/business**: pay Malik for alternative delivery, talk to Sara → `founder_negotiation`
+- `worldmind demo:play`: deterministisk walkthrough af alle 3 paths med byte-identical output mellem kørsler. Persister en snapshot til `data/demo-play.sqlite`.
+- `worldmind validate:leno` (CLI) + `src/contracts/leno-validator.js` (pure API): auditerer Leno-summaries for 3 typer hidden-truth leaks (source-defining Nadia mentions = HARD, hidden cause literal = HARD, plain Nadia mentions = soft warning). Hard leaks kræver `rumor_source_nadia` evidence; uden denne må Leno ikke afsløre kilden.
+- `deepClone` gjort cykel-sikker og funktion-sikker (`src/simulation/utils.ts`) så world-state kan serialiseres til SQLite selv med relation-cirkler og runtime-funktioner.
+- 153/153 tests grønne, ci:gate 13 steps grønne (inkl. `validate:leno` og `demo:play`).
+- Event Log invariants stadig intakte: 0 violations / 123 events.
+- Risk 4/5 actions stadig gated (max risk = 3 i MVP).
+- Leno evidence guard stadig aktiv — intet hidden truth lækket.
+
+### v1.0-rc5 — (næste)
+- Interactive Web Play UI (minimal HTML/JS, stadig ingen React) der kalder `worldmind play` bagved.
+- LLM-backed Leno dialogue generation bag deterministic mock.
 - Authoring tools (creator mode v0.1).
 - 2D district view.
 - Phone UI + Leno overlay.
-- Real Leno model integration behind deterministic mocks.
-- Player progression + inventory + faction pressure.
 
 ## Non-goals (until v1.0)
 
@@ -107,9 +123,13 @@
 ## Verification gate (every sprint)
 
 ```bash
-npm test              # 89/89 currently grøn
+npm test              # 153/153 grønne (v1.0-rc4)
 npm run typecheck     # strict + strictNullChecks clean
 npm run check         # typecheck + MVP-eval passed
-npm run ci:gate       # 10 steps currently grøn
+npm run ci:gate       # 13 steps grønne
 npm start             # dashboard regenereret med alle eval-kriterier
+npm run play -- --help        # 14 player commands listet
+npm run demo:play             # deterministisk 3-path walkthrough
+npm run validate:leno         # Leno evidence-guard audit
+npm run saves:list            # save browser
 ```
