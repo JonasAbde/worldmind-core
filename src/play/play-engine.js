@@ -38,7 +38,7 @@ const REPO = process.cwd();
 const DEFAULT_SCENARIO = path.join(REPO, 'scenarios/new-aarhus-district-01.json');
 
 const AGENT_ALIASES = {
-  sara: 'sara', cafe: 'cafe', malik: 'malik', rune: 'rune',
+  sara: 'sara', malik: 'malik', rune: 'rune',
   amina: 'amina', player: 'player', nadia: 'nadia', omar: 'omar',
   lina: 'lina', yasin: 'yasin', freja: 'freja', elias: 'elias'
 };
@@ -350,7 +350,8 @@ export function resolveCommand(world, commandOrText, args = {}) {
         };
       }
       case 'inspect': {
-        const targetAgent = resolveAgent(world, effectiveArgs.target);
+        let targetAgent = resolveAgent(world, effectiveArgs.target);
+        if (targetAgent && !world.agents[targetAgent]) targetAgent = null;
         const targetLoc = targetAgent ? null : resolveLocation(world, effectiveArgs.target);
         if (!targetAgent && !targetLoc) return { ok: false, kind: 'error', error: `unknown target: ${effectiveArgs.target}` };
         const before = snapshotForDelta(world);
@@ -374,9 +375,12 @@ export function resolveCommand(world, commandOrText, args = {}) {
           actorId, actionId: 'listen_for_rumors', targetLocationId: targetLoc
         });
         const rumorIds = ev.payload?.rumorIds || [];
+        const locName = world.locations[targetLoc]?.name ?? effectiveArgs.target;
         return {
           ok: true, kind: 'rumors', command,
-          text: known.map ? null : null,
+          text: ev.description || (rumorIds.length
+            ? `Heard ${rumorIds.length} rumor(s) at ${locName}.`
+            : `No new rumors at ${locName}.`),
           rumors: rumorIds.map((rid) => {
             const r = world.rumors[rid];
             return r ? { id: r.id, claim: r.claim, truthLevel: r.truthLevel } : { id: rid };
