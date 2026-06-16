@@ -79,6 +79,7 @@ function createWorldFromState(state, { seed = 42 } = {}) {
   const world = {
     id: normalized.id,
     name: normalized.name,
+    worldId: normalized.worldId ?? normalized.id,
     tick: normalized.tick,
     day: normalized.day,
     time: normalized.time,

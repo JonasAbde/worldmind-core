@@ -251,6 +251,7 @@ export function openSqliteWorldStore({ dbPath = path.resolve('data/worldmind.sql
       if (!row) throw new Error(`Snapshot not found: ${snapshotId}`);
       const state = parseJson(row.state_json);
       state.currentSnapshotId = row.snapshot_id;
+      state.worldId = row.world_id;
       state.branchOriginSnapshotId = row.branch_origin_snapshot_id;
       state.branchParentSnapshotId = row.snapshot_id;
       state.branchName = row.branch_name;
