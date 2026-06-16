@@ -94,9 +94,8 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
   }
 
   if (!world.founder) {
-    const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
     world.founder = {
-      unlocked: Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation'),
+      unlocked: isFounderUnlockedFromIncidents(world),
       baseLevel: 0,
       reputation: world.agents?.player?.stats?.reputation ?? 0,
       contractsCompleted: 0,
@@ -105,6 +104,16 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
   }
 
   return world;
+}
+
+function isFounderUnlockedFromIncidents(world) {
+  const incident = Object.values(world.incidents ?? {}).find((i) => i?.id === 'missing_delivery');
+  return Boolean(incident?.status === 'resolved' || incident?.resolutionState === 'founder_negotiation');
+}
+
+function syncFounderAvailability(world) {
+  if (!world.founder) return;
+  if (isFounderUnlockedFromIncidents(world)) world.founder.unlocked = true;
 }
 
 export function summarizeWorld(world) {
@@ -295,6 +304,7 @@ export function resolveCommand(world, commandOrText, args = {}) {
   }
 
   const actorId = 'player';
+  syncFounderAvailability(world);
 
   try {
     switch (command) {

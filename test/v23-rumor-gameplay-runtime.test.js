@@ -106,3 +106,16 @@ it('v23.9 — listen_rumors: consequence.relationshipDelta is present and non-nu
   const result = resolveCommand(world, 'listen_rumors', { target: 'market' });
   assert('relationshipDelta' in (result.consequence || {}), 'relationshipDelta must be present');
 });
+
+it('v23.10 — weak counter_rumor can backfire by raising spreadRisk', () => {
+  const world = newWorld();
+  resolveCommand(world, 'listen_rumors', { target: 'market' });
+  const rumorId = Object.keys(world.rumors || {})[0];
+  if (!rumorId) { assert.fail('no rumor'); return; }
+  const before = world.rumors[rumorId].spreadRisk ?? world.rumors[rumorId].spreadRate ?? 0;
+  const result = resolveCommand(world, 'counter_rumor', { rumor: rumorId, message: 'Weak claim', evidenceStrength: 0 });
+  const after = world.rumors[rumorId].spreadRisk ?? world.rumors[rumorId].spreadRate ?? 0;
+  assert.equal(result.ok, true);
+  assert.equal(result.world.events.at(-1)?.payload?.backfire, true, 'event payload should mark backfire');
+  assert(after >= before, `spreadRisk should not decrease on weak backfire (before=${before}, after=${after})`);
+});

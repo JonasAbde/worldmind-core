@@ -12,6 +12,7 @@ function newWorld() {
 
 it('v22.1 — before resolution: start_delivery_workflow returns error', () => {
   const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'active', title: 'The Missing Delivery', resolutionState: 'unresolved' } };
   if (world.founder) world.founder.unlocked = false;
   else world.founder = { unlocked: false, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
   const result = resolveCommand(world, 'start_delivery_workflow');
@@ -21,6 +22,7 @@ it('v22.1 — before resolution: start_delivery_workflow returns error', () => {
 
 it('v22.2 — before resolution: list_contracts returns error', () => {
   const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'active', title: 'The Missing Delivery', resolutionState: 'unresolved' } };
   if (world.founder) world.founder.unlocked = false;
   else world.founder = { unlocked: false, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
   const result = resolveCommand(world, 'list_contracts');
@@ -82,4 +84,13 @@ it('v22.7 — founderDelta shape on completion', () => {
   assert('baseLevel' in fd);
   assert('reputation' in fd);
   assert('activeContractChanged' in fd);
+});
+
+it('v22.8 — founder unlock auto-syncs from resolved incident', () => {
+  const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'resolved', title: 'The Missing Delivery' } };
+  world.founder = { unlocked: false, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
+  const result = resolveCommand(world, 'list_contracts');
+  assert.equal(result.ok, true, `should unlock from incident: ${result.error}`);
+  assert.equal(world.founder.unlocked, true, 'founder should be auto-unlocked after resolution');
 });
