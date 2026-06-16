@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc2 save browser
+# WorldMind v1.0-rc3 visual save browser
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -38,6 +38,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v0.9** per-event-type payload validators + `validate:state` + `validate:risk --strict` (12-step `ci:gate`, 100/100 tests).
 - **v1.0-rc1** all 9 event-emitters migrated to typed `payload` fields; `validate:event-log` flipped to **strict mode** as default; canonical 7-day run: **0 violations / 123 events** (var 108 i v0.9); Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate; 116/116 tests grønne.
 - **v1.0-rc2** ny `worldmind saves` CLI med `list` / `inspect` / `restore` / `timeline` subcommands; deterministisk restore (byte-identical); auditerbar restore-log (actor/reason); branch/origin-kæde synlig; 126/126 tests grønne.
+- **v1.0-rc3** visuelt dashboard med Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery) og Visual Diff Panel. Ny `worldmind saves diff` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas). 137/137 tests grønne.
 
 ## Kør projektet
 
@@ -113,5 +114,7 @@ Læs i denne rækkefølge:
 12. `docs/39_STATE_VALIDATOR_AND_RISK_AUDIT.md` (v0.9)
 13. `docs/40_TYPED_PAYLOAD_MIGRATION.md` (v1.0-rc1)
 14. `docs/41_SAVE_BROWSER_AND_TIMELINE.md` (v1.0-rc2)
+15. `docs/42_VISUAL_SAVE_BROWSER.md` (v1.0-rc3)
+16. `docs/43_BRANCH_DIFF_AND_QA_INSPECTOR.md` (v1.0-rc3)
 13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`

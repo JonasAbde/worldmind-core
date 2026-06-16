@@ -110,14 +110,18 @@ restored what, when, and why.
 
 ## Migration impact
 
-| Metric | v1.0-rc1 | v1.0-rc2 |
-|---|---:|---:|
-| Tests grønne | 116 | **126** |
-| Save browser CLI | — | **`node src/cli/saves.js`** (4 subcommands) |
-| Restore determinism | implicit (RNG state) | **explicit (byte-identical across calls)** |
-| Restore audit | none | **`logEntry` JSON with actor + reason** |
-| Argument-parser | space-only | **space + equals + multi-value** |
-| Branch timeline | hidden in JSON | **dedicated `timeline` subcommand** |
+| Metric | v1.0-rc1 | v1.0-rc2 | v1.0-rc3 |
+|---|---:|---:|---:|
+| Tests grønne | 116 | **126** | **137** |
+| Save browser CLI | — | **`saves`** (4 subcommands) | **`saves`** (5 subcommands, +`diff`) |
+| Restore determinism | implicit (RNG state) | **explicit (byte-identical)** | **unchanged (still byte-identical)** |
+| Restore audit | none | **`logEntry` JSON** | **unchanged** |
+| Argument-parser | space-only | **space + equals** | **space + equals** |
+| Branch timeline | hidden in JSON | **`timeline` subcommand** | **+ Visual Timeline Tree i dashboard** |
+| Visual dashboard | — | — | **20 sektioner** (Save Browser, Visual Timeline Tree, State Inspector, Incident Flow, Visual Diff Panel) |
+| Incident flow | — | — | **5-trins trace (Missing Delivery)** |
+| State inspector | — | — | **8 KPI tiles + top-3 memories/rumors** |
+| Diff CLI | — | — | **`saves diff <a> <b>` med deltas** |
 
 ## Backward compatibility
 

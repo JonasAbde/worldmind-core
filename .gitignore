@@ -4,7 +4,4 @@ coverage/
 .DS_Store
 *.log
 static-dashboard/*.json
-data/*.sqlite
-data/*.sqlite-journal
-data/*.sqlite-wal
-data/*.sqlite-shm
+data/

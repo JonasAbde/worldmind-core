@@ -1,10 +1,22 @@
-# Hermes Handoff — WorldMind v1.0-rc2 save browser
+# Hermes Handoff — WorldMind v1.0-rc3 visual save browser
 
 ## Status
 
-WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters bruger typed `payload`-felter, `validate:event-log` kører i strict mode (0 violations / 123 events), og **save browser + timeline UX** er nu tilgængeligt via `node src/cli/saves.js`. 126/126 tests grønne, 12-trins `ci:gate`.
+WorldMind runtime er fuld TypeScript (`strict: true` + `strictNullChecks: true`). Alle 9 event-emitters bruger typed `payload`-felter, `validate:event-log` kører i strict mode (0 violations / 123 events), **save browser + timeline UX** er tilgængeligt via `node src/cli/saves.js`, og **visual save browser + branch diff + QA inspector** er nu tilgængeligt i dashboardet. 137/137 tests grønne, 12-trins `ci:gate`.
 
-## What is built (v1.0-rc2)
+## What is built (v1.0-rc3)
+
+Building on v1.0-rc2's save browser CLI:
+
+- **`src/simulation/dashboard.ts`** (udvidet): 4 nye panel-renderere — `renderTimelineTree` (visuelt grentrée med origin-arrows), `renderStateInspector` (8 KPI tiles + top-3 memories + top-3 rumors), `renderIncidentFlow` (5-trins trace af The Missing Delivery), `renderVisualDiff` (struktureret diff med added/removed/changed farver). 20 samlede dashboard-sektioner.
+- **`src/cli/saves.js`** (udvidet): nyt `diff <from> <to>` subcommand. Returnerer JSON med `fromBranch` / `toBranch` / `eventCountDelta` / `tickDelta` / `dayDelta` + `agentLocationChanges` / `relationshipChanges` / `newMemories` / `newRumors` / `economyChanges` / `incidentChanges`.
+- **`src/cli/simulate.js`** (udvidet): `--dashboard-dir=PATH` flag styrer hvor dashboardet skrives.
+- **`src/cli/validate.js`** (udvidet): dashboard kræver nu 4 nye sektioner (`Visual Timeline Tree`, `State Inspector`, `Incident Flow — The Missing Delivery`, `Visual Diff Panel`).
+- **`package.json`**: nyt `saves:diff` script.
+- **`test/v12-visual-save-browser.test.js`** (ny): 11 tests der dækker diff CLI, alle 5 nye dashboard-paneler, deterministisk restore.
+- **`docs/42_VISUAL_SAVE_BROWSER.md`**, **`docs/43_BRANCH_DIFF_AND_QA_INSPECTOR.md`** (ny): spec + use-cases.
+
+## What is built (v1.0-rc2) — recapped
 
 Building on v1.0-rc1's typed payload foundation:
 
@@ -137,9 +149,10 @@ npm run diff:event-log
 | `v07-strict-runtime.test.js` | 12 |
 | `v08-strict-invariants.test.js` | 14 |
 || `v09-per-event-schemas.test.js` | 11 |
-|| `v10-typed-payload.test.js` | 16 |
-|| `v11-save-browser.test.js` | 10 |
-|| **Total** | **126** |
+| `v10-typed-payload.test.js` | 16 |
+| `v11-save-browser.test.js` | 10 |
+| `v12-visual-save-browser.test.js` | 11 |
+| **Total** | **137** |
 
 ## Non-negotiables (bæret fra v0.7)
 
@@ -150,9 +163,9 @@ npm run diff:event-log
 - Add tests for every new core mechanic.
 - Risk 4/5 actions are forbidden in MVP (now enforced by `validate:risk`).
 
-## Næste skridt (v1.0-rc3 kandidater)
+## Næste skridt (v1.0-rc4 kandidater)
 
-1. **Visual save browser dashboard** — HTML-side der viser saves + timeline visuelt (træ-layout, origin-pile).
-2. **`validate:leno` CLI** — auditerer Leno's prompt/model policy + evidence-guard end-to-end.
-3. **Branch diff visualisation** — vis forskelle mellem to branches (location changes, relationship deltas, incident flows).
+1. **`validate:leno` CLI** — auditerer Leno's prompt/model policy + evidence-guard end-to-end. Tjekker at summary-text aldrig afslører `hiddenCause` uden `evidenceIds`-whitelist.
+2. **Interactive state inspector** — klik på en agent i dashboardet for at udvide relations-graph + memory stream.
+3. **Visual timeline diff** — vis hvilke branches der splitter hvor på en tidslinje (siblings + origin-pile).
 4. **Tighten `noUncheckedIndexedAccess`** modul-for-modul med eksplicitte lookup-typer.

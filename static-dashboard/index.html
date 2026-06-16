@@ -8,11 +8,35 @@ h1,h2,h3{color:#b8e0ff;margin-top:0}
 .metric span{display:block;color:#9cb2c8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .metric strong{font-size:18px}
 table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #304254;padding:8px;text-align:left;vertical-align:top}
-code,pre{background:#0c1117;border-radius:10px;padding:12px;display:block;white-space:pre-wrap;overflow:auto}
+code,pre{background:#0c1117;border-radius:10px;padding:12px;display:block;white-space:pre-wrap;overflow:auto;font-size:12px}
 .pass{color:#9ff2b5}.fail{color:#ffb4b4}.muted{color:#9cb2c8}
 .small{font-size:12px}
+.tree{font-family:'Cascadia Code','JetBrains Mono',monospace;white-space:pre;color:#b8e0ff;background:#0c1117;border-radius:10px;padding:16px;overflow:auto}
+.flow-step{display:flex;gap:12px;margin-bottom:10px;padding:10px;background:#0c1117;border-radius:10px;border-left:3px solid #4a7caa}
+.flow-step.resolved{border-left-color:#9ff2b5}
+.flow-step.active{border-left-color:#ffb4b4}
+.flow-step .step-icon{flex:0 0 28px;height:28px;border-radius:50%;background:#243445;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold}
+.flow-step .step-body{flex:1}
+.flow-step .step-title{font-weight:600;color:#b8e0ff;margin-bottom:4px}
+.flow-step .step-meta{font-size:11px;color:#9cb2c8}
+.diff-section{margin-bottom:12px;padding:10px;background:#0c1117;border-radius:10px}
+.diff-section h4{margin:0 0 6px 0;font-size:14px;color:#b8e0ff}
+.diff-item{padding:4px 0;border-bottom:1px solid #243445;font-size:12px}
+.diff-item:last-child{border-bottom:none}
+.diff-item.added{color:#9ff2b5}
+.diff-item.removed{color:#ffb4b4}
+.diff-item.changed{color:#ffd97a}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.kpi{background:#0c1117;border-radius:8px;padding:8px;text-align:center}
+.kpi .label{font-size:10px;color:#9cb2c8;text-transform:uppercase}
+.kpi .value{font-size:16px;font-weight:bold;color:#b8e0ff}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-main{background:#1a3a5a;color:#b8e0ff}
+.badge-experiment{background:#5a3a1a;color:#ffd9a8}
+.badge-resolved{background:#1a4a2a;color:#9ff2b5}
+.badge-active{background:#5a1a1a;color:#ffb4b4}
 </style></head><body>
-<h1>WorldMind — v0.3 Save Browser + Timeline UX</h1>
+<h1>WorldMind — v1.0-rc3 Visual Save Browser + QA Inspector</h1>
 <p class="muted">Static snapshot generated from the simulation core. Event Log is the source of truth.</p>
 <div class="grid-3"><div class="metric"><span>Day / Time</span><strong>8 / 00:00</strong></div><div class="metric"><span>Agents</span><strong>11</strong></div><div class="metric"><span>Locations</span><strong>4</strong></div><div class="metric"><span>Memories</span><strong>261</strong></div><div class="metric"><span>Rumors</span><strong>1</strong></div><div class="metric"><span>Incidents</span><strong>1</strong></div><div class="metric"><span>Food price</span><strong>20</strong></div><div class="metric"><span>Economy pressure</span><strong>100</strong></div></div>
 <div class="grid" style="margin-top:16px;">
@@ -32,17 +56,27 @@ Resolution path: investigation_and_counter_rumor.
 Evidence level: Nadia is a probable source of the false rumor.
 Recent visible events: Food scarcity increased. Market food price is now 20. / Food scarcity increased. Market food price is now 20. / Daily checkpoint: 11 agents, 251 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 7, 12:00. / Food scarcity increased. Market food price is now 20. / Daily checkpoint: 11 agents, 256 memories, 1 rumors, 1 incidents. / World: New Aarhus District 01, Day 7, 18:00. / Food scarcity increased. Market food price is now 20..</pre><h3>Suggested actions</h3><ul><li>Safe: talk to Sara again and inspect the café stock.</li><li>Social: ask Amina to mediate between Sara and Malik.</li><li>Risky: pay Rune for information about Nadia and the workshop.</li></ul></section>
 </div>
-<section class="card" style="margin-top:16px;"><h2>Save Browser</h2><table><thead><tr><th>Snapshot</th><th>World</th><th>Branch</th><th>Parent</th><th>Origin</th><th>Tick</th><th>Day</th><th>Time</th><th>Incident</th><th>Memories</th><th>Events</th><th>Relationships</th><th>Rumors</th></tr></thead><tbody><tr><td colspan="13">No snapshots available yet. Run with <code>--persist</code> to populate the save browser.</td></tr></tbody></table></section>
-<section class="card" style="margin-top:16px;"><h2>Timeline Branches</h2><table><thead><tr><th>Branch</th><th>Origin Snapshot</th><th>Parent Snapshot</th><th>Current Snapshot</th><th>Current Day</th><th>Current Time</th><th>Snapshots</th><th>Note</th></tr></thead><tbody><tr><td colspan="8">No branches yet.</td></tr></tbody></table></section>
+<section class="card" style="margin-top:16px;"><h2>Save Browser</h2><p class="muted small">v1.0-rc3: snapshot ids, branches, parent/origin, incident status. Run <code>npm run saves:list</code> for the CLI view.</p><table><thead><tr><th>Snapshot</th><th>World</th><th>Branch</th><th>Parent</th><th>Origin</th><th>Tick</th><th>Day</th><th>Time</th><th>Incident</th><th>Memories</th><th>Events</th><th>Relationships</th><th>Rumors</th></tr></thead><tbody><tr><td colspan="13">No snapshots available yet. Run with <code>--persist</code> to populate the save browser.</td></tr></tbody></table></section>
 <div class="grid" style="margin-top:16px;">
-  <section class="card"><h2>Snapshot Details</h2><pre>{
+  <section class="card"><h2>Visual Timeline Tree</h2><p class="muted small">v1.0-rc3: branches with origin chain. <span class="badge badge-main">main</span> vs <span class="badge badge-experiment">experiment</span>.</p><div class="tree">(no branches yet — run with --persist --save-snapshot)</div></section>
+  <section class="card"><h2>Timeline Branches (Table)</h2><table><thead><tr><th>Branch</th><th>Origin</th><th>Parent</th><th>Current</th><th>Day</th><th>Time</th><th>Snapshots</th><th>Note</th></tr></thead><tbody><tr><td colspan="8">No branches yet.</td></tr></tbody></table></section>
+</div>
+<section class="card" style="margin-top:16px;"><h2>State Inspector</h2><p class="muted small">v1.0-rc3: rich view of the current snapshot. Click <code>world-state.json</code> below for the raw payload.</p><div class="kpi-grid"><div class="kpi"><div class="label">Agents</div><div class="value">11</div></div><div class="kpi"><div class="label">Locations</div><div class="value">4</div></div><div class="kpi"><div class="label">Memories</div><div class="value">261</div></div><div class="kpi"><div class="label">Relationships</div><div class="value">55</div></div><div class="kpi"><div class="label">Rumors</div><div class="value">1</div></div><div class="kpi"><div class="label">Incidents</div><div class="value">1</div></div><div class="kpi"><div class="label">Events</div><div class="value">123</div></div><div class="kpi"><div class="label">Tick</div><div class="value">672</div></div></div>
+<div class="grid" style="margin-top:12px;">
+  <div><h4 class="muted small">Recent memories</h4><div class="diff-item">· Food scarcity increased. Market food price is now 20. <span class="muted">@656</span></div><div class="diff-item">· Food scarcity increased. Market food price is now 20. <span class="muted">@656</span></div><div class="diff-item">· Food scarcity increased. Market food price is now 20. <span class="muted">@656</span></div></div>
+  <div><h4 class="muted small">Top rumors</h4><div class="diff-item">· Sara may be cooperating with Registry. <span class="muted">truth=20, known=6</span></div></div>
+</div></section>
+<section class="card" style="margin-top:16px;"><h2>Incident Flow — The Missing Delivery</h2><p class="muted small">v1.0-rc3: step-by-step incident trace from creation to resolution. Evidence level reflects the strict evidence guard.</p><p class="small"><span class="badge badge-resolved">evidence-backed</span> · Known facts: Sara is low on supplies. · Malik refused delivery. · A rumor connects Sara to Registry.</p><div class="flow-step active"><div class="step-icon">1</div><div class="step-body"><div class="step-title">Incident detected: The Missing Delivery</div><div class="step-meta">tick 12, day 1 03:00 — Incident detected: The Missing Delivery.</div></div></div><div class="flow-step "><div class="step-icon">2</div><div class="step-body"><div class="step-title">Evidence discovered: rumor source traced</div><div class="step-meta">tick 24, day 1 06:00 — Trace found probable rumor source: Nadia.</div></div></div><div class="flow-step "><div class="step-icon">3</div><div class="step-body"><div class="step-title">Counter-rumor published</div><div class="step-meta">tick 28, day 1 07:00 — Counter-rumor introduced: Sara was not working with Registry; the rumor was planted.</div></div></div><div class="flow-step resolved"><div class="step-icon">4</div><div class="step-body"><div class="step-title">Delivery restored</div><div class="step-meta">tick 28, day 1 07:00 — The delivery relationship between Sara and Malik was partially restored.</div></div></div><div class="flow-step resolved"><div class="step-icon">✓</div><div class="step-body"><div class="step-title">Resolved</div><div class="step-meta">Resolution path: investigation_and_counter_rumor</div></div></div></section>
+<section class="card" style="margin-top:16px;"><h2>Visual Diff Panel</h2><p class="muted small">v1.0-rc3: structured diff between two snapshots. CLI: <code>npm run saves:diff snapshot_A snapshot_B --db=...</code></p><p class="muted small">Save at least two snapshots to compare timelines. CLI: <code>npm run saves:diff snapshot_a snapshot_b --db=...</code></p></section>
+<div class="grid" style="margin-top:16px;">
+  <section class="card"><h2>Snapshot Details (current)</h2><pre>{
   &quot;branchName&quot;: &quot;main&quot;,
   &quot;currentSnapshotId&quot;: null,
   &quot;tick&quot;: 672,
   &quot;day&quot;: 8,
   &quot;time&quot;: &quot;00:00&quot;
 }</pre></section>
-  <section class="card"><h2>Timeline Diff</h2><pre>Save at least two snapshots to compare timelines.</pre></section>
+  <section class="card"><h2>Timeline Diff (raw)</h2><pre>Save at least two snapshots to compare timelines.</pre></section>
 </div>
 <section class="card" style="margin-top:16px;"><h2>Branch-aware Event Log</h2><p class="muted">Filters: {&quot;branchName&quot;:&quot;main&quot;,&quot;tickFrom&quot;:null,&quot;tickTo&quot;:null,&quot;actorId&quot;:null,&quot;incidentId&quot;:null}</p><table><thead><tr><th>Time</th><th>Type</th><th>Description</th><th>Branch</th><th>Origin Snapshot</th><th>Actors</th></tr></thead><tbody><tr><td colspan="6">No events match the current filters.</td></tr></tbody></table></section>
 <section class="card" style="margin-top:16px;"><h2>Continue from snapshot</h2><pre>npm run saves:list

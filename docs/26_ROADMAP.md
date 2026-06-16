@@ -71,9 +71,16 @@
 - Auditerbar restore-log (action, snapshotId, actor, reason, restoredAtTick)
 - Branch/origin-kæde synlig i timeline med `parentSnapshotId` chain
 - Argument-parser understøtter nu både `--key value` og `--key=value`
-- 126/126 tests grønne, ci:gate 12/12 grønne
+### v1.0-rc2 — Save browser + timeline UX  ✅
 
-### v1.0-rc3 — Leno policy + visual timeline  *(næste)*
+### v1.0-rc3 — Visual save browser + branch diff + QA inspector  *(current)*
+- Dashboard med 20 sektioner inkl. Save Browser, Visual Timeline Tree, State Inspector, Incident Flow, Visual Diff Panel
+- `worldmind saves diff <a> <b>` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas)
+- Incident flow viser The Missing Delivery's 5-step trace (detected → evidence → counter → restored → resolved)
+- State inspector med 8 KPI tiles + top-3 memories + top-3 rumors
+- 137/137 tests grønne, ci:gate 12/12 grønne
+
+### v1.0-rc4 — Leno policy audit + interactive dashboard  *(næste)*
 - React dashboard (optional companion).
 - Authoring tools (creator mode v0.1).
 - 2D district view.

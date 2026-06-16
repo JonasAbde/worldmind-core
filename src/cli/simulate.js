@@ -61,6 +61,7 @@ const loadSnapshotId = getArg('load-snapshot') ?? null;
 const continueFromSnapshotId = getArg('continue-from-snapshot') ?? null;
 const saveSnapshot = args.includes('--save-snapshot');
 const withDashboard = args.includes('--dashboard');
+const dashboardDir = getArg('dashboard-dir') ?? 'static-dashboard';
 const withAssert = args.includes('--assert');
 const listSaves = args.includes('--list-saves');
 const listBranches = args.includes('--list-branches');
@@ -128,7 +129,7 @@ console.log(JSON.stringify(evalResult, null, 2));
 console.log('\nLeno summary:\n' + lenoSummarize(world));
 console.log('\nLeno suggestions:\n- ' + lenoSuggestActions(world).join('\n- '));
 if (withDashboard) {
-  const out = generateDashboard(world, path.resolve('static-dashboard'), { store });
+  const out = generateDashboard(world, path.resolve(dashboardDir), { store });
   console.log(`\nDashboard written: ${out.htmlPath}`);
 }
 if (store && (saveSnapshot || persist || createBranchSnapshotId || activeSnapshotId)) {

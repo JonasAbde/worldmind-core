@@ -30,6 +30,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { openSqliteWorldStore } from '../persistence/sqlite.js';
+import { diffSnapshots } from '../persistence/timeline.js';
 
 const HELP = `worldmind saves — save browser & timeline CLI
 
@@ -41,6 +42,7 @@ Subcommands:
   inspect <id>            Inspect a snapshot without restoring
   restore <id>            Restore a snapshot to a state JSON file
   timeline                Show all branches and their origin chain
+  diff <from> <to>        Show structured diff between two snapshots
 
 Flags:
   --db=PATH               SQLite database path (default: data/worldmind.sqlite)
@@ -222,6 +224,56 @@ function restoreSnapshot(flags, id) {
   }
 }
 
+function diffSnapshotsCli(flags, fromId, toId) {
+  if (!fromId || !toId) fail(1, { reason: 'diff requires two snapshot ids' });
+  const store = getStore(flags);
+  try {
+    let fromWorld, toWorld;
+    try {
+      fromWorld = store.loadSnapshot(fromId);
+    } catch (err) {
+      fail(2, { reason: err.message, snapshotId: fromId });
+      return;
+    }
+    try {
+      toWorld = store.loadSnapshot(toId);
+    } catch (err) {
+      fail(2, { reason: err.message, snapshotId: toId });
+      return;
+    }
+    const rawDiff = diffSnapshots(fromWorld, toWorld);
+    // Annotate with the metadata that the save browser wants.
+    const eventCountDelta = (toWorld.events?.length ?? 0) - (fromWorld.events?.length ?? 0);
+    const diff = {
+      ...rawDiff,
+      eventCountDelta,
+      tickDelta: (toWorld.tick ?? 0) - (fromWorld.tick ?? 0),
+      dayDelta: (toWorld.day ?? 0) - (fromWorld.day ?? 0),
+      fromTick: fromWorld.tick,
+      fromDay: fromWorld.day,
+      fromTime: fromWorld.time,
+      toTick: toWorld.tick,
+      toDay: toWorld.day,
+      toTime: toWorld.time,
+      fromEventCount: fromWorld.events?.length ?? 0,
+      toEventCount: toWorld.events?.length ?? 0,
+      fromMemoryCount: Object.keys(fromWorld.memories ?? {}).length,
+      toMemoryCount: Object.keys(toWorld.memories ?? {}).length
+    };
+    ok({
+      from: fromId,
+      to: toId,
+      fromBranch: fromWorld.branchName ?? 'unknown',
+      toBranch: toWorld.branchName ?? 'unknown',
+      fromWorldId: fromWorld.id ?? fromWorld.worldId,
+      toWorldId: toWorld.id ?? toWorld.worldId,
+      diff
+    });
+  } finally {
+    store.close();
+  }
+}
+
 function showTimeline(flags) {
   const store = getStore(flags);
   try {
@@ -288,6 +340,8 @@ function main() {
       return restoreSnapshot(flags, rest[0]);
     case 'timeline':
       return showTimeline(flags);
+    case 'diff':
+      return diffSnapshotsCli(flags, rest[0], rest[1]);
     default:
       fail(1, { reason: `unknown subcommand: ${subcommand}` });
   }

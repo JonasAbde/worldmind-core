@@ -34,6 +34,7 @@ npm run diff:event-log
 - v0.9 per-event-type schemas: validateEventPayloadByType (soft + strict modes), validate:state, validate:risk --strict with permission audit, 100/100 tests grøn.
 - v1.0-rc1 typed payload migration: alle 9 event-emitters migreret til typed `payload`-felter, `validate:event-log` flipped til strict mode som default, Leno `lenoTickPayload` evidence gate, canonical 7-dages sim 0 violations / 123 events, 116/116 tests grøn.
 - v1.0-rc2 save browser + timeline UX: ny `worldmind saves` CLI med 4 subcommands (list/inspect/restore/timeline), deterministisk restore (byte-identical), auditerbar restore-log, branch/origin-kæde synlig, 126/126 tests grøn.
+- v1.0-rc3 visual save browser + branch diff: visuelt dashboard med 20 sektioner inkl. Save Browser, Visual Timeline Tree, State Inspector, Incident Flow, Visual Diff Panel. `saves diff` CLI med structured diff (location, relationships, memories, rumors, economy, incidents + deltas). 137/137 tests grøn.
 
 ## Eval criteria
 

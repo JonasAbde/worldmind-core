@@ -45,6 +45,8 @@
 38. `39_STATE_VALIDATOR_AND_RISK_AUDIT.md` — v0.9 `validate:state` and `validate:risk --strict` (permission audit). 12-step ci:gate.
 39. `40_TYPED_PAYLOAD_MIGRATION.md` — v1.0-rc1 all 9 event-emitters migrated to typed `payload` fields. `validate:event-log` flipped to **strict mode** as default. Canonical 7-day run: 0 violations / 123 events. Leno `lenoTickPayload` carries explicit `includeHiddenCause` evidence gate. 116/116 tests grønne.
 40. `41_SAVE_BROWSER_AND_TIMELINE.md` — v1.0-rc2 `worldmind saves` CLI med `list` / `inspect` / `restore` / `timeline` subcommands. Deterministisk restore (byte-identical), auditerbar restore-log (actor/reason), branch/origin-kæde synlig i timeline. 126/126 tests grønne.
+41. `42_VISUAL_SAVE_BROWSER.md` — v1.0-rc3 visuelt dashboard: Save Browser table, Visual Timeline Tree, State Inspector, Incident Flow (Missing Delivery), Visual Diff Panel. 137/137 tests grønne.
+42. `43_BRANCH_DIFF_AND_QA_INSPECTOR.md` — v1.0-rc3 `worldmind saves diff` CLI + Visual Diff Panel. Struktureret diff med agent location, relationships, memories, rumors, economy, incidents.
 
 ## Roadmap
 
