@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { CHARACTER_ASSETS, WORLD_ASSETS } from './assets.js';
+import { listFounderContractOffers, founderTierLabel } from './founder-contracts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -315,8 +316,10 @@ export function buildGameplayShellModel(world, payload = {}) {
     founder: {
       unlocked: founderUnlocked,
       baseLevel: world?.founder?.baseLevel ?? 0,
+      tierLabel: founderTierLabel(world?.founder?.baseLevel ?? 0),
       contractsCompleted: world?.founder?.contractsCompleted ?? 0,
       activeContract: world?.founder?.activeContract ?? null,
+      contracts: listFounderContractOffers(world?.founder ?? {}),
       reputation: world?.founder?.reputation ?? player?.stats?.reputation ?? 0,
       money: player?.stats?.money ?? 0,
       unlockText: founderUnlocked

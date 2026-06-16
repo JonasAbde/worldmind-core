@@ -448,6 +448,7 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
   <div class="wm-founder-status wm-unlocked" data-founder-status>
     <span class="wm-founder-badge">UNLOCKED</span>
     <p>Founder loop unlocked.</p>
+    <p class="wm-founder-tier" data-founder-tier>Starter runner</p>
   </div>
   <ul class="wm-founder-stats">
     <li>Contracts: <strong data-founder-contracts>0</strong></li>
@@ -456,10 +457,23 @@ code { background: #0d1117; padding: 1px 4px; border-radius: 3px; font-size: 0.8
     <li>Money: <strong data-founder-money>150</strong></li>
     <li>Active contract: <strong data-founder-active-contract>none</strong></li>
   </ul>
+  <ul class="wm-founder-contracts" data-founder-contract-list><li class="wm-founder-contract wm-contract-available" data-contract-id="delivery_sara_emergency">
+      <strong>Emergency stock for Sara</strong> — Sara (25 payout)
+      <span class="wm-contract-status">available</span>
+      <button type="button" data-run-command="start_delivery_workflow delivery_sara_emergency">Start</button>
+    </li><li class="wm-founder-contract wm-contract-locked" data-contract-id="delivery_market_supplies">
+      <strong>Market supply run</strong> — Market vendors (35 payout)
+      <span class="wm-contract-status">locked</span>
+      
+    </li><li class="wm-founder-contract wm-contract-locked" data-contract-id="delivery_workshop_parts">
+      <strong>Workshop parts delivery</strong> — Workshop (50 payout)
+      <span class="wm-contract-status">locked</span>
+      
+    </li></ul>
   <div class="wm-founder-actions">
+    <button type="button" data-run-command="list_contracts" >List contracts</button>
     <button type="button" data-run-command="start_delivery_workflow" >Start delivery workflow</button>
     <button type="button" data-run-command="run_delivery_contract" >Run delivery contract</button>
-    <button type="button" data-run-command="status" >View contract details</button>
   </div>
 </section>
         <section class="wm-section wm-major-decisions" id="wm-major-decisions">

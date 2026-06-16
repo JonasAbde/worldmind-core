@@ -30,6 +30,12 @@ import {
   helpSaraPeacefully
 } from '../simulation/actions.ts';
 import { lenoSummarize, lenoSuggestActions } from '../simulation/leno.ts';
+import {
+  createActiveFounderContract,
+  founderBaseLevelForContracts,
+  listFounderContractOffers,
+  resolveFounderContractTemplate
+} from './founder-contracts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -493,22 +499,21 @@ export function resolveCommand(world, commandOrText, args = {}) {
             error: 'founder contract already active; run run_delivery_contract first'
           };
         }
-        founder.activeContract = {
-          id: `delivery_contract_${world.tick ?? 0}`,
-          customer: 'Sara',
-          payout: 25,
-          reputationGain: 3,
-          stockImpact: -4,
-          status: 'active'
-        };
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted ?? 0);
+        const template = resolveFounderContractTemplate(effectiveArgs.contract ?? effectiveArgs.id, founder);
+        if (!template) {
+          return { ok: false, kind: 'error', error: `unknown or locked founder contract: ${effectiveArgs.contract ?? effectiveArgs.id ?? '(none)'}` };
+        }
+        founder.activeContract = createActiveFounderContract(template, world.tick ?? 0);
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: 'Founder workflow started: deliver emergency stock to Sara.',
+          text: `Founder workflow started: ${template.label} for ${template.customer}.`,
+          contract: founder.activeContract,
           consequence: diffConsequence(world, before, actorId, {
             type: 'founder.contract_started',
-            description: 'Delivery contract started',
+            description: `Delivery contract started: ${template.id}`,
             importance: 6
           }),
           world
@@ -521,30 +526,32 @@ export function resolveCommand(world, commandOrText, args = {}) {
           return { ok: false, kind: 'error', error: 'no active founder contract; run start_delivery_workflow first' };
         }
         const contract = founder.activeContract;
+        const prevBaseLevel = founder.baseLevel ?? 0;
         founder.contractsCompleted = (founder.contractsCompleted ?? 0) + 1;
-        founder.baseLevel = founder.contractsCompleted >= 3 ? 1 : founder.baseLevel ?? 0;
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted);
         founder.reputation = (founder.reputation ?? 0) + (contract.reputationGain ?? 2);
         founder.activeContract = null;
 
         if (world.agents?.player?.stats) {
           world.agents.player.stats.money = (world.agents.player.stats.money ?? 0) + (contract.payout ?? 20);
           world.agents.player.stats.reputation = (world.agents.player.stats.reputation ?? 0) + (contract.reputationGain ?? 2);
-          world.agents.player.stats.energy = Math.max(0, (world.agents.player.stats.energy ?? 100) - 6);
+          world.agents.player.stats.energy = Math.max(0, (world.agents.player.stats.energy ?? 100) - (contract.energyCost ?? 6));
         }
         if (world.economy) {
           world.economy.foodScarcity = Math.max(0, (world.economy.foodScarcity ?? 0) + (contract.stockImpact ?? -3));
           world.economy.trustPressure = Math.max(0, (world.economy.trustPressure ?? 0) - 1);
         }
 
+        const tierUp = founder.baseLevel > prevBaseLevel;
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: `Contract delivered. +${contract.payout} money, +${contract.reputationGain} reputation.`,
+          text: `Contract delivered (${contract.label ?? contract.templateId ?? contract.id}). +${contract.payout} money, +${contract.reputationGain} reputation.${tierUp ? ` Base level now ${founder.baseLevel}.` : ''}`,
           consequence: diffConsequence(world, before, actorId, {
             type: 'founder.contract_completed',
             description: 'Delivery contract completed',
-            importance: 8
+            importance: tierUp ? 9 : 8
           }),
           world
         };
@@ -554,19 +561,15 @@ export function resolveCommand(world, commandOrText, args = {}) {
         if (!founder.unlocked) {
           return { ok: false, kind: 'error', error: 'founder loop is locked until Missing Delivery is resolved' };
         }
+        founder.baseLevel = founderBaseLevelForContracts(founder.contractsCompleted ?? 0);
+        const contracts = listFounderContractOffers(founder);
         const before = snapshotForDelta(world);
         return {
           ok: true,
           kind: 'founder',
           command,
-          text: 'Available contracts: emergency delivery to Sara (25 payout, +3 reputation).',
-          contracts: [{
-            id: 'delivery_sara_emergency',
-            customer: 'Sara',
-            payout: 25,
-            reputationGain: 3,
-            status: founder.activeContract ? 'active' : 'available'
-          }],
+          text: `Founder contracts (${contracts.filter((c) => c.status === 'available').length} available, base level ${founder.baseLevel}).`,
+          contracts,
           consequence: diffConsequence(world, before, actorId, null),
           world
         };
@@ -657,6 +660,9 @@ function diffUnlocks(before, after) {
   const wasFounder = Boolean(before.founder?.unlocked);
   const nowFounder = Boolean(after.founder?.unlocked);
   if (!wasFounder && nowFounder) unlocks.push('founder_loop');
+  const prevTier = before.founder?.baseLevel ?? 0;
+  const nextTier = after.founder?.baseLevel ?? 0;
+  if (nextTier > prevTier) unlocks.push(`founder_tier_${nextTier}`);
   return unlocks;
 }
 

@@ -189,23 +189,38 @@ export function renderLenoGameplayPanel(payload, shell) {
 export function renderFounderGameplay(shell) {
   const f = shell?.founder ?? {};
   const unlocked = Boolean(f.unlocked);
+  const contractRows = (f.contracts ?? []).map((c) => {
+    const cmd = c.status === 'available'
+      ? `start_delivery_workflow ${c.id}`
+      : c.status === 'active'
+        ? 'run_delivery_contract'
+        : '';
+    const disabled = !unlocked || c.status === 'locked' || (c.status === 'available' && f.activeContract);
+    return `<li class="wm-founder-contract wm-contract-${escapeHtml(c.status)}" data-contract-id="${escapeHtml(c.id)}">
+      <strong>${escapeHtml(c.label)}</strong> — ${escapeHtml(c.customer)} (${escapeHtml(c.payout)} payout)
+      <span class="wm-contract-status">${escapeHtml(c.status)}</span>
+      ${cmd && !disabled ? `<button type="button" data-run-command="${escapeHtml(cmd)}">${c.status === 'active' ? 'Run' : 'Start'}</button>` : ''}
+    </li>`;
+  }).join('');
   return `<section class="wm-section wm-founder wm-founder-panel" id="wm-founder" data-founder-panel>
   <h2>Founder / Base</h2>
   <div class="wm-founder-status ${unlocked ? 'wm-unlocked' : 'wm-locked'}" data-founder-status>
     ${unlocked ? '<span class="wm-founder-badge">UNLOCKED</span>' : '<span class="wm-founder-badge wm-locked-badge">LOCKED</span>'}
     <p>${escapeHtml(f.unlockText ?? '')}</p>
+    <p class="wm-founder-tier" data-founder-tier>${escapeHtml(f.tierLabel ?? 'Starter runner')}</p>
   </div>
   <ul class="wm-founder-stats">
     <li>Contracts: <strong data-founder-contracts>${escapeHtml(f.contractsCompleted ?? 0)}</strong></li>
     <li>Base level: <strong data-founder-base-level>${escapeHtml(f.baseLevel ?? 0)}</strong></li>
     <li>Reputation: <strong data-founder-reputation>${escapeHtml(f.reputation ?? 0)}</strong></li>
     <li>Money: <strong data-founder-money>${escapeHtml(f.money ?? 0)}</strong></li>
-    <li>Active contract: <strong data-founder-active-contract>${escapeHtml(f.activeContract?.id ?? 'none')}</strong></li>
+    <li>Active contract: <strong data-founder-active-contract>${escapeHtml(f.activeContract?.templateId ?? f.activeContract?.id ?? 'none')}</strong></li>
   </ul>
+  <ul class="wm-founder-contracts" data-founder-contract-list>${contractRows || '<li class="wm-empty">No contracts listed.</li>'}</ul>
   <div class="wm-founder-actions">
+    <button type="button" data-run-command="list_contracts" ${unlocked ? '' : 'disabled'}>List contracts</button>
     <button type="button" data-run-command="start_delivery_workflow" ${unlocked ? '' : 'disabled'}>Start delivery workflow</button>
     <button type="button" data-run-command="run_delivery_contract" ${unlocked ? '' : 'disabled'}>Run delivery contract</button>
-    <button type="button" data-run-command="status" ${unlocked ? '' : 'disabled'}>View contract details</button>
   </div>
 </section>`;
 }

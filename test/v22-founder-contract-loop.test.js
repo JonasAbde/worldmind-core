@@ -94,3 +94,39 @@ it('v22.8 — founder unlock auto-syncs from resolved incident', () => {
   assert.equal(result.ok, true, `should unlock from incident: ${result.error}`);
   assert.equal(world.founder.unlocked, true, 'founder should be auto-unlocked after resolution');
 });
+
+it('v22.9 — list_contracts returns tiered catalog', () => {
+  const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'resolved', title: 'The Missing Delivery' } };
+  world.founder = { unlocked: true, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
+  const result = resolveCommand(world, 'list_contracts');
+  assert.equal(result.ok, true);
+  assert.ok(Array.isArray(result.contracts));
+  assert.ok(result.contracts.length >= 3, 'should expose full tiered catalog');
+  assert(result.contracts.some((c) => c.id === 'delivery_sara_emergency' && c.status === 'available'));
+  assert(result.contracts.some((c) => c.id === 'delivery_market_supplies' && c.status === 'locked'));
+});
+
+it('v22.10 — start_delivery_workflow accepts contract id', () => {
+  const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'resolved', title: 'The Missing Delivery' } };
+  world.founder = { unlocked: true, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
+  const result = resolveCommand(world, 'start_delivery_workflow', { contract: 'delivery_sara_emergency' });
+  assert.equal(result.ok, true, result.error);
+  assert.equal(world.founder.activeContract?.templateId, 'delivery_sara_emergency');
+  assert.equal(world.founder.activeContract?.payout, 25);
+});
+
+it('v22.11 — three completed contracts promote base level to 1', () => {
+  const world = newWorld();
+  world.incidents = { missing_delivery: { id: 'missing_delivery', status: 'resolved', title: 'The Missing Delivery' } };
+  world.founder = { unlocked: true, baseLevel: 0, reputation: 0, contractsCompleted: 0, activeContract: null };
+  for (let i = 0; i < 3; i++) {
+    resolveCommand(world, 'start_delivery_workflow', { contract: 'delivery_sara_emergency' });
+    resolveCommand(world, 'run_delivery_contract');
+  }
+  assert.equal(world.founder.contractsCompleted, 3);
+  assert.equal(world.founder.baseLevel, 1);
+  const list = resolveCommand(world, 'list_contracts');
+  assert(list.contracts.some((c) => c.id === 'delivery_market_supplies' && c.status === 'available'));
+});
