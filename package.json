@@ -2,7 +2,7 @@
   "name": "worldmind",
   "version": "0.1.0",
   "private": true,
-  "description": "WorldMind v0.2 foundation — living AI world simulation with agents, memory, relationships, rumors, economy, incidents, dialogue, snapshots and Leno summaries.",
+  "description": "WorldMind v0.5 — TypeScript runtime migration foundation, typed contracts and CLI validation gates.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -16,6 +16,10 @@
     "saves:diff": "node src/cli/simulate.js --compare-snapshots",
     "sim:from-snapshot": "node src/cli/simulate.js --continue-from-snapshot",
     "sim:branch": "node src/cli/simulate.js --create-branch",
+    "validate:scenario": "node src/cli/validate.js scenario",
+    "validate:snapshot": "node src/cli/validate.js snapshot",
+    "validate:diff": "node src/cli/validate.js diff",
+    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json",
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check": "npm run typecheck && node src/cli/simulate.js --days 7 --assert"
@@ -25,7 +29,8 @@
     "simulation",
     "emergent-story",
     "game-engine",
-    "worldmind"
+    "worldmind",
+    "typescript"
   ],
   "license": "UNLICENSED",
   "dependencies": {

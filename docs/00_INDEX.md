@@ -35,6 +35,7 @@
 28. `28_SAVE_BROWSER_AND_TIMELINE_UX.md`
 29. `29_TIMELINE_DIFF_AND_REPLAY.md`
 30. `30_DATA_CONTRACTS_AND_VALIDATION.md`
+31. `31_TYPESCRIPT_RUNTIME_MIGRATION.md` — v0.5 gradual migration to TypeScript + CLI validation gates.
 
 ## Roadmap
 
