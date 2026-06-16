@@ -104,21 +104,15 @@
 - `src/cli/validate-web-play.js` (ny): auditerer den genererede side. Tjekker 11 section labels + 3 runtime markers.
 - 171/171 tests grønne. Web UI var read-only i rc5.
 
-### v1.0-rc7 — Live Save Browser UI + Branch Timeline Restore ✅ *(current)*
-- `src/cli/play-server.js` (ny): Node HTTP server uden framework. Servicer `static-play/`, `GET /api/health`, `GET /api/state`, `POST /api/command`, `POST /api/save`, `GET /api/events`, `GET /api/saves`, `GET /api/saves/:id`, `POST /api/saves/:id/restore`, `GET /api/branches`, `POST /api/branches`, `GET /api/saves/diff?from=A&to=B`.
-- `src/cli/validate-saves-ui.js` (ny): standalone validator der auto-starter en midlertidig play-server hvis nødvendig. Tjekker health/state/saves/command/save/inspect/restore/branches/branch-create/diff/Leno guard/static sections.
-- `src/play/web-renderer.js`: Save Browser panel fik `data-saves-list`, search/filter, restore/inspect controls; Branch Timeline tree fik create form; Snapshot Diff panel fik `data-diff-panel`.
-- `src/cli/play-web.js`: browser runtime prøver `/api/health`, skifter til live mode, kalder `/api/command`, `/api/saves`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff` uden reload.
-- Save/restore/branch/diff genbruger eksisterende persistence (`src/persistence/sqlite.js`) og timeline (`src/persistence/timeline.js`) — ingen duplicate save logic.
-- Private memories/secrets redacteres i API/UI, og `hiddenCause` skjules uden evidence. Leno guard og Risk 4/5 gates er stadig aktive.
-- 188/188 tests grønne.
+### v1.0-rc7 — Live Save Browser UI + Branch Timeline Restore ✅
 
-### v1.0-rc8 — (næste)
-- Polish Live Web Play UX: dedicated snapshot inspect drawer, branch restore confirmation, event feed timeline, and visual branch tree layout.
-- Optional SSE/WebSocket stream to replace polling.
-- Authoring tools (creator mode v0.1).
-- 2D district view.
-- Phone UI + Leno overlay.
+### v1.0-rc8 — 2D District View + Phone/Leno UI ✅
+- `src/play/district-view.js` (ny): `buildDistrictView(world)` producerer nodes/edges for 4 locations + agent markers.
+- `src/play/web-renderer.js` (udvidet): `renderDistrictView(view)` SVG kort med `data-district-map` markers, `data-location-id` hooks for click-to-move; `renderPhoneTabs()` med 8 tabs; `renderEventFeed(events)` panel; Leno overlay udvides.
+- `src/cli/validate-district-ui.js` (ny): validator for district view + phone UI + event feed.
+- Location click sender move command via `/api/command` i live server.
+- Hidden truth guard stadig aktiv i UI.
+- **200/200 tests grønne.**
 
 ## Non-goals (until v1.0)
 

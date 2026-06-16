@@ -15,6 +15,7 @@
  *   renderHeader(world)           -> <header> fragment
  *   renderLocation(world)         -> Current Location panel
  *   renderAgents(world)           -> Visible Agents panel
+ *   renderDistrictView(view)      -> 2D SVG district map
  *   renderCommandButtons()        -> quick-action button row
  *   renderCommandForm()           -> freeform text input
  *   renderDialogueTurn(dialogue)  -> Dialogue panel
@@ -22,11 +23,14 @@
  *   renderEvidence(payload)       -> Evidence panel (with guard)
  *   renderIncident(world)         -> Incident progress panel
  *   renderLeno(payload)           -> Leno panel (with guard)
+ *   renderPhoneTabs()             -> Phone UI tabs
+ *   renderEventFeed(events)       -> Event feed panel
  *   renderSaves(saves)            -> Save Browser panel
  *   renderBranches(branches)      -> Branches panel
  *   renderDemoPaths(paths)        -> Demo paths selector
  *   escapeHtml(text)              -> safe HTML escape
  */
+import { buildDistrictView } from './district-view.js';
 
 const SOURCE_DEFINING = /\bnadia\s+is\s+the\s+source\b/i;
 
@@ -259,6 +263,72 @@ export function renderDiff() {
 </section>`;
 }
 
+/** District View — SVG map showing the 4 MVP locations */
+export function renderDistrictView(view) {
+  const viewBox = '0 0 100 100';
+  const nodes = (view?.nodes ?? []).map((node) => {
+    const classes = node.id === view?.playerLocationId ? 'wm-node wm-player-location' : 'wm-node';
+    const agentList = (node.agentsHere ?? []).map((a) => `<text x="${node.x + 4}" y="${node.y + 6}" font-size="2" data-agent-id="${a.id}">${a.name}</text>`).join('');
+    return `<g class="${classes}" data-location-id="${node.id}">
+      <circle cx="${node.x}" cy="${node.y}" r="4" />
+      <text x="${node.x + 4}" y="${node.y - 2}" font-size="3">${escapeHtml(node.name)}</text>
+      ${agentList}
+    </g>`;
+  }).join('\n');
+  const edges = (view?.edges ?? []).map((edge) => {
+    const from = view.nodes.find((n) => n.id === edge.from) || {};
+    const to = view.nodes.find((n) => n.id === edge.to) || {};
+    return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="currentColor" stroke-width="0.3" />`;
+  }).join('\n');
+  return `<section class="wm-section wm-district-view" id="section-district">
+    <h2>District View</h2>
+    <svg viewBox="${viewBox}" class="wm-district-svg" data-district-map>
+      ${edges}
+      ${nodes}
+    </svg>
+    <p class="wm-hint">Click on a location circle to move there.</p>
+  </section>`;
+}
+
+/** Phone UI panel with tabs */
+export function renderPhoneTabs() {
+  return `<section class="wm-section wm-phone" id="section-phone">
+    <h2>Phone</h2>
+    <div class="wm-phone-tabs">
+      <button type="button" data-phone-tab="messages">Messages</button>
+      <button type="button" data-phone-tab="contacts">Contacts</button>
+      <button type="button" data-phone-tab="rumors">Rumors</button>
+      <button type="button" data-phone-tab="evidence">Evidence</button>
+      <button type="button" data-phone-tab="jobs">Jobs/Incident</button>
+      <button type="button" data-phone-tab="saves">Saves</button>
+      <button type="button" data-phone-tab="branches">Branches</button>
+      <button type="button" data-phone-tab="leno">Leno</button>
+    </div>
+    <div class="wm-phone-content" data-phone-content>
+      <div data-phone-pane="messages" class="wm-phone-pane">Messages panel</div>
+      <div data-phone-pane="contacts" class="wm-phone-pane">Contacts panel</div>
+      <div data-phone-pane="rumors" class="wm-phone-pane">Rumors panel</div>
+      <div data-phone-pane="evidence" class="wm-phone-pane">Evidence panel</div>
+      <div data-phone-pane="jobs" class="wm-phone-pane">Jobs/incident panel</div>
+      <div data-phone-pane="saves" class="wm-phone-pane">Saves panel</div>
+      <div data-phone-pane="branches" class="wm-phone-pane">Branches panel</div>
+      <div data-phone-pane="leno" class="wm-phone-pane">Leno panel</div>
+    </div>
+  </section>`;
+}
+
+/** Event Feed — live event ticker */
+export function renderEventFeed(events) {
+  const rows = (events ?? []).slice(-12).reverse().map((e) => {
+    const time = `${e.day ?? '?'}d ${e.time ?? ''}`;
+    return `<li><code>${escapeHtml(e.type)}</code> · ${escapeHtml(time)} · ${escapeHtml(e.message ?? '')}</li>`;
+  }).join('');
+  return `<section class="wm-section wm-events" id="section-events">
+    <h2>Event Feed</h2>
+    <ul class="wm-event-feed" data-event-feed>${rows || '<li class="wm-empty">No events yet — try a command.</li>'}</ul>
+  </section>`;
+}
+
 export function renderDemoPaths(paths) {
   const items = (paths ?? []).map((p) => `
     <li class="wm-demo-path" data-path="${escapeHtml(p.name)}">
@@ -283,6 +353,7 @@ export function renderWebPage(payload) {
   const world = payload?.world ?? {};
   const css = payload?.appCss ?? '';
   const js = payload?.appJs ?? '';
+  const districtView = payload?.districtView ?? buildDistrictView(world);
   const stateJson = JSON.stringify({
     world: {
       id: world.id, name: world.name, day: world.day, time: world.time, tick: world.tick,
@@ -293,10 +364,11 @@ export function renderWebPage(payload) {
     initialResult: {
       dialogue: payload?.dialogue ?? null,
       consequence: payload?.consequence ?? null,
-      leno: payload?.leno ?? null
-    }
+      leno: payload?.leno ?? null,
+      events: payload?.events ?? []
+    },
+    districtView
   });
-
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -312,6 +384,7 @@ export function renderWebPage(payload) {
       <div class="wm-col-left">
         ${renderLocation(world)}
         ${renderAgents(world)}
+        ${renderDistrictView(districtView)}
         ${renderCommandButtons()}
         ${renderDemoPaths(payload?.demoPaths ?? [])}
       </div>
@@ -321,6 +394,8 @@ export function renderWebPage(payload) {
         ${renderEvidence(payload)}
         ${renderIncident(world)}
         ${renderLeno(payload)}
+        ${renderPhoneTabs()}
+        ${renderEventFeed(payload?.events)}
         ${renderSaves(payload?.saves)}
         ${renderBranches(payload?.branches)}
         ${renderDiff()}

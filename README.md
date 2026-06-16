@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc7 save browser UI and branch restore
+# WorldMind v1.0-rc8 2D district view + phone/Leno UI
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -9,7 +9,7 @@ Arbejdstitler:
 - **Leno Core**: spillerens companion-agent/UI-brain.
 - **New Aarhus District 01**: første world/setting.
 
-Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Event Log er sandheden, memory er agentens fortolkning, og hidden truth altid kræver evidence.
+Kernen er ikke "NPC chatbot". Kernen er en simulation-first engine, hvor Event Log er sandheden, memory er agentens fortolkning, og hidden truth altid kræver evidence.
 
 ## Hvad der er inkluderet
 
@@ -42,6 +42,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v1.0-rc4** playable vertical slice. Ny `worldmind play` CLI med 14 player commands (look/move/talk/ask/inspect/listen_rumors/trace_rumor/counter_rumor/pay/ask_leno/status/save/branch/quit) der alle mapper til autoritative ActionRequests. Dialogue turn + consequence panel rendering. 3 resolution paths (peaceful / investigation / founder) — alle løser *The Missing Delivery* deterministisk. Ny `worldmind demo:play` (deterministisk 3-path walkthrough, byte-identical output) og `worldmind validate:leno` (Leno evidence-guard auditor der fanger hidden-truth leaks). 153/153 tests grønne, 13-trins `ci:gate` grøn.
 - **v1.0-rc5** interactive web play UI. Ny `worldmind play:web` CLI der genererer `static-play/index.html` (70KB) + `state.json` (122KB) — 11 centrale sektioner (Current Location, Visible Agents, Available Commands, Dialogue, Consequence, Evidence, Incident, Leno, Saves, Branches, Demo Paths) + Leno evidence-guard i UI. Shared `src/play/play-engine.js` (pure API) bruges af både CLI og web — ingen duplicate gameplay logic. Ny `worldmind validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate` grøn.
 - **v1.0-rc7** live save browser UI + branch timeline restore. Ny `worldmind play:server` HTTP runtime uden framework og `worldmind validate:saves-ui` gate. Browseren kan nu liste/filtrere saves, inspecte snapshots, restore uden reload, oprette branches og vise snapshot-diffs via `/api/saves`, `/api/saves/:id`, `/api/saves/:id/restore`, `/api/branches` og `/api/saves/diff`. Save/branch/diff genbruger SQLite/timeline persistence; private memory/secrets redacteres i API/UI. 188/188 tests grønne.
+- **v1.0-rc8** 2D district view + phone/Leno UI. `worldmind play:web` inkluderer nu `renderDistrictView()` med SVG kort over de 4 locations, `renderPhoneTabs()` med 8 tabs (Messages, Contacts, Rumors, Evidence, Jobs/Incident, Saves, Branches, Leno), `renderEventFeed()` panel. Location click → move command via `/api/command`. Leno overlay viser suggestions. 200/200 tests grønne.
 
 ## Kør projektet
 

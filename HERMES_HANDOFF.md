@@ -1,12 +1,21 @@
-# Hermes Handoff — WorldMind v1.0-rc7 live save browser + branch restore
+# Hermes Handoff — WorldMind v1.0-rc8 2D district view + phone/Leno UI
 
 ## Status
 
-WorldMind har nu en **live web-play server og Save Browser UI**. Browseren kan sende commands til serveren, liste/filtrere snapshots, inspecte snapshots, restore uden page reload, oprette branches og vise snapshot-diffs. `play-server` bruger `src/play/play-engine.js` og eksisterende SQLite/timeline persistence — ingen duplicate gameplay eller save logic.
+WorldMind har nu **2D District View + Phone/Leno UI** lagt oven på rc7 foundation. Live web-serveren leverer SVG kort med de 4 MVP-locations, Phone panel med 8 tabs (Messages, Contacts, Rumors, Evidence, Jobs/Incident, Saves, Branches, Leno), Event Feed panel og Leno overlay med suggestions. `private memories` og `hidden truth` forbliver beskyttet mod leak i UI. **200/200 tests grønne**, typecheck clean, `validate:district-ui` grøn.
 
-Aktuel verifikation: **188/188 tests grønne**, strict typecheck clean, `validate:saves-ui` grøn. Private memories/secrets redacteres i API/UI, Leno evidence-guard er stadig aktiv, og Risk 4/5 actions forbliver gated.
+## What is built (v1.0-rc8)
 
-## What is built (v1.0-rc7)
+Building on v1.0-rc7's live save browser:
+
+- **`src/play/web-renderer.js`** (udvidet): `renderDistrictView(view)` producerer SVG-kort med `data-district-map` markers, `data-location-id` hooks for move-on-click. `renderPhoneTabs()` viser 8 tabs med `data-phone-pane` containers. `renderEventFeed(events)` rendererer sidste 12 events i `<ul data-event-feed>`. Leno panel udvides med `hidden truth guard` (ingen Nadia uden evidence).
+- **`src/play/district-view.js`** (ny): `buildDistrictView(world)` bygger nodes/edges for de 4 locations + agent markers, SVG-koordinater. Bruges af renderer og kan exporteres til andre moduler.
+- **`src/cli/validate-district-ui.js`** (ny): validator for district view + phone UI. Checker SVG map, location labels, phone tabs, Leno overlay, event feed markers, location click hooks, save/restore/branch sektioner stadig til stede.
+- **`test/v18-district-phone-ui.test.js`** (ny): 7 tests for district view renderer, phone tabs, event feed, full page integration, static page markers, Leno guard, location click hooks.
+- **`docs/48_2D_DISTRICT_VIEW.md`** (ny): spec for SVG district view + location navigation.
+- **`docs/49_PHONE_AND_LENO_UI.md`** (ny): spec for Phone UI tabs + event feed + Leno integration.
+
+## What is built (v1.0-rc7) — recapped
 
 Building on v1.0-rc5's static web UI:
 
