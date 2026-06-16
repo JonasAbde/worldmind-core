@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ACTION_RISK_LIMIT_MVP, RISK, ACTIONS } from '../simulation/constants.js';
+import { ACTION_RISK_LIMIT_MVP, RISK, ACTIONS, PERMISSIONS } from '../simulation/constants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const actionsPath = path.resolve(__dirname, '../simulation/actions.ts');
@@ -48,14 +48,57 @@ export function readActionRegistry(source) {
 
 /**
  * Validate the action registry against the MVP risk limit.
- * Returns { ok, errors, totalActions, maxRisk, disabledGated }.
+ * Returns { ok, errors, totalActions, maxRisk, disabledGated,
+ *           permissionAudit? }.
+ *
+ * v0.9: when `options.strict` is true, the validator additionally
+ * audits the permission-to-action mapping. It reads the `permission:`
+ * field next to each `risk:` declaration and asserts:
+ *   - permission is a non-empty string
+ *   - permission is one of PERMISSIONS.*
+ *   - the canonical ACTIONS.X is mapped to a real actionId
  */
-export function validateActionRisks() {
+export function validateActionRisks(options = {}) {
   const source = fs.readFileSync(actionsPath, 'utf8');
   const registry = readActionRegistry(source);
   const errors = [];
   let maxRisk = 0;
   let disabledGated = 0;
+  const knownPermissions = new Set(Object.values(PERMISSIONS));
+  const permissionAudit = [];
+
+  // v0.9 strict mode: parse the source one more time to extract the
+  // permission value alongside the action id and risk.
+  if (options.strict) {
+    const strictRe = /\[ACTIONS\.([A-Z_]+)\]:\s*\{\s*permission:\s*PERMISSIONS\.([A-Z_]+),\s*risk:\s*RISK\.([A-Z_]+)/g;
+    const keyToValue = Object.fromEntries(Object.entries(ACTIONS));
+    let m;
+    while ((m = strictRe.exec(source)) !== null) {
+      const actionKey = m[1];
+      const permissionKey = m[2];
+      const riskName = m[3];
+      const actionId = keyToValue[actionKey];
+      const permission = PERMISSIONS[permissionKey];
+      const risk = RISK[riskName];
+      if (!actionId) {
+        errors.push(`Registry entry uses unknown action key: ${actionKey}`);
+        continue;
+      }
+      if (!permission) {
+        errors.push(`Action ${actionId} uses unknown permission key: ${permissionKey}`);
+        continue;
+      }
+      if (typeof risk !== 'number') {
+        errors.push(`Action ${actionId} uses unknown risk key: ${riskName}`);
+        continue;
+      }
+      if (!knownPermissions.has(permission)) {
+        errors.push(`Action ${actionId} has permission '${permission}' not in PERMISSIONS enum`);
+      }
+      permissionAudit.push({ actionId, actionKey, permission, permissionKey, risk });
+    }
+  }
+
   for (const [actionName, risk] of Object.entries(registry)) {
     if (risk > maxRisk) maxRisk = risk;
     if (risk > ACTION_RISK_LIMIT_MVP) {
@@ -90,6 +133,7 @@ export function validateActionRisks() {
     errors,
     totalActions: Object.keys(registry).length,
     maxRisk,
-    disabledGated
+    disabledGated,
+    ...(options.strict ? { permissionAudit } : {})
   };
 }

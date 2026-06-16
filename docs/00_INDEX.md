@@ -41,6 +41,8 @@
 34. `35_STRICT_NULL_CHECKS.md` — v0.8 full strictNullChecks audit, `utils.js` → `utils.ts`, 26 nullable-access fixes with explicit defaults.
 35. `36_EVENT_LOG_INVARIANTS.md` — v0.8 `validate:event-log` CLI plus `diff:event-log` subcommand. Event log is the canonical truth.
 36. `37_RISK_VALIDATION.md` — v0.8 `validate:risk` CLI. Risk 4/5 actions forbidden in MVP, source-parsed from `actions.ts`.
+37. `38_PER_EVENT_TYPE_SCHEMAS.md` — v0.9 per-event-type payload validation (soft + strict modes), 9 event types with typed payload contracts.
+38. `39_STATE_VALIDATOR_AND_RISK_AUDIT.md` — v0.9 `validate:state` and `validate:risk --strict` (permission audit). 12-step ci:gate.
 
 ## Roadmap
 

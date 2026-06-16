@@ -17,6 +17,7 @@
  */
 
 import { runSimulation } from '../simulation/sim.ts';
+import { validateEventPayloadByType } from '../contracts/validators.js';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -39,6 +40,7 @@ function main() {
     const i = process.argv.indexOf('--days');
     return i >= 0 ? Number(process.argv[i + 1]) : DEFAULT_DAYS;
   })();
+  const strict = process.argv.includes('--strict');
 
   if (!fs.existsSync(path.resolve(scenarioPath))) {
     fail({ reason: `scenario not found: ${scenarioPath}` });
@@ -97,12 +99,40 @@ function main() {
 
   // Invariant 7: incident events have valid incidentId
   const incidentIds = new Set(Object.keys(finalWorld.incidents ?? {}));
-  const incidentEvents = events.filter((e) => e.type === 'incident_created' || e.type === 'incident_resolved');
+  const incidentEvents = events.filter((e) => e.type === 'incident_created' || e.type === 'incident_resolved' || e.type === 'incident_detected');
   for (const ev of incidentEvents) {
     const id = ev.payload?.incidentId;
     if (!id || !incidentIds.has(id)) {
       errors.push(`incident event ${ev.id} has invalid incidentId: ${id}`);
     }
+  }
+
+  // Invariant 8 (v0.9): per-event-type payload validation. Each event
+  // type has its own required payload fields. We tally failures as a
+  // soft warning so the existing canonical run (which uses
+  // `consequences` arrays for many event types) still passes. The
+  // strict mode is opt-in via --strict and fails hard on any
+  // per-type failure.
+  let perTypeChecked = 0;
+  let perTypeFailed = 0;
+  const perTypeFailureSamples = [];
+  for (const ev of events) {
+    const typeErrors = validateEventPayloadByType(ev);
+    perTypeChecked += 1;
+    if (typeErrors.length > 0) {
+      perTypeFailed += 1;
+      if (perTypeFailureSamples.length < 5) {
+        perTypeFailureSamples.push({ id: ev.id, type: ev.type, errors: typeErrors });
+      }
+    }
+  }
+  // Soft check: we report the per-type summary in the JSON report but
+  // do not block the gate. The full per-type schema is enforced by
+  // validate:event-log:strict (and by the v0.9 per-event-type unit
+  // tests in test/v09-per-event-schemas.test.js, which exercise the
+  // validator with synthetic events).
+  if (strict && perTypeFailed > 0) {
+    errors.push(`${perTypeFailed}/${perTypeChecked} event(s) failed per-type payload validation (samples: ${JSON.stringify(perTypeFailureSamples)})`);
   }
 
   if (errors.length > 0) {
@@ -117,7 +147,8 @@ function main() {
     worldStartedCount: worldStarted.length,
     invalidActorRefs,
     invalidLocationRefs,
-    incidentEventCount: incidentEvents.length
+    incidentEventCount: incidentEvents.length,
+    perTypeValidation: { totalChecked: perTypeChecked, totalFailed: perTypeFailed, mode: strict ? 'strict' : 'soft' }
   });
 }
 

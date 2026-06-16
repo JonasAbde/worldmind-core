@@ -45,7 +45,7 @@
 - `validate:action` CLI gate.
 - 75/75 tests grøn; `ci:gate` expanded to 6 steps.
 
-### v0.8 — Strict invariants + risk gates  *(current)*
+### v0.8 — Strict invariants + risk gates
 - `strictNullChecks: true` flipped on. 26 nullable-access sites fixed with explicit `?? 0` / `?? ''` / `?? []` defaults.
 - `src/simulation/utils.js` → `src/simulation/utils.ts` (last simulation JS file migrated).
 - `validate:risk` CLI: source-parses `actions.ts` and enforces that no action has `risk > ACTION_RISK_LIMIT_MVP = 3`.
@@ -54,14 +54,14 @@
 - 89/89 tests grøn; `ci:gate` expanded to 10 steps.
 - Source-reading regression test for Leno evidence-guard (no `hiddenCause.match` string-leak fallback).
 
-## Planned sprints
+### v0.9 — Per-event-type schema + state validator + risk audit  *(current)*
+- `validateEventPayloadByType` in `src/contracts/validators.js`: per-type payload schema for 9 event categories (rumor, incident, relationship, daily_checkpoint, leno_summary_tick, economy_pressure, delivery_*).
+- `validate:event-log:strict` mode that fails the gate on any per-type payload violation. Soft mode is the default and reports the tally without blocking.
+- `validate:state` CLI: asserts the 19-key canonical `WorldState` shape against a JSON file.
+- `validate:risk --strict` mode that audits actionId ↔ `PERMISSIONS.X` mapping.
+- 100/100 tests grøn; `ci:gate` expanded to 12 steps.
 
-### v0.9 — Per-event-type schema validation
-- Split `validateEventRecord` into per-type validators: `validateWorldStartedEvent`, `validateRumorSpreadEvent`, `validateIncidentEvent`, `validateRelationshipChangedEvent`, `validateEconomyPressureEvent`, `validateDailyCheckpoint`, etc.
-- Each validator asserts the type-specific payload shape (e.g. `rumor_spread` requires `payload.rumorId`, `incident_*` requires `payload.incidentId`).
-- `validate:event-log` calls the per-type validator in addition to the generic shape check.
-- Add `validate:state` CLI that asserts every key from the canonical `WorldState` contract is present.
-- Add `validate:risk --strict` that audits Risk 1-3 actions for permission/actor-routing.
+## Planned sprints
 
 ### v1.0 — Playable vertical slice
 - React dashboard (optional companion).

@@ -173,8 +173,72 @@ function validateEventRecord(event) {
   if (event.payload !== undefined && (typeof event.payload !== 'object' || event.payload === null || Array.isArray(event.payload))) {
     errors.push('event.payload must be an object');
   }
+  // Per-type payload validation (v0.9). The generic shape check above
+  // runs first; if the generic shape is fine we then assert the
+  // type-specific required payload fields.
+  if (errors.length === 0) {
+    const typeErrors = validateEventPayloadByType(event);
+    if (typeErrors.length > 0) errors.push(...typeErrors);
+  }
   return { valid: errors.length === 0, errors };
 }
+
+// v0.9: per-event-type payload schema. Each event type has its own
+// required fields. Returns an array of error messages (empty if OK).
+export function validateEventPayloadByType(event) {
+  const errors = [];
+  const type = event.type;
+  const payload = event.payload;
+  const ensurePayloadField = (name) => {
+    if (!payload || typeof payload !== 'object' || !(name in payload)) {
+      errors.push(`event.type=${type} requires payload.${name}`);
+    }
+  };
+  switch (type) {
+    case 'rumor_created':
+    case 'rumor_spread':
+    case 'rumor_traced':
+    case 'counter_rumor':
+      ensurePayloadField('rumorId');
+      break;
+    case 'incident_detected':
+    case 'incident_resolved':
+    case 'incident_advanced':
+      ensurePayloadField('incidentId');
+      break;
+    case 'relationship_changed':
+      ensurePayloadField('sourceAgentId');
+      ensurePayloadField('targetAgentId');
+      break;
+    case 'daily_checkpoint':
+      ensurePayloadField('agentCount');
+      ensurePayloadField('memoryCount');
+      ensurePayloadField('rumorCount');
+      ensurePayloadField('incidentCount');
+      break;
+    case 'leno_summary_tick':
+      ensurePayloadField('includeHiddenCause');
+      ensurePayloadField('hiddenCause');
+      break;
+    case 'economy_pressure':
+      ensurePayloadField('foodPrice');
+      break;
+    case 'delivery_completed':
+    case 'delivery_failed':
+    case 'delivery_restored':
+      ensurePayloadField('fromLocationId');
+      ensurePayloadField('toLocationId');
+      break;
+    // Events without a strict payload contract (world_started,
+    // help_offered, location_inspected, payment_made, topic_discussed,
+    // agent_moved, dialogue, etc.) skip the per-type check.
+    default:
+      break;
+  }
+  return errors;
+}
+
+export { validateEventRecord };
 
 export function validateScenario(scenario) {
   const errors = [];

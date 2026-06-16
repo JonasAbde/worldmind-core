@@ -26,11 +26,12 @@ npm run diff:event-log
 - SQLite persistence can save, restore, and branch a snapshot.
 - event-log metadata carries branch origin information.
 - Rune evidence can unlock Nadia-source tracing without secret-memory leaks.
-- v0.4 contracts: scenario/snapshot/diff/branch shape and required fields.
+- v0.4 data contracts: scenario/snapshot/diff/branch shape and required fields.
 - v0.5 TypeScript runtime: `tsc --noEmit` passes against the migrated `.ts` files.
 - v0.6 authoritative runtime: validate:branch and validate:dashboard.
 - v0.7 strict typescript default: validate:action + typed diff-checker (scenario drift + mutation).
 - v0.8 strict invariants: utils.ts is authoritative, strictNullChecks is true, validate:risk + validate:event-log + diff:event-log, hidden-truth regression test for Leno.
+- v0.9 per-event-type schemas: validateEventPayloadByType (soft + strict modes), validate:state, validate:risk --strict with permission audit, 100/100 tests grøn.
 
 ## Eval criteria
 

@@ -4,7 +4,19 @@
 
 WorldMind runtime er nu fuld TypeScript (`strict: true` + `strictNullChecks: true`) med 89/89 tests grønne og en 10-trins `ci:gate`. Event Log er fortsat sandheden, og vi har nu en automatisk gate der hævder det.
 
-## What is built (v0.8)
+## What is built (v0.9)
+
+Building on v0.8's strict invariants:
+
+- **`src/contracts/validators.js`** (udvidet): ny `validateEventPayloadByType(event)` der hævder per-event-type payload schema for 9 kategorier (rumor, incident, relationship, daily_checkpoint, leno_summary_tick, economy_pressure, delivery_*). `validateEventRecord` kalder den automatisk efter den generiske shape check.
+- **`src/contracts/state-validator.js`** (ny): runtime audit af canonical `WorldState` shape (19 nøgler inkl. `kind`, `version`, alle collections, `playerKnowledge`, `economy`).
+- **`src/contracts/risk-validator.js`** (udvidet): `--strict` mode auditerer actionId ↔ `PERMISSIONS.X` mapping og rapporterer `permissionAudit`-array.
+- **`src/cli/validate-state.js`** (ny): CLI for `validate:state`.
+- **`src/cli/validate.js`** (udvidet): nyt `state` subcommand, `risk` subcommand understøtter `--strict`.
+- **`src/cli/validate-event-log.js`** (udvidet): `--strict` mode der failer ved per-type payload violations. Soft mode er default.
+- **`test/v09-per-event-schemas.test.js`** (ny): 11 nye tests for per-event-type validators, state shape, risk strict, ci:gate smoke.
+- **`docs/38_PER_EVENT_TYPE_SCHEMAS.md`** (ny): per-type schema spec, soft vs strict mode.
+- **`docs/39_STATE_VALIDATOR_AND_RISK_AUDIT.md`** (ny): state validator og risk strict docs.
 
 - **`src/simulation/utils.ts`** (ny, migreret fra `utils.js`): deterministisk `makeRng` med `getState` / `setState` / `snapshot`, `tickToDayTime`, `deepClone`, `createId`, `clamp`, `unique`, `average`.
 - **`src/contracts/risk-validator.js`** (ny): source-parsing af `actions.ts` for at verificere at ingen MVP-action overskrider `ACTION_RISK_LIMIT_MVP` (= 3).

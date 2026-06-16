@@ -35,6 +35,7 @@ Kernen er ikke “NPC chatbot”. Kernen er en simulation-first engine, hvor Eve
 - **v0.6** authoritative `.ts` runtime for contracts + simulator + dashboard.
 - **v0.7** all 9 simulation modules migrated to `.ts` with `strict: true` default.
 - **v0.8** `strictNullChecks: true` + `utils.ts` + `validate:risk` + `validate:event-log` + `diff:event-log` (10-step `ci:gate`, 89/89 tests).
+- **v0.9** per-event-type payload validators + `validate:state` + `validate:risk --strict` (12-step `ci:gate`, 100/100 tests).
 
 ## Kør projektet
 
@@ -68,7 +69,10 @@ npm run validate:branch       # canonical branch JSON
 npm run validate:dashboard    # dashboard HTML har alle 15 sektioner
 npm run validate:action       # action payload mod canonical world
 npm run validate:risk         # Risk 4/5 actions er forbudt i MVP
+npm run validate:risk:strict   # + permission audit (actionId ↔ PERMISSIONS.X)
+npm run validate:state         # 19-key WorldState shape check
 npm run validate:event-log    # event-log invariants på 7-dages sim
+npm run validate:event-log:strict  # + per-event-type payload check (strict)
 npm run diff:canonical        # scenario vs runtime drift-check
 npm run diff:event-log        # deterministisk event-log dobbeltkørsel
 ```
@@ -100,8 +104,10 @@ Læs i denne rækkefølge:
 2. `AGENTS.md`
 3. `docs/00_INDEX.md`
 4. `docs/24_MVP_BUILD_PLAN.md`
-5. `docs/35_STRICT_NULL_CHECKS.md` (v0.8)
-6. `docs/36_EVENT_LOG_INVARIANTS.md` (v0.8)
-7. `docs/37_RISK_VALIDATION.md` (v0.8)
-8. Kør `npm run ci:gate`
+8. `docs/35_STRICT_NULL_CHECKS.md` (v0.8)
+9. `docs/36_EVENT_LOG_INVARIANTS.md` (v0.8)
+10. `docs/37_RISK_VALIDATION.md` (v0.8)
+11. `docs/38_PER_EVENT_TYPE_SCHEMAS.md` (v0.9)
+12. `docs/39_STATE_VALIDATOR_AND_RISK_AUDIT.md` (v0.9)
+13. Kør `npm run ci:gate`
 9. Fortsæt med issues i `docs/26_ROADMAP.md`

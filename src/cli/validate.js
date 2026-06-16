@@ -26,6 +26,7 @@ import {
 } from '../contracts/parse.js';
 import { diffContracts } from '../contracts/validators.js';
 import { validateActionRisks } from '../contracts/risk-validator.js';
+import { validateStateShape } from '../contracts/state-validator.js';
 import { loadScenarioFile } from '../simulation/scenario-loader.ts';
 import { createWorld } from '../simulation/world.ts';
 
@@ -192,16 +193,43 @@ function runDashboard(maybePath) {
   }
 }
 
-function runRisk() {
+function runRisk(extraArgs = []) {
   try {
-    const result = validateActionRisks();
+    const strict = extraArgs.includes('--strict');
+    const result = validateActionRisks({ strict });
     if (!result.ok) {
       throw Object.assign(new Error('action risk validation failed'), { validationErrors: result.errors });
     }
-    report('risk', { totalActions: result.totalActions, maxRisk: result.maxRisk, disabledGated: result.disabledGated, mvpLimit: 3 });
+    const payload = { totalActions: result.totalActions, maxRisk: result.maxRisk, disabledGated: result.disabledGated, mvpLimit: 3 };
+    if (strict) {
+      payload.strict = true;
+      payload.permissionAudit = result.permissionAudit ?? [];
+    }
+    report('risk', payload);
     return 0;
   } catch (err) {
     fail('risk', err);
+    return 1;
+  }
+}
+
+async function runState(target) {
+  try {
+    const fsModule = await import('node:fs');
+    const pathModule = await import('node:path');
+    const resolved = target ? pathModule.default.resolve(target) : pathModule.default.resolve('scenarios/new-aarhus-district-01.json');
+    if (!fsModule.default.existsSync(resolved)) {
+      throw new Error(`state file not found: ${resolved}`);
+    }
+    const data = JSON.parse(fsModule.default.readFileSync(resolved, 'utf8'));
+    const result = validateStateShape(data);
+    if (!result.ok) {
+      throw Object.assign(new Error('state shape validation failed'), { validationErrors: result.errors });
+    }
+    report('state', { totalKeys: result.totalKeys, missingKeys: [], source: resolved });
+    return 0;
+  } catch (err) {
+    fail('state', err);
     return 1;
   }
 }
@@ -241,7 +269,7 @@ function main() {
   const [subcommand, ...rest] = cleaned;
   const target = rest[0] ?? process.env.WM_VALIDATE_TARGET ?? null;
   if (!subcommand) {
-    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|action|dashboard|risk|event-log> [path|"-"]\n');
+    process.stderr.write('usage: validate <scenario|snapshot|diff|branch|action|dashboard|risk|state|event-log> [path|"-"]\n');
     process.exit(2);
   }
   let code = 0;
@@ -265,7 +293,11 @@ function main() {
       code = runDashboard(target);
       break;
     case 'risk':
-      code = runRisk();
+      code = runRisk(rest);
+      break;
+    case 'state':
+      return runState(target).then((c) => process.exit(c));
+      // unreachable
       break;
     case 'event-log':
       return runEventLog(target).then((c) => process.exit(c));
