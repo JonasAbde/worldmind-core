@@ -1,8 +1,8 @@
 {
   "name": "worldmind",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "WorldMind v1.0-rc21 \u2014 ship-ready infra (release:verify 19 steps, README v1.0, install guide updated)",
+  "description": "WorldMind v1.0.0 \u2014 3 episodes, 9 resolution paths, 11 NPCs, browser authoring panel, procedural 3D world",
   "type": "module",
   "engines": {
     "node": ">=20"
