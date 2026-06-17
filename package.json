@@ -2,7 +2,7 @@
   "name": "worldmind",
   "version": "0.1.0",
   "private": true,
-  "description": "WorldMind v1.0-rc15 \u2014 procedural GLB asset pipeline (5 locations + 11 NPCs + humanoid fallback, deterministic from JSON specs)",
+  "description": "WorldMind v1.0-rc15 \u2014 procedural GLB pipeline + v1.0+ roadmap (rc16-rc21)",
   "type": "module",
   "engines": {
     "node": ">=20"
