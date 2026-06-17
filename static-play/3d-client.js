@@ -1,5 +1,5 @@
 /**
- * WorldMind 3D district client v1 — Three.js, Play API only (no duplicated simulation).
+ * WorldMind 3D district client v1 - Three.js, Play API only (no duplicated simulation).
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -16,6 +16,31 @@ const form = document.getElementById('wm-3d-form');
 const dayEl = document.getElementById('wm-3d-day');
 const moneyEl = document.getElementById('wm-3d-money');
 const locEl = document.getElementById('wm-3d-loc');
+const hintEl = document.getElementById('wm-3d-hint');
+const questTitleEl = document.getElementById('wm-3d-quest-title');
+const questStepsEl = document.getElementById('wm-3d-quest-steps');
+
+const LOCOMOTION = Object.freeze({
+  walkSpeed: 5.8,
+  sprintSpeed: 10.5,
+  acceleration: 38,
+  deceleration: 46,
+  districtMin: -16,
+  districtMax: 16,
+  playerRadius: 0.42,
+  enterRadius: 2.7,
+  hotspotRadius: 1.4,
+  agentRadius: 1.8,
+  maxDeltaSec: 1 / 20
+});
+
+const keyState = {
+  forward: false,
+  back: false,
+  left: false,
+  right: false,
+  sprint: false
+};
 
 let liveMode = false;
 let visualCues = null;
@@ -31,6 +56,12 @@ let pendingVisualCues = null;
 let walkStartMs = null;
 let walkPlayerGroup = null;
 let staticPlayerGroup = null;
+let localPlayerPosition = new THREE.Vector3();
+let localVelocity = new THREE.Vector3();
+let localFacing = 0;
+let activeProximityMeta = null;
+let audioUnlocked = false;
+let lastFrameMs = performance.now();
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -64,9 +95,59 @@ function api(method, path, body) {
 }
 
 function setHud() {
-  dayEl.textContent = `Day ${gameShell?.topbar?.day ?? '—'}`;
-  moneyEl.textContent = `¢ ${playerSnapshot?.money ?? gameShell?.topbar?.money ?? 0}`;
-  locEl.textContent = `@ ${gameShell?.location?.name ?? gameShell?.location?.id ?? '—'}`;
+  dayEl.textContent = `Day ${gameShell?.topbar?.day ?? '-'}`;
+  moneyEl.textContent = `Credits ${playerSnapshot?.money ?? gameShell?.topbar?.money ?? 0}`;
+  locEl.textContent = `@ ${gameShell?.location?.name ?? gameShell?.location?.id ?? '-'}`;
+}
+
+function escapeText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function renderQuestHud() {
+  const quest = gameShell?.questProgress;
+  if (!questTitleEl || !questStepsEl) return;
+  if (!quest) {
+    questTitleEl.textContent = 'No active case.';
+    questStepsEl.innerHTML = '';
+    return;
+  }
+
+  questTitleEl.textContent = quest.resolvedPathId
+    ? `${quest.title || 'Case'} resolved: ${quest.resolvedPathId}`
+    : `${quest.title || 'The Missing Delivery'} - ${quest.incidentStatus || 'active'}`;
+
+  const rows = [];
+  for (const path of quest.paths || []) {
+    const steps = path.steps || [];
+    const next = steps.find((step) => !step.done);
+    const done = steps.length > 0 && steps.every((step) => step.done);
+    rows.push({
+      label: path.label || path.id,
+      step: next?.step || (done ? 'complete' : 'waiting'),
+      command: next?.step || null,
+      done,
+      progress: Math.max(0, Math.min(100, Math.round(path.progress ?? 0)))
+    });
+  }
+
+  questStepsEl.innerHTML = rows.map((row) => `
+    <li class="${row.done ? 'done' : ''}">
+      <span>${row.done ? 'OK' : `${row.progress}%`}</span>
+      <span><strong>${escapeText(row.label)}</strong><br>${escapeText(row.step)}</span>
+      ${row.command && !row.done ? `<button type="button" data-quest-command="${escapeText(row.command)}">Run</button>` : '<span></span>'}
+    </li>
+  `).join('');
+
+  questStepsEl.querySelectorAll('[data-quest-command]').forEach((button) => {
+    button.addEventListener('click', () => runCommand(button.getAttribute('data-quest-command')));
+  });
 }
 
 function clearWorldMeshes() {
@@ -95,6 +176,162 @@ function addPickable(mesh, meta) {
   });
   worldGroup.add(mesh);
   return mesh;
+}
+
+function playerLocationId() {
+  return visualCues?.playerLocationId ?? visualCues?.player?.locationId ?? gameShell?.location?.id ?? null;
+}
+
+function collidesWithDistrictBuilding(x, z) {
+  const current = playerLocationId();
+  for (const loc of visualCues?.locations || []) {
+    if (loc.id === current) continue;
+    const col = loc.collision;
+    if (!col) continue;
+    const [lx, , lz] = loc.position || [0, 0, 0];
+    const dx = Math.abs(x - lx);
+    const dz = Math.abs(z - lz);
+    const radius = LOCOMOTION.playerRadius;
+    if (col.shape === 'circle') {
+      if (Math.hypot(x - lx, z - lz) < (col.radius ?? 1.5) + radius) return true;
+      continue;
+    }
+    const half = col.halfExtents || [1.5, 1.5];
+    if (dx < half[0] + radius && dz < half[1] + radius) return true;
+  }
+  return false;
+}
+
+function clampLocalPosition(x, z) {
+  const nx = Math.max(LOCOMOTION.districtMin, Math.min(LOCOMOTION.districtMax, x));
+  const nz = Math.max(LOCOMOTION.districtMin, Math.min(LOCOMOTION.districtMax, z));
+  if (!collidesWithDistrictBuilding(nx, nz)) return [nx, nz];
+  const oldX = localPlayerPosition.x;
+  const oldZ = localPlayerPosition.z;
+  if (!collidesWithDistrictBuilding(nx, oldZ)) return [nx, oldZ];
+  if (!collidesWithDistrictBuilding(oldX, nz)) return [oldX, nz];
+  return [oldX, oldZ];
+}
+
+function cameraForwardYaw() {
+  return Math.atan2(
+    camera.position.x - localPlayerPosition.x,
+    camera.position.z - localPlayerPosition.z
+  );
+}
+
+function inputDirection() {
+  let moveX = 0;
+  let moveZ = 0;
+  if (keyState.forward) moveZ -= 1;
+  if (keyState.back) moveZ += 1;
+  if (keyState.left) moveX -= 1;
+  if (keyState.right) moveX += 1;
+  const len = Math.hypot(moveX, moveZ);
+  if (len === 0) return null;
+  moveX /= len;
+  moveZ /= len;
+  const yaw = cameraForwardYaw();
+  const sin = Math.sin(yaw);
+  const cos = Math.cos(yaw);
+  return {
+    x: moveX * cos - moveZ * sin,
+    z: moveX * sin + moveZ * cos
+  };
+}
+
+function isTypingTarget(target) {
+  return target instanceof HTMLElement
+    && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+}
+
+function nearestProximityMeta() {
+  if (!visualCues || !staticPlayerGroup) return null;
+  const pos = localPlayerPosition;
+  let best = null;
+  const consider = (meta, position, radius) => {
+    const d = Math.hypot(pos.x - position[0], pos.z - position[2]);
+    if (d <= radius && (!best || d < best.distance)) best = { ...meta, distance: d };
+  };
+  for (const loc of visualCues.locations || []) {
+    if (loc.id === playerLocationId()) continue;
+    consider({
+      kind: 'location',
+      id: loc.id,
+      label: loc.label,
+      command: loc.command,
+      description: `${loc.zone} - press E to enter`
+    }, loc.position, LOCOMOTION.enterRadius);
+  }
+  for (const hotspot of visualCues.hotspots || []) {
+    consider({
+      kind: 'hotspot',
+      id: hotspot.id,
+      label: hotspot.label,
+      command: hotspot.command,
+      description: hotspot.preview ?? hotspot.description ?? `Risk ${hotspot.risk ?? 1}`,
+      risk: hotspot.risk
+    }, hotspot.position, LOCOMOTION.hotspotRadius);
+  }
+  for (const loc of visualCues.locations || []) {
+    for (const agent of loc.agents || []) {
+      consider({
+        kind: 'agent',
+        id: agent.id,
+        label: agent.name,
+        commands: agent.commands,
+        description: agent.role || 'district agent'
+      }, agent.position, LOCOMOTION.agentRadius);
+    }
+  }
+  return best;
+}
+
+function updateProximityHint() {
+  activeProximityMeta = nearestProximityMeta();
+  if (!hintEl) return;
+  if (!activeProximityMeta || walkAnimation) {
+    hintEl.textContent = '';
+    hintEl.classList.remove('visible');
+    return;
+  }
+  hintEl.textContent = `E - ${activeProximityMeta.kind === 'agent' ? 'Talk to' : 'Use'} ${activeProximityMeta.label}`;
+  hintEl.classList.add('visible');
+}
+
+function updateLocalLocomotion(dt) {
+  if (walkAnimation || !staticPlayerGroup || !visualCues) return;
+  const step = Math.min(dt, LOCOMOTION.maxDeltaSec);
+  const dir = inputDirection();
+  const maxSpeed = keyState.sprint ? LOCOMOTION.sprintSpeed : LOCOMOTION.walkSpeed;
+  const previous = localPlayerPosition.clone();
+
+  if (dir) {
+    const targetX = dir.x * maxSpeed;
+    const targetZ = dir.z * maxSpeed;
+    const accel = LOCOMOTION.acceleration * step;
+    localVelocity.x += Math.max(-accel, Math.min(accel, targetX - localVelocity.x));
+    localVelocity.z += Math.max(-accel, Math.min(accel, targetZ - localVelocity.z));
+    localFacing = Math.atan2(dir.x, dir.z);
+  } else {
+    const damp = Math.exp(-LOCOMOTION.deceleration * step);
+    localVelocity.multiplyScalar(damp);
+    if (Math.hypot(localVelocity.x, localVelocity.z) < 0.04) localVelocity.set(0, 0, 0);
+  }
+
+  const [nx, nz] = clampLocalPosition(
+    localPlayerPosition.x + localVelocity.x * step,
+    localPlayerPosition.z + localVelocity.z * step
+  );
+  localPlayerPosition.set(nx, LOCOMOTION.playerRadius * 0.25, nz);
+  staticPlayerGroup.position.copy(localPlayerPosition);
+  staticPlayerGroup.rotation.y = localFacing;
+
+  const delta = localPlayerPosition.clone().sub(previous);
+  if (delta.lengthSq() > 0) {
+    camera.position.add(delta);
+    controls.target.add(delta);
+  }
 }
 
 function buildGround(env) {
@@ -287,13 +524,13 @@ function buildLocations(locations) {
       id: loc.id,
       label: loc.label,
       command: loc.command,
-      description: `${loc.zone} · ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`
+      description: `${loc.zone} | ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`
     });
 
     const labelHeight = shouldUseGltfBuilding(loc.modelUrl)
       ? (loc.footprint?.[1] ?? BILLBOARD_H) + 0.8
       : BILLBOARD_H + 0.8;
-    const label = makeLabel(loc.label + (loc.isPlayerHere ? ' ★' : ''));
+    const label = makeLabel(loc.label + (loc.isPlayerHere ? ' *' : ''));
     label.position.set(px, labelHeight, pz);
     worldGroup.add(label);
 
@@ -465,6 +702,9 @@ function buildPlayer(player) {
   } else {
     buildCapsuleBody(staticPlayerGroup, '#fbbf24', '#f59e0b');
   }
+  localPlayerPosition.set(x, y, z);
+  localVelocity.set(0, 0, 0);
+  localFacing = 0;
   worldGroup.add(staticPlayerGroup);
 }
 
@@ -566,16 +806,60 @@ async function refreshState() {
   playerSnapshot = res.body.playerSnapshot;
   if (res.body.visualCues) applyVisualCues(res.body.visualCues);
   setHud();
+  renderQuestHud();
+}
+
+function findMajorDecision(commandText) {
+  const normalized = String(commandText || '').trim().toLowerCase();
+  if (!normalized) return null;
+  return (gameShell?.majorDecisions || []).find((decision) => {
+    const command = String(decision.command || '').trim().toLowerCase();
+    return command && (normalized === command || normalized.startsWith(`${command} `));
+  }) ?? null;
+}
+
+async function maybeBranchBefore(commandText) {
+  if (!liveMode) return;
+  const decision = findMajorDecision(commandText);
+  if (!decision?.branchSuggested) return;
+  const shouldBranch = window.confirm(`Major decision: ${decision.label || decision.id}\n\nCreate a save branch before continuing?`);
+  if (!shouldBranch) return;
+  const save = await api('POST', '/api/save', { note: `Before: ${commandText}` });
+  const snapshotId = save.body?.snapshotId;
+  if (!snapshotId) return;
+  await api('POST', '/api/branch', {
+    name: `before-${decision.id || 'decision'}`,
+    snapshotId,
+    note: decision.label || commandText
+  });
+  showBanner(`Branch saved: before-${decision.id || 'decision'}`);
+}
+
+function unlockAudio() {
+  audioUnlocked = true;
+}
+
+function playAudioCues(cues = []) {
+  if (!audioUnlocked || !Array.isArray(cues)) return;
+  for (const cue of cues) {
+    const src = resolveAssetUrl(cue.path);
+    if (!src) continue;
+    const audio = new Audio(src);
+    audio.volume = cue.kind === 'walk_start' ? 0.28 : 0.42;
+    audio.play().catch(() => {});
+  }
 }
 
 async function runCommand(text) {
   const cmd = String(text || '').trim();
   if (!cmd) return;
+  unlockAudio();
   if (!liveMode) {
-    outputEl.textContent = `Offline — start play-server. Would run: ${cmd}`;
+    outputEl.textContent = `Offline - start play-server. Would run: ${cmd}`;
     return;
   }
-  outputEl.textContent = 'Running…';
+  outputEl.textContent = 'Running...';
+  await maybeBranchBefore(cmd);
   const res = await api('POST', '/api/command', { text: cmd });
   if (res.status !== 200 || !res.body.ok) {
     outputEl.textContent = res.body.error || 'Command failed';
@@ -585,12 +869,17 @@ async function runCommand(text) {
   if (result.gameShell) gameShell = result.gameShell;
   if (result.playerSnapshot) playerSnapshot = result.playerSnapshot;
   setHud();
+  renderQuestHud();
+  playAudioCues(result.audioCues);
 
   const lines = [result.text || res.body.text || 'Done'];
   if (result.consequenceBeat?.summary) lines.push(result.consequenceBeat.summary);
+  if (result.dialogue?.message) lines.push(result.dialogue.message);
+  if (result.leno?.summary) lines.push(`Leno: ${result.leno.summary}`);
+  if (result.majorDecisionPrompt?.label) lines.push(`Major decision: ${result.majorDecisionPrompt.label}`);
   outputEl.textContent = lines.join('\n\n');
   commandInput.value = '';
-  showBanner(`✓ ${cmd}`);
+  showBanner(`OK ${cmd}`);
 
   if (result.walkAnimation?.waypoints?.length) {
     const stateRes = await api('GET', '/api/state');
@@ -623,6 +912,48 @@ form.addEventListener('submit', (e) => {
   void runCommand(commandInput.value);
 });
 
+function setMovementKey(code, value) {
+  if (code === 'KeyW' || code === 'ArrowUp') keyState.forward = value;
+  else if (code === 'KeyS' || code === 'ArrowDown') keyState.back = value;
+  else if (code === 'KeyA' || code === 'ArrowLeft') keyState.left = value;
+  else if (code === 'KeyD' || code === 'ArrowRight') keyState.right = value;
+  else if (code === 'ShiftLeft' || code === 'ShiftRight') keyState.sprint = value;
+  else return false;
+  return true;
+}
+
+function runPrimaryProximityAction() {
+  if (!activeProximityMeta || walkAnimation) return;
+  selectMeta(activeProximityMeta);
+  if (activeProximityMeta.kind === 'agent') {
+    void runCommand(activeProximityMeta.commands?.talk);
+  } else {
+    void runCommand(activeProximityMeta.command);
+  }
+}
+
+window.addEventListener('keydown', (event) => {
+  if (isTypingTarget(event.target)) return;
+  if (event.code === 'KeyE' || event.code === 'Enter') {
+    event.preventDefault();
+    if (!event.repeat) runPrimaryProximityAction();
+    return;
+  }
+  if (setMovementKey(event.code, true)) {
+    event.preventDefault();
+    unlockAudio();
+  }
+});
+
+window.addEventListener('keyup', (event) => {
+  if (setMovementKey(event.code, false)) event.preventDefault();
+});
+
+window.addEventListener('blur', () => {
+  Object.keys(keyState).forEach((key) => { keyState[key] = false; });
+  localVelocity.set(0, 0, 0);
+});
+
 canvas.addEventListener('pointerdown', onPointerDown);
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -649,8 +980,14 @@ function tickIdleAgentAnimations(now) {
 function animate(now) {
   requestAnimationFrame(animate);
   const frameNow = now ?? performance.now();
+  const dt = Math.max(0, (frameNow - lastFrameMs) / 1000);
+  lastFrameMs = frameNow;
   if (walkAnimation) tickWalkAnimation(frameNow);
-  else controls.update();
+  else {
+    updateLocalLocomotion(dt);
+    controls.update();
+  }
+  updateProximityHint();
   tickIdleAgentAnimations(frameNow);
   renderer.render(scene, camera);
 }
@@ -660,21 +997,21 @@ async function boot() {
     const health = await api('GET', '/api/health');
     if (health.status === 200 && health.body.ok) {
       liveMode = true;
-      showBanner(`Live · API ${health.body.apiVersion || '1.0.0'}`, 4000);
+      showBanner(`Live | API ${health.body.apiVersion || '1.0.0'}`, 4000);
       await refreshState();
     } else {
       throw new Error('no api');
     }
   } catch {
     liveMode = false;
-    showBanner('Start: npm run play:server — then open /3d.html', 8000);
+    showBanner('Start: npm run play:server - then open /3d.html', 8000);
     applyVisualCues({
       kind: 'worldmind_3d_visual_cues',
       version: 1,
       environment: {},
       camera: { target: [0, 1.5, 0] },
       locations: [
-        { id: 'cafe', label: 'Café', zone: 'social', position: [-2, 0, 0], scale: [2.5, 3, 2.5], color: '#c97b3d', command: 'move cafe', agents: [] },
+        { id: 'cafe', label: 'Cafe', zone: 'social', position: [-2, 0, 0], scale: [2.5, 3, 2.5], color: '#c97b3d', command: 'move cafe', agents: [] },
         { id: 'market', label: 'Market', zone: 'commerce', position: [4, 0, -2], scale: [2.5, 2.8, 2.5], color: '#14b8a6', command: 'move market', agents: [] },
         { id: 'workshop', label: 'Workshop', zone: 'industrial', position: [3, 0, 4], scale: [2.5, 2.6, 2.5], color: '#6b7280', command: 'move workshop', agents: [] },
         { id: 'apartment', label: 'Apartment', zone: 'residential', position: [-5, 0, -4], scale: [2.2, 2.2, 2.2], color: '#4a6fa5', command: 'move apartment', agents: [] }

@@ -1,7 +1,7 @@
 {
   "id": "the-missing-delivery",
   "title": "The Missing Delivery",
-  "status": "production_placeholder_ready",
+  "status": "playable_3d_ready",
   "district": "new-aarhus-district-01",
   "themes": [
     "trust",
@@ -17,7 +17,10 @@
     "relationships",
     "Leno",
     "saves",
-    "branches"
+    "branches",
+    "Play API",
+    "3D district client",
+    "progression"
   ],
-  "artStatus": "qa-v3 placeholder complete; final hand art optional"
+  "artStatus": "3D GLB district models, character bodies, scene cards, item icons and audio cues wired for playable prototype"
 }

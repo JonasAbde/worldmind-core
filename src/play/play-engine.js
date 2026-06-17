@@ -98,7 +98,89 @@ export function getDemoPaths() {
   return DEMO_PATHS;
 }
 
-export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {}) {
+function placeAgentAtLocation(world, agentId, locationId) {
+  const agent = world.agents?.[agentId];
+  if (!agent || !world.locations?.[locationId]) return;
+  const oldLocationId = agent.locationId;
+  if (oldLocationId && world.locations?.[oldLocationId]?.agentsPresent) {
+    world.locations[oldLocationId].agentsPresent = world.locations[oldLocationId].agentsPresent
+      .filter((id) => id !== agentId);
+  }
+  agent.locationId = locationId;
+  if (!world.locations[locationId].agentsPresent.includes(agentId)) {
+    world.locations[locationId].agentsPresent.push(agentId);
+  }
+}
+
+function seedPlayableMissingDelivery(world) {
+  placeAgentAtLocation(world, 'player', 'cafe');
+
+  world.playerKnowledge = {
+    evidenceIds: [],
+    knownRumorIds: [],
+    suspectedCauses: [],
+    unresolvedQuestions: ['What happened to Sara\'s delivery?']
+  };
+
+  world.incidents.missing_delivery = {
+    id: 'missing_delivery',
+    title: 'The Missing Delivery',
+    status: 'active',
+    visibleProblem: 'Sara\'s cafe is short on supplies after a failed delivery, and a false rumor is damaging trust.',
+    hiddenCause: 'Nadia planted a misleading rumor to destabilize Sara and Malik.',
+    resolutionState: 'unresolved',
+    knownFacts: ['Sara is low on supplies.', 'The market is carrying a rumor about the failed delivery.'],
+    involvedAgentIds: ['sara', 'malik', 'nadia', 'rune'],
+    createdAtTick: world.tick ?? 0
+  };
+
+  if (!Object.values(world.rumors || {}).some((r) => r.sourceAgentId === 'nadia')) {
+    executeAction(world, {
+      actorId: 'nadia',
+      actionId: 'spread_rumor',
+      claim: 'Sara may have caused the missing delivery herself.',
+      targetAgentIds: ['sara'],
+      truthLevel: 65,
+      emotionalTone: 'suspicion'
+    });
+  }
+
+  if (world.agents?.rune?.relationships?.player) {
+    world.agents.rune.relationships.player.trust = Math.max(
+      world.agents.rune.relationships.player.trust ?? 0,
+      5
+    );
+  }
+
+  world.questProgress = {
+    questId: 'quest_missing_delivery',
+    completedSteps: [],
+    resolvedPathId: null
+  };
+
+  world.founder = {
+    unlocked: false,
+    baseLevel: 0,
+    reputation: world.agents?.player?.stats?.reputation ?? 0,
+    contractsCompleted: 0,
+    activeContract: null
+  };
+
+  world.progression = createInitialProgression();
+
+  world.addEvent({
+    type: 'incident_detected',
+    locationId: 'cafe',
+    actorIds: ['player', 'sara'],
+    description: 'The Missing Delivery is active: Sara needs supplies, trust is falling, and rumors are spreading.',
+    public: true,
+    visibleToAgentIds: ['player', 'sara', 'malik', 'rune', 'amina'],
+    importance: 5,
+    payload: { incidentId: 'missing_delivery' }
+  });
+}
+
+export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, playStart = true } = {}) {
   const world = runSimulation({
     days,
     scenarioPath,
@@ -113,6 +195,8 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 1 } = {
       unresolvedQuestions: []
     };
   }
+  if (playStart && days === 0) seedPlayableMissingDelivery(world);
+
   // Tag the player with a stable locationId so move/inspect/talk work.
   if (world.agents.player && !world.agents.player.locationId) {
     world.agents.player.locationId = 'cafe';
@@ -218,8 +302,27 @@ function resolveLocation(world, name) {
 }
 
 function resolveRumor(world, name) {
-  if (!name) return null;
+  const firstKnownRuntimeRumor = () => {
+    const known = world.playerKnowledge?.knownRumorIds ?? [];
+    return known.find((id) => world.rumors?.[id])
+      ?? Object.keys(world.rumors || {})[0]
+      ?? null;
+  };
+
+  const resolvePackRumorToRuntime = (packRumorId) => {
+    const pack = getContentPack();
+    const packRumor = pack?.rumors?.find((r) => r.id === packRumorId);
+    if (!packRumor?.claim) return null;
+    const normalizedClaim = String(packRumor.claim).trim().toLowerCase();
+    return Object.values(world.rumors || {}).find((r) =>
+      String(r.claim ?? '').trim().toLowerCase() === normalizedClaim
+    )?.id ?? null;
+  };
+
+  if (!name) return firstKnownRuntimeRumor();
   if (world.rumors[name]) return name;
+  const fromPack = resolvePackRumorToRuntime(name);
+  if (fromPack) return fromPack;
   for (const r of Object.values(world.rumors)) {
     if (r.id === name) return r.id;
   }
@@ -262,7 +365,7 @@ export function parseCommandText(text) {
   const trimmed = text.trim();
   if (!trimmed) return null;
   const tokens = trimmed.split(/\s+/);
-  const head = tokens[0].toLowerCase();
+  let head = tokens[0].toLowerCase();
   const rest = tokens.slice(1);
   switch (head) {
     case 'look':

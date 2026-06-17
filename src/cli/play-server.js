@@ -509,7 +509,7 @@ async function handleEvents(req, res, urlObj) {
 async function handleDemoPath(req, res, name) {
   ensureBoot();
   const paths = getDemoPaths();
-  if (!paths[name]) return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });
+  if (!paths.some((p) => p.name === name)) return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });
   // Run scripted path on a copy so it doesn't mutate the live world
   const copy = JSON.parse(JSON.stringify(world));
   const result = resolveCommand; // imported

@@ -2,24 +2,37 @@
   "episodeId": "the-missing-delivery",
   "steps": [
     {
-      "id": "observe",
-      "label": "Observe the area",
-      "command": "look"
+      "id": "inspect_delivery_gap",
+      "label": "Inspect Sara's missing delivery crate",
+      "locationId": "cafe",
+      "command": "inspect cafe cafe_delivery_crate"
     },
     {
-      "id": "inspect",
-      "label": "Inspect local evidence",
-      "command": "inspect"
+      "id": "hear_market_rumor",
+      "label": "Listen for the market rumor chain",
+      "locationId": "market",
+      "command": "listen_rumors market"
     },
     {
-      "id": "talk",
-      "label": "Talk to affected agents",
-      "command": "talk"
+      "id": "ask_rune",
+      "label": "Ask Rune about Nadia without exposing hidden truth early",
+      "locationId": "market",
+      "command": "ask rune nadia"
     },
     {
-      "id": "choose_path",
-      "label": "Choose resolution path",
-      "command": "choose_path"
+      "id": "trace_source",
+      "label": "Trace the rumor source from evidence",
+      "locationId": "market",
+      "command": "trace_rumor"
+    },
+    {
+      "id": "choose_resolution",
+      "label": "Resolve through mediation, counter-rumor, or founder negotiation",
+      "commands": [
+        "pay malik 5",
+        "counter_rumor",
+        "pay malik 15"
+      ]
     }
   ]
 }

@@ -6,7 +6,8 @@
       "id": "rumor_missing_delivery_blame",
       "claim": "Sara may have caused the missing delivery herself.",
       "truthLevel": "false_or_misleading",
-      "sourceEvidenceId": "rumor_source_nadia"
+      "sourceEvidenceId": "rumor_source_nadia",
+      "hiddenSourceEvidenceId": "rumor_source_nadia"
     },
     {
       "id": "rumor_signal_coverup",

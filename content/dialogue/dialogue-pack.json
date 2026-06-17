@@ -27,28 +27,24 @@
       "agentId": "amina",
       "topic": "mediation",
       "tone": "calm",
-      "line": "People aren't angry at the noise. They're angry at the silence.",
+      "line": "Sara and Malik do not need a public trial. Bring them both a practical offer and I can keep this peaceful.",
       "unlocks": []
     },
     {
       "id": "dialogue_malik_data",
       "agentId": "malik",
-      "topic": "signals",
+      "topic": "delivery",
       "tone": "focused",
-      "line": "The interference isn't random. Something is masking a signal.",
-      "unlocks": [
-        "signal_interference_log"
-      ]
+      "line": "The route failed because trust failed. If you cover the risk, I can move a replacement crate.",
+      "unlocks": []
     },
     {
       "id": "dialogue_nadia_economy",
       "agentId": "nadia",
       "topic": "market",
       "tone": "guarded",
-      "line": "Data doesn't lie, but systems do. We build better ones.",
-      "unlocks": [
-        "market_pressure_note"
-      ]
+      "line": "Everyone in the market edits the truth a little. Prove something before you make accusations.",
+      "unlocks": []
     }
   ]
 }

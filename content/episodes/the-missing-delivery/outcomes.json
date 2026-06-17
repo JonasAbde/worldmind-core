@@ -2,27 +2,30 @@
   "episodeId": "the-missing-delivery",
   "outcomes": [
     {
-      "id": "low_risk_success",
-      "label": "Trust restored",
+      "id": "peaceful_mediation",
+      "label": "Peaceful mediation restores trust",
       "impact": {
-        "districtTrust": "+",
+        "districtInfluence": "+8",
+        "saraTrust": "+",
         "publicConcern": "-"
       }
     },
     {
-      "id": "truth_revealed",
-      "label": "Facts revealed",
+      "id": "investigation_and_counter_rumor",
+      "label": "Evidence-backed counter-rumor protects Sara",
       "impact": {
         "evidence": "+",
-        "rumors": "-"
+        "rumorSpread": "-",
+        "hiddenTruthExposure": "evidence-gated"
       }
     },
     {
-      "id": "high_authority_resolution",
-      "label": "Systemic intervention",
+      "id": "founder_negotiation",
+      "label": "Founder negotiation opens the delivery business loop",
       "impact": {
-        "policy": "+",
-        "communityTrust": "variable"
+        "money": "-15 upfront",
+        "founderLoop": "unlocked",
+        "districtInfluence": "+6"
       }
     }
   ]
