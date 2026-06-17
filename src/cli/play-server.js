@@ -551,7 +551,16 @@ async function handleEvents(req, res, urlObj) {
 async function handleDemoPath(req, res, name) {
   ensureBoot();
   const paths = getDemoPaths();
-  if (!paths.some((p) => p.name === name)) return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });
+  // Accept both short and canonical names.
+  const ALIAS = {
+    peaceful: 'peaceful_mediation',
+    investigation: 'investigation_and_counter_rumor',
+    founder: 'founder_negotiation'
+  };
+  const canonicalName = ALIAS[name] || name;
+  if (!paths.some((p) => p.name === canonicalName)) {
+    return jsonResponse(req, res, 404, { ok: false, error: 'unknown demo path' });
+  }
   // Run scripted path on a copy so it doesn't mutate the live world
   const copy = JSON.parse(JSON.stringify(world));
   const result = resolveCommand; // imported
@@ -560,9 +569,9 @@ async function handleDemoPath(req, res, name) {
   // For simplicity, execute against a copy via the engine's helper:
   const runScripted = (await import('../play/play-engine.js')).runScriptedPath;
   const freshWorld = (await import('../play/play-engine.js')).bootstrapWorld({ scenarioPath: DEFAULT_SCENARIO });
-  const steps = runScripted(freshWorld, name);
-  recordEvents([{ type: 'demo.path', message: `Ran demo path ${name}` }]);
-  jsonResponse(req, res, 200, { ok: true, path: name, steps, world: redactWorldState(freshWorld) });
+  const steps = runScripted(freshWorld, canonicalName);
+  recordEvents([{ type: 'demo.path', message: `Ran demo path ${canonicalName}` }]);
+  jsonResponse(req, res, 200, { ok: true, path: canonicalName, steps, world: redactWorldState(freshWorld) });
 }
 
 // ---------------------------------------------------------------------------

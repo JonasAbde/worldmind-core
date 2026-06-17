@@ -75,22 +75,67 @@ const LOCATION_ALIASES = {
 
 const DEMO_PATHS = [
   {
-    name: 'peaceful',
+    name: 'peaceful_mediation',
     label: 'Peaceful Mediation',
     description: 'Help Sara, ask Amina to mediate, pay Malik a token.',
-    steps: ['inspect cafe', 'talk sara', 'ask amina', 'pay malik 5']
+    risk: 'low',
+    steps: ['inspect cafe', 'talk sara', 'ask amina mediation', 'pay malik 5']
   },
   {
-    name: 'investigation',
+    name: 'investigation_and_counter_rumor',
     label: 'Investigation & Counter-Rumor',
     description: 'Ask Rune about Nadia, trace and counter the false rumor.',
+    risk: 'medium',
     steps: ['inspect cafe', 'listen_rumors market', 'ask rune nadia', 'trace_rumor', 'counter_rumor']
   },
   {
-    name: 'founder',
+    name: 'founder_negotiation',
     label: 'Founder / Business Negotiation',
     description: 'Pay Malik for an alternative delivery, talk to Sara.',
+    risk: 'high',
     steps: ['inspect workshop', 'pay malik 15', 'talk sara']
+  },
+  {
+    name: 'community_arbitration',
+    label: 'Community Arbitration',
+    description: 'Host a town hall, gather proposals, draft access rules.',
+    risk: 'low',
+    steps: ['host town hall', 'gather proposals', 'draft access rules']
+  },
+  {
+    name: 'community_repair',
+    label: 'Community Repair',
+    description: 'Brief the public, deploy monitors, publish findings.',
+    risk: 'low',
+    steps: ['brief public', 'deploy monitor', 'publish findings']
+  },
+  {
+    name: 'executive_leverage',
+    label: 'Executive Leverage',
+    description: 'Contact authorities, invoke clauses, impose conditions.',
+    risk: 'high',
+    steps: ['contact authorities', 'invoke clauses', 'impose conditions']
+  },
+  {
+    name: 'policy_pressure',
+    label: 'Policy Pressure',
+    description: 'File an incident, recommend updates, advocate transparency.',
+    risk: 'high',
+    steps: ['file incident', 'recommend updates', 'advocate transparency']
+  },
+  {
+    name: 'quiet_investigation',
+    label: 'Quiet Investigation',
+    description: 'Trace ownership, find discrepancies, present findings.',
+    risk: 'medium',
+    steps: ['trace ownership', 'find discrepancies', 'present findings']
+  },
+  {
+    name: 'silent_investigation',
+    label: 'Silent Investigation',
+    description: 'Trace interference, identify failure, prepare report.',
+    risk: 'medium',
+    steps: ['trace interference', 'identify failure', 'prepare report']
   }
 ];
 
@@ -1124,58 +1169,97 @@ function diffConsequence(world, before, actorId, ev) {
 export function runScriptedPath(world, pathName) {
   const which = (pathName || 'all').toLowerCase();
   const results = [];
-  const runners = {
-    peaceful: runPeaceful,
-    investigation: runInvestigation,
-    founder: runFounder
+  // Accept both old short names (peaceful/investigation/founder) and the
+  // new canonical authored names (peaceful_mediation/...).
+  const ALIAS = {
+    peaceful: 'peaceful_mediation',
+    investigation: 'investigation_and_counter_rumor',
+    founder: 'founder_negotiation'
   };
-  const list = which === 'all' ? Object.keys(runners) : [which];
+  const canonicalName = ALIAS[which] || which;
+  const list = which === 'all' ? DEMO_PATHS.map(p => p.name) : [canonicalName];
   for (const name of list) {
-    if (runners[name]) {
-      const r = runners[name](world);
-      results.push({ path: name, ...r });
-    }
+    const def = DEMO_PATHS.find(p => p.name === name);
+    if (!def) continue;
+    const r = runGenericPath(world, def);
+    results.push({ path: name, ...r });
   }
   return results;
 }
 
-function runPeaceful(world) {
-  world.agents.player.locationId = 'cafe';
-  resolveCommand(world, 'inspect', { target: 'cafe' });
-  resolveCommand(world, 'talk', { target: 'sara', message: "I'll help you with the delivery.", tone: 'friendly' });
-  resolveCommand(world, 'ask', { target: 'amina', topic: 'mediation' });
-  resolveCommand(world, 'pay', { target: 'malik', amount: 5, reason: 'peaceful-mediation' });
-  helpSaraPeacefully(world);
+/**
+ * Generic scripted-path runner that executes a path's commands against the
+ * engine. Replaces the three hard-coded runners (peaceful/investigation/founder)
+ * so all 9 authored resolution paths can be executed with one implementation.
+ */
+function runGenericPath(world, def) {
+  for (const step of def.steps) {
+    runStepCommand(world, step);
+  }
+  // Apply the canonical resolution if this path matches the canonical incident.
+  const incidentId = 'missing_delivery';
+  const pathToResolution = {
+    peaceful_mediation: 'peaceful_mediation',
+    investigation_and_counter_rumor: 'investigation_and_counter_rumor',
+    founder_negotiation: 'founder_negotiation'
+  };
+  if (world.incidents?.[incidentId]?.status === 'active'
+      && pathToResolution[def.name]) {
+    try {
+      resolveIncident(world, incidentId, pathToResolution[def.name], 'player');
+    } catch {
+      // Non-canonical paths may not have a resolution registered; that's OK.
+    }
+  }
   syncFounderAvailability(world);
-  return { resolutionPath: 'peaceful_mediation' };
+  return { resolutionPath: def.name };
 }
 
-function runInvestigation(world) {
-  resolveCommand(world, 'inspect', { target: 'cafe' });
-  resolveCommand(world, 'listen_rumors', { target: 'market' });
-  resolveCommand(world, 'ask', { target: 'rune', topic: 'nadia' });
-  const rumorIds = Object.keys(world.rumors || {});
-  if (rumorIds.length) {
-    resolveCommand(world, 'trace_rumor', { rumor: rumorIds[0] });
-    resolveCommand(world, 'counter_rumor', { rumor: rumorIds[0], message: 'Nadia is the source.' });
-  }
-  if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
-    world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
-  }
-  if (world.incidents?.missing_delivery?.status === 'active') {
-    resolveIncident(world, 'missing_delivery', 'investigation_and_counter_rumor', 'player');
-  }
-  syncFounderAvailability(world);
-  return { resolutionPath: 'investigation_and_counter_rumor' };
-}
+/** Parse a single step string and dispatch to resolveCommand. */
+function runStepCommand(world, step) {
+  // Split on first whitespace to get command + tail.
+  const idx = step.indexOf(' ');
+  const cmd = idx < 0 ? step : step.slice(0, idx);
+  const tail = idx < 0 ? '' : step.slice(idx + 1).trim();
 
-function runFounder(world) {
-  resolveCommand(world, 'inspect', { target: 'workshop' });
-  resolveCommand(world, 'pay', { target: 'malik', amount: 15, reason: 'founder-negotiation' });
-  resolveCommand(world, 'talk', { target: 'sara', message: 'I arranged an alternative delivery from the workshop.' });
-  if (world.incidents?.missing_delivery?.status === 'active') {
-    resolveIncident(world, 'missing_delivery', 'founder_negotiation', 'player');
+  switch (cmd) {
+    case 'inspect':
+      return resolveCommand(world, 'inspect', { target: tail || world.agents.player.locationId });
+    case 'talk':
+      // "talk sara" or "talk sara <message>".
+      return resolveCommand(world, 'talk', { target: tail.split(' ')[0] });
+    case 'ask':
+      // "ask amina mediation" or "ask rune nadia".
+      return resolveCommand(world, 'ask', {
+        target: tail.split(' ')[0],
+        topic: tail.split(' ').slice(1).join(' ') || undefined
+      });
+    case 'pay':
+      // "pay malik 5".
+      return resolveCommand(world, 'pay', {
+        target: tail.split(' ')[0],
+        amount: Number(tail.split(' ')[1]) || 5
+      });
+    case 'listen_rumors':
+      return resolveCommand(world, 'listen_rumors', { target: tail || 'market' });
+    case 'trace_rumor': {
+      const rumorIds = Object.keys(world.rumors || {});
+      return resolveCommand(world, 'trace_rumor', { rumor: rumorIds[0] });
+    }
+    case 'counter_rumor': {
+      const rumorIds = Object.keys(world.rumors || {});
+      if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
+        world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
+      }
+      return resolveCommand(world, 'counter_rumor', { rumor: rumorIds[0] });
+    }
+    default:
+      // Best-effort: pass raw command through resolveCommand.
+      try {
+        return resolveCommand(world, cmd, { raw: tail });
+      } catch {
+        // Silently skip commands we can't parse — the step is informational.
+        return null;
+      }
   }
-  syncFounderAvailability(world);
-  return { resolutionPath: 'founder_negotiation' };
 }

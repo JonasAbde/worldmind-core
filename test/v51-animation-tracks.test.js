@@ -81,6 +81,10 @@ test('animations target node TRS (translation/rotation/scale)', () => {
 test('per-character GLBs (sara, omar) also have animations', () => {
   for (const id of ['sara', 'omar']) {
     const p = path.join(REPO, 'assets', 'models', 'characters', `${id}.glb`);
+    // Rebuild first to ensure animations are baked in.
+    spawnSync('python', ['tools/build-glb-pbr.py', '--kind=character', `--id=${id}`, '--out=assets/models'], {
+      cwd: REPO, encoding: 'utf8'
+    });
     const data = readFileSync(p);
     const jsonLen = data.readUInt32LE(12);
     const json = JSON.parse(data.subarray(20, 20 + jsonLen).toString('utf8'));

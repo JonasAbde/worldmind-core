@@ -2553,20 +2553,22 @@
   },
   "demoPaths": [
     {
-      "name": "peaceful",
+      "name": "peaceful_mediation",
       "label": "Peaceful Mediation",
       "description": "Help Sara, ask Amina to mediate, pay Malik a token.",
+      "risk": "low",
       "steps": [
         "inspect cafe",
         "talk sara",
-        "ask amina",
+        "ask amina mediation",
         "pay malik 5"
       ]
     },
     {
-      "name": "investigation",
+      "name": "investigation_and_counter_rumor",
       "label": "Investigation & Counter-Rumor",
       "description": "Ask Rune about Nadia, trace and counter the false rumor.",
+      "risk": "medium",
       "steps": [
         "inspect cafe",
         "listen_rumors market",
@@ -2576,13 +2578,80 @@
       ]
     },
     {
-      "name": "founder",
+      "name": "founder_negotiation",
       "label": "Founder / Business Negotiation",
       "description": "Pay Malik for an alternative delivery, talk to Sara.",
+      "risk": "high",
       "steps": [
         "inspect workshop",
         "pay malik 15",
         "talk sara"
+      ]
+    },
+    {
+      "name": "community_arbitration",
+      "label": "Community Arbitration",
+      "description": "Host a town hall, gather proposals, draft access rules.",
+      "risk": "low",
+      "steps": [
+        "host town hall",
+        "gather proposals",
+        "draft access rules"
+      ]
+    },
+    {
+      "name": "community_repair",
+      "label": "Community Repair",
+      "description": "Brief the public, deploy monitors, publish findings.",
+      "risk": "low",
+      "steps": [
+        "brief public",
+        "deploy monitor",
+        "publish findings"
+      ]
+    },
+    {
+      "name": "executive_leverage",
+      "label": "Executive Leverage",
+      "description": "Contact authorities, invoke clauses, impose conditions.",
+      "risk": "high",
+      "steps": [
+        "contact authorities",
+        "invoke clauses",
+        "impose conditions"
+      ]
+    },
+    {
+      "name": "policy_pressure",
+      "label": "Policy Pressure",
+      "description": "File an incident, recommend updates, advocate transparency.",
+      "risk": "high",
+      "steps": [
+        "file incident",
+        "recommend updates",
+        "advocate transparency"
+      ]
+    },
+    {
+      "name": "quiet_investigation",
+      "label": "Quiet Investigation",
+      "description": "Trace ownership, find discrepancies, present findings.",
+      "risk": "medium",
+      "steps": [
+        "trace ownership",
+        "find discrepancies",
+        "present findings"
+      ]
+    },
+    {
+      "name": "silent_investigation",
+      "label": "Silent Investigation",
+      "description": "Trace interference, identify failure, prepare report.",
+      "risk": "medium",
+      "steps": [
+        "trace interference",
+        "identify failure",
+        "prepare report"
       ]
     }
   ],

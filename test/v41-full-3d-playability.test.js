@@ -100,10 +100,10 @@ test('v41: default play boot starts before The Missing Delivery is solved', () =
 test('v41: play-server demo path endpoint resolves named paths', async () => {
   const { child, port } = await startServer(0);
   try {
-    const res = await fetchJson(port, '/api/demo/path/investigation');
+    const res = await fetchJson(port, '/api/demo/path/investigation_and_counter_rumor');
     assert.equal(res.status, 200);
     assert.equal(res.json.ok, true);
-    assert.equal(res.json.path, 'investigation');
+    assert.equal(res.json.path, 'investigation_and_counter_rumor');
     assert.ok(Array.isArray(res.json.steps));
   } finally {
     child.kill();
