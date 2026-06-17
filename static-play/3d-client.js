@@ -10,6 +10,10 @@ const banner = document.getElementById('wm-3d-banner');
 const selectionMedia = document.getElementById('wm-3d-selection-media');
 const selectionTitle = document.getElementById('wm-3d-selection-title');
 const selectionDesc = document.getElementById('wm-3d-selection-desc');
+const sceneMedia = document.getElementById('wm-3d-scene-media');
+const sceneTitle = document.getElementById('wm-3d-scene-title');
+const sceneMeta = document.getElementById('wm-3d-scene-meta');
+const sceneActions = document.getElementById('wm-3d-scene-actions');
 const actionsEl = document.getElementById('wm-3d-actions');
 const outputEl = document.getElementById('wm-3d-output');
 const commandInput = document.getElementById('wm-3d-command');
@@ -231,6 +235,59 @@ function renderIntelHud() {
   renderChipRow(evidenceEl, playerKnowledge?.evidenceIds, 'No evidence yet');
   renderChipRow(rumorsEl, playerKnowledge?.knownRumorIds, 'No rumors heard');
   renderLenoActions();
+}
+
+function currentLocationCue() {
+  const id = playerLocationId();
+  return (visualCues?.locations || []).find((loc) => loc.id === id)
+    || (visualCues?.locations || []).find((loc) => loc.isPlayerHere)
+    || null;
+}
+
+function renderSceneHud() {
+  if (!sceneMedia || !sceneTitle || !sceneMeta || !sceneActions) return;
+  const loc = currentLocationCue();
+  if (!loc) {
+    sceneTitle.textContent = 'Current scene';
+    sceneMeta.innerHTML = '<span class="wm-chip empty">No live scene loaded</span>';
+    sceneActions.innerHTML = '';
+    return;
+  }
+  const sceneImage = visualCues?.interior?.sceneTexture || loc.sceneTexture;
+  sceneMedia.src = resolveAssetUrl(preferredWebp(sceneImage)) || '/assets/locations/cafe.webp';
+  sceneMedia.alt = loc.label || 'Current scene';
+  sceneTitle.textContent = loc.label || 'Current scene';
+
+  const cast = (loc.agents || [])
+    .filter((agent) => agent.id !== 'player')
+    .map((agent) => agent.name || agent.id)
+    .slice(0, 5);
+  const hotspots = visualCues?.interior?.hotspots || [];
+  const chips = [
+    `<span class="wm-chip">${escapeText(loc.zone || 'district')}</span>`,
+    cast.length
+      ? `<span class="wm-chip">${escapeText(`Cast: ${cast.join(', ')}`)}</span>`
+      : '<span class="wm-chip empty">No NPCs in scene</span>',
+    hotspots.length
+      ? `<span class="wm-chip">${escapeText(`${hotspots.length} hotspot${hotspots.length === 1 ? '' : 's'}`)}</span>`
+      : '<span class="wm-chip empty">No hotspots</span>'
+  ];
+  sceneMeta.innerHTML = chips.join('');
+
+  const actions = [
+    { label: 'Inspect scene', command: `inspect ${loc.id}` },
+    ...(hotspots.slice(0, 3).map((hotspot) => ({
+      label: hotspot.label || humanizeId(hotspot.id),
+      command: hotspot.command
+    }))),
+    ...(cast.length ? [{ label: `Talk ${cast[0]}`, command: loc.agents.find((agent) => agent.name === cast[0])?.commands?.talk }] : [])
+  ].filter((action) => action.command);
+  sceneActions.innerHTML = actions.map((action) =>
+    `<button type="button" data-scene-command="${escapeText(action.command)}">${escapeText(action.label)}</button>`
+  ).join('');
+  sceneActions.querySelectorAll('[data-scene-command]').forEach((button) => {
+    button.addEventListener('click', () => runCommand(button.getAttribute('data-scene-command')));
+  });
 }
 
 function currentQuestPath() {
@@ -978,6 +1035,142 @@ function buildHotspots(hotspots) {
   }
 }
 
+function buildCurrentLocationStage(cues) {
+  const loc = (cues.locations || []).find((item) => item.id === cues.playerLocationId)
+    || (cues.locations || []).find((item) => item.isPlayerHere);
+  if (!loc?.position) return;
+  const [x, , z] = loc.position;
+  const stageTexture = cues.interior?.sceneTexture || loc.sceneTexture;
+  const stageMat = makeTextureMaterial(stageTexture, { opacity: 0.96 });
+  if (stageMat) {
+    const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 4.2), stageMat);
+    backdrop.position.set(x, 2.45, z + 3.25);
+    backdrop.rotation.y = Math.PI;
+    backdrop.userData.pickMeta = {
+      kind: 'location',
+      id: loc.id,
+      label: loc.label,
+      command: loc.command,
+      description: `${loc.zone} interior scene | current location`,
+      image: stageTexture
+    };
+    worldGroup.add(backdrop);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(7.2, 4.6),
+      makeTextureMaterial(stageTexture, { opacity: 0.2 }) || new THREE.MeshBasicMaterial({ color: '#111827', transparent: true, opacity: 0.2 })
+    );
+    floor.position.set(x, 0.045, z + 0.9);
+    floor.rotation.x = -Math.PI / 2;
+    worldGroup.add(floor);
+  }
+
+  const frameMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.7 });
+  const framePoints = [
+    new THREE.Vector3(x - 4.35, 0.18, z - 1.75),
+    new THREE.Vector3(x + 4.35, 0.18, z - 1.75),
+    new THREE.Vector3(x + 4.35, 0.18, z + 3.45),
+    new THREE.Vector3(x - 4.35, 0.18, z + 3.45),
+    new THREE.Vector3(x - 4.35, 0.18, z - 1.75)
+  ];
+  worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(framePoints), frameMat));
+
+  const hotspotMat = makeTextureMaterial('/assets/ui/icons/inspect.webp', { opacity: 0.94 });
+  for (const [index, hotspot] of (cues.interior?.hotspots || []).entries()) {
+    const spotX = x - 2.2 + (index * 2.2);
+    const spotZ = z + 1.05;
+    const marker = hotspotMat
+      ? new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.72), hotspotMat)
+      : new THREE.Mesh(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: '#f59e0b' }));
+    marker.position.set(spotX, 1.1, spotZ);
+    marker.rotation.y = Math.PI;
+    addPickable(marker, {
+      kind: 'hotspot',
+      id: hotspot.id,
+      label: hotspot.label,
+      command: hotspot.command,
+      description: hotspot.preview || hotspot.description || 'Inspect scene hotspot',
+      image: '/assets/ui/icons/inspect.webp',
+      risk: hotspot.risk ?? 1
+    });
+    const label = makeLabel(hotspot.label || humanizeId(hotspot.id));
+    label.position.set(spotX, 1.75, spotZ);
+    worldGroup.add(label);
+  }
+}
+
+function caseCardTexture(card) {
+  if (card.kind === 'incident') return '/assets/reference/generated/incident-card-missing-delivery.webp';
+  if (card.kind === 'rumor') return '/assets/reference/generated/rumor-card-sara-registry.webp';
+  return '/assets/reference/generated/evidence-card-delivery-gap.webp';
+}
+
+function buildCaseObjects(cues) {
+  const loc = (cues.locations || []).find((item) => item.id === cues.playerLocationId)
+    || (cues.locations || []).find((item) => item.isPlayerHere);
+  if (!loc?.position || !gameShell?.caseBoard) return;
+  const [x, , z] = loc.position;
+  const incident = gameShell.questProgress
+    ? [{
+        kind: 'incident',
+        id: gameShell.questProgress.questId || 'missing_delivery',
+        label: gameShell.questProgress.title || 'The Missing Delivery',
+        command: 'ask_leno',
+        description: gameShell.questProgress.objective || 'Active incident'
+      }]
+    : [];
+  const evidence = (gameShell.caseBoard.evidenceCards || [])
+    .filter((card) => !card.locked && !card.redacted)
+    .slice(0, 2)
+    .map((card) => ({
+      kind: 'evidence',
+      id: card.id,
+      label: card.label,
+      command: card.inspectCommand || `inspect ${card.locationId || loc.id}`,
+      description: `Evidence | ${card.type || 'observation'}`
+    }));
+  const rumors = (gameShell.caseBoard.rumorCards || [])
+    .filter((card) => !card.locked && !card.redacted)
+    .slice(0, 2)
+    .map((card) => ({
+      kind: 'rumor',
+      id: card.id,
+      label: card.label,
+      command: card.inspectCommand || 'listen_rumors market',
+      description: 'Rumor lead'
+    }));
+  const cards = [...incident, ...evidence, ...rumors].slice(0, 5);
+  if (!cards.length) return;
+
+  for (const [index, card] of cards.entries()) {
+    const mat = makeTextureMaterial(caseCardTexture(card), { opacity: card.kind === 'incident' ? 0.9 : 0.86 });
+    const offset = index - ((cards.length - 1) / 2);
+    const cardX = x + offset * 1.05;
+    const cardZ = z - 2.25;
+    const mesh = mat
+      ? new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.25), mat)
+      : new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.25, 0.05), new THREE.MeshBasicMaterial({ color: '#1f2937' }));
+    mesh.position.set(cardX, 1.25, cardZ);
+    mesh.rotation.y = 0;
+    addPickable(mesh, {
+      kind: 'hotspot',
+      id: card.id,
+      label: card.label,
+      command: card.command,
+      description: card.description,
+      image: caseCardTexture(card),
+      risk: 1
+    });
+    const glow = new THREE.Mesh(
+      new THREE.RingGeometry(0.38, 0.5, 24),
+      new THREE.MeshBasicMaterial({ color: card.kind === 'incident' ? '#f97316' : '#58a6ff', transparent: true, opacity: 0.46, side: THREE.DoubleSide })
+    );
+    glow.position.set(cardX, 0.11, cardZ);
+    glow.rotation.x = -Math.PI / 2;
+    worldGroup.add(glow);
+  }
+}
+
 function makeLabel(text) {
   const canvas2d = document.createElement('canvas');
   const ctx = canvas2d.getContext('2d');
@@ -1014,6 +1207,8 @@ function applyVisualCues(cues) {
   buildBackdrop();
   buildRainField();
   buildEdges(cues.edges);
+  buildCurrentLocationStage(cues);
+  buildCaseObjects(cues);
   buildLocations(cues.locations);
   buildHotspots(cues.hotspots);
   buildPlayer(cues.player);
@@ -1079,6 +1274,7 @@ async function refreshState() {
   renderQuestHud();
   renderIntelHud();
   renderEpisodeHud();
+  renderSceneHud();
 }
 
 function findMajorDecision(commandText) {
@@ -1152,6 +1348,7 @@ async function runCommand(text) {
   renderQuestHud();
   renderIntelHud();
   renderEpisodeHud();
+  renderSceneHud();
   playAudioCues(result.audioCues);
 
   const lines = [result.text || res.body.text || 'Done'];
@@ -1173,6 +1370,7 @@ async function runCommand(text) {
     renderQuestHud();
     renderIntelHud();
     renderEpisodeHud();
+    renderSceneHud();
     return;
   }
 
@@ -1186,6 +1384,7 @@ async function runCommand(text) {
     renderQuestHud();
     renderIntelHud();
     renderEpisodeHud();
+    renderSceneHud();
   }
 }
 

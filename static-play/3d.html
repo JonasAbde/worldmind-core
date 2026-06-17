@@ -61,6 +61,20 @@
     }
     #wm-3d-panel h2 { font-size: 0.85rem; color: #58a6ff; margin-bottom: 6px; }
     #wm-3d-panel p { font-size: 0.75rem; color: #8b949e; line-height: 1.45; margin-bottom: 8px; }
+    #wm-3d-scene {
+      display: grid; gap: 7px; margin-bottom: 10px; padding-bottom: 9px; border-bottom: 1px solid #30363d;
+    }
+    #wm-3d-scene img {
+      width: 100%; aspect-ratio: 16 / 7; object-fit: cover; border-radius: 6px; border: 1px solid #30363d;
+      background: #0d1117;
+    }
+    #wm-3d-scene-title { font-size: 0.8rem; color: #fbbf24; }
+    #wm-3d-scene-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+    #wm-3d-scene-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    #wm-3d-scene-actions button {
+      font: inherit; font-size: 0.62rem; padding: 5px 7px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #23863666; background: rgba(18,52,31,0.82); color: #7ee787;
+    }
     #wm-3d-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     #wm-3d-actions button {
       font: inherit; font-size: 0.68rem; padding: 5px 8px; border-radius: 4px; cursor: pointer;
@@ -210,6 +224,12 @@
       <div id="wm-3d-episode-actions"></div>
     </div>
     <div id="wm-3d-panel">
+      <div id="wm-3d-scene">
+        <img id="wm-3d-scene-media" src="/assets/locations/cafe.webp" alt="" />
+        <div id="wm-3d-scene-title">Current scene</div>
+        <div id="wm-3d-scene-meta"></div>
+        <div id="wm-3d-scene-actions"></div>
+      </div>
       <img id="wm-3d-selection-media" class="hidden" alt="" />
       <h2 id="wm-3d-selection-title">Click a building or agent</h2>
       <p id="wm-3d-selection-desc">WASD / drag to orbit | click location to move | agents for talk/ask</p>

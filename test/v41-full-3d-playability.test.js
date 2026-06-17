@@ -125,6 +125,11 @@ test('v41: static 3D client wires embodied controls, collision, quest HUD, decis
   assert.match(src, /renderQuestHud/);
   assert.match(src, /renderIntelHud/);
   assert.match(src, /renderEpisodeHud/);
+  assert.match(src, /renderSceneHud/);
+  assert.match(src, /buildCurrentLocationStage/);
+  assert.match(src, /buildCaseObjects/);
+  assert.match(src, /caseCardTexture/);
+  assert.match(src, /currentLocationCue/);
   assert.match(src, /showResolutionOverlay/);
   assert.match(src, /badgeForResolution/);
   assert.match(src, /renderLenoActions/);
