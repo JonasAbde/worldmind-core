@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorldMind — Authoring Panel</title>
+  <link rel="stylesheet" href="/3d.css" />
+  <style>
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Inter', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .wm-author-shell { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .wm-author-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .wm-author-header h1 { font-size: 1.4rem; margin: 0; }
+    .wm-author-header .wm-link { color: #58a6ff; text-decoration: none; font-size: 0.85rem; }
+    .wm-author-status { padding: 10px 12px; border-radius: 6px; margin-bottom: 16px; }
+    .wm-author-status.ok { background: #0a3320; border: 1px solid #2ea043; color: #7ee787; }
+    .wm-author-status.error { background: #3c1010; border: 1px solid #f85149; color: #ffa198; }
+    .wm-author-status.idle { background: #161b22; border: 1px solid #30363d; color: #8b949e; }
+    .wm-author-section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .wm-author-section h2 { font-size: 1.05rem; margin: 0 0 8px 0; color: #f0f6fc; }
+    .wm-author-section .wm-help { font-size: 0.8rem; color: #8b949e; margin-bottom: 8px; }
+    .wm-author-section textarea {
+      width: 100%;
+      min-height: 280px;
+      background: #0d1117;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      resize: vertical;
+    }
+    .wm-author-section textarea:focus { outline: none; border-color: #58a6ff; }
+    .wm-author-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .wm-author-actions button {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .wm-author-actions button:hover { background: #30363d; }
+    .wm-author-actions button.primary { background: #238636; border-color: #2ea043; color: #fff; }
+    .wm-author-actions button.primary:hover { background: #2ea043; }
+    .wm-author-actions button.danger { background: #21262d; border-color: #f85149; color: #ffa198; }
+    .wm-author-key {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: #c9d1d9;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .wm-section-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+    .wm-section-tabs button {
+      background: #21262d;
+      color: #8b949e;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .wm-section-tabs button.active { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+    .wm-meta { font-size: 0.78rem; color: #6e7681; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wm-author-shell">
+    <div class="wm-author-header">
+      <h1>WorldMind — Authoring Panel</h1>
+      <a class="wm-link" href="/3d.html">← Back to Play</a>
+    </div>
+    <div id="wm-status" class="wm-author-status idle">Loading content pack…</div>
+    <div style="margin-bottom: 12px;">
+      <label for="wm-key" style="font-size: 0.85rem; color: #8b949e;">Author key:</label>
+      <input type="password" id="wm-key" class="wm-author-key" placeholder="X-AUTHOR-KEY" style="margin-left: 8px;" />
+      <span class="wm-meta">Set via <code>WM_AUTHOR_KEY</code> env var on the server. Leave empty in dev mode (no auth).</span>
+    </div>
+    <div class="wm-section-tabs" id="wm-tabs">
+      <button data-section="dialogue" class="active">Dialogue</button>
+      <button data-section="resolutionPaths">Resolution Paths</button>
+      <button data-section="incidents">Incidents</button>
+      <button data-section="rumors">Rumors</button>
+      <button data-section="evidence">Evidence</button>
+    </div>
+    <div class="wm-author-section">
+      <h2 id="wm-section-title">Dialogue</h2>
+      <div class="wm-help" id="wm-section-help">Edit the dialogue array. Each entry needs id, agentId, topic, line.</div>
+      <textarea id="wm-editor" spellcheck="false"></textarea>
+      <div class="wm-meta" id="wm-section-stats"></div>
+      <div class="wm-author-actions">
+        <button class="primary" id="wm-save">Save changes</button>
+        <button id="wm-reload">Reload from disk</button>
+        <button class="danger" id="wm-format">Format JSON</button>
+      </div>
+    </div>
+  </div>
+  <script src="/author.js"></script>
+</body>
+</html>

@@ -11,6 +11,7 @@ export function renderGameTopBar(shell, world) {
   <div class="wm-topbar-brand">
     <img src="assets/ui/incident-alert.png" alt="" class="wm-topbar-logo" />
     <span class="wm-topbar-world" data-topbar-world>${escapeHtml(t.worldName ?? world?.name ?? 'WorldMind')}</span>
+    <a href="/author.html" class="wm-author-link" data-author-link>Author</a>
   </div>
   <div class="wm-topbar-stats">
     <span data-topbar-day><strong>Day</strong> ${escapeHtml(t.day ?? '?')}</span>

@@ -382,6 +382,66 @@ async function handleEpisodeSwitch(req, res) {
   });
 }
 
+/**
+ * Authoring panel: serve the worldmind content pack (v1.0-rc20).
+ * Auth-gated by WM_AUTHOR_KEY env var when set; if unset, no auth (dev).
+ */
+async function handleContentGet(req, res) {
+  const expectedKey = process.env.WM_AUTHOR_KEY;
+  const providedKey = req.headers['x-author-key'];
+  if (expectedKey && providedKey !== expectedKey) {
+    return jsonResponse(req, res, 401, { ok: false, error: 'author key required' });
+  }
+  const packPath = path.join(REPO, 'content', 'worldmind', 'content-pack-v1.json');
+  if (!fs.existsSync(packPath)) {
+    return jsonResponse(req, res, 404, { ok: false, error: 'content pack not found' });
+  }
+  try {
+    const raw = fs.readFileSync(packPath, 'utf8');
+    const data = JSON.parse(raw);
+    jsonResponse(req, res, 200, { ok: true, ...data });
+  } catch (e) {
+    jsonResponse(req, res, 500, { ok: false, error: String(e?.message || e) });
+  }
+}
+
+async function handleContentPost(req, res) {
+  const expectedKey = process.env.WM_AUTHOR_KEY;
+  const providedKey = req.headers['x-author-key'];
+  if (expectedKey && providedKey !== expectedKey) {
+    return jsonResponse(req, res, 401, { ok: false, error: 'author key required' });
+  }
+  const packPath = path.join(REPO, 'content', 'worldmind', 'content-pack-v1.json');
+  let body = '';
+  for await (const chunk of req) body += chunk;
+  let parsed;
+  try {
+    parsed = JSON.parse(body);
+  } catch (e) {
+    return jsonResponse(req, res, 400, { ok: false, error: `invalid JSON: ${e.message}` });
+  }
+  // Validate against the rc12 scenario schema (lightweight shape checks).
+  const { validateWorldmindContent } = await import('../play/scenario-schema.js');
+  const result = validateWorldmindContent(parsed);
+  if (!result.ok) {
+    return jsonResponse(req, res, 400, { ok: false, error: 'schema validation failed', errors: result.errors });
+  }
+  // Bump version and write atomically.
+  parsed.version = (parsed.version || 1) + 1;
+  parsed.updatedAt = new Date().toISOString();
+  try {
+    const tmpPath = `${packPath}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(parsed, null, 2) + '\n', 'utf8');
+    fs.renameSync(tmpPath, packPath);
+    // Hot-reload: invalidate the scenario loader cache.
+    const { clearContentPackCache } = await import('../play/scenario-loader.js');
+    if (clearContentPackCache) clearContentPackCache();
+    jsonResponse(req, res, 200, { ok: true, version: parsed.version, bytes: JSON.stringify(parsed).length });
+  } catch (e) {
+    jsonResponse(req, res, 500, { ok: false, error: String(e?.message || e) });
+  }
+}
+
 async function handleCommand(req, res) {
   ensureBoot();
   let body;
@@ -591,6 +651,8 @@ async function route(req, res, urlPath, urlObj) {
         if (urlPath === '/api/episodes' && req.method === 'GET') return handleEpisodesList(req, res);
         if (urlPath === '/api/episode/switch' && req.method === 'POST') return handleEpisodeSwitch(req, res);
         if (urlPath === '/api/command' && req.method === 'POST') return handleCommand(req, res);
+    if (urlPath === '/api/content' && req.method === 'GET') return handleContentGet(req, res);
+    if (urlPath === '/api/content' && req.method === 'POST') return handleContentPost(req, res);
     if (urlPath === '/api/save' && req.method === 'POST') return handleSave(req, res);
     if (urlPath === '/api/branch' && req.method === 'POST') return handleBranchCreate(req, res);
     if (urlPath === '/api/branches' && req.method === 'POST') return handleBranchCreate(req, res);
