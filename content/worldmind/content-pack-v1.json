@@ -9,16 +9,109 @@
       "id": "episode_missing_delivery",
       "title": "The Missing Delivery",
       "description": "A small district incident where rumors, trust, money, evidence, and mediation can all resolve the same problem.",
-      "questIds": ["quest_missing_delivery"],
+      "questIds": [
+        "quest_missing_delivery"
+      ],
       "startingLocationId": "cafe"
     }
   ],
   "characters": [
-    { "id": "sara", "role": "cafe owner", "primaryLocationId": "cafe", "arc": "needs help restoring trust after the delivery incident" },
-    { "id": "malik", "role": "delivery worker", "primaryLocationId": "workshop", "arc": "money pressure and reputation risk" },
-    { "id": "rune", "role": "rumor broker", "primaryLocationId": "market", "arc": "knows fragments, not the full truth" },
-    { "id": "amina", "role": "mediator", "primaryLocationId": "district_square", "arc": "can resolve conflict peacefully" },
-    { "id": "nadia", "role": "hidden rumor source", "primaryLocationId": "market", "arc": "must not be revealed without evidence" }
+    {
+      "id": "sara",
+      "role": "cafe owner",
+      "primaryLocationId": "cafe",
+      "arc": "needs help restoring trust after the delivery incident",
+      "npcDialogueTopics": [
+        {
+          "id": "delivery_status",
+          "label": "Delivery status",
+          "requiredTrust": 30,
+          "unlocks": [
+            "cafe_delivery_gap"
+          ]
+        },
+        {
+          "id": "cafe_stock",
+          "label": "Café stock",
+          "requiredTrust": 40,
+          "unlocks": []
+        },
+        {
+          "id": "rumor_chain",
+          "label": "Rumor chain",
+          "requiredTrust": 60,
+          "unlocks": [
+            "counter_rumor_safe"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "malik",
+      "role": "delivery worker",
+      "primaryLocationId": "workshop",
+      "arc": "money pressure and reputation risk",
+      "npcDialogueTopics": [
+        {
+          "id": "workshop_clients",
+          "label": "Workshop clients",
+          "requiredTrust": 30,
+          "unlocks": []
+        },
+        {
+          "id": "guild_pressure",
+          "label": "Guild pressure",
+          "requiredTrust": 50,
+          "unlocks": [
+            "workshop_contract"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rune",
+      "role": "rumor broker",
+      "primaryLocationId": "market",
+      "arc": "knows fragments, not the full truth",
+      "npcDialogueTopics": [
+        {
+          "id": "free_agents",
+          "label": "Free agents network",
+          "requiredTrust": 25,
+          "unlocks": [
+            "counter_rumor"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "amina",
+      "role": "mediator",
+      "primaryLocationId": "district_square",
+      "arc": "can resolve conflict peacefully",
+      "npcDialogueTopics": [
+        {
+          "id": "cafe_customers",
+          "label": "Café customers",
+          "requiredTrust": 20,
+          "unlocks": []
+        }
+      ]
+    },
+    {
+      "id": "nadia",
+      "role": "hidden rumor source",
+      "primaryLocationId": "market",
+      "arc": "must not be revealed without evidence",
+      "npcDialogueTopics": [
+        {
+          "id": "market_suppliers",
+          "label": "Market suppliers",
+          "requiredTrust": 40,
+          "unlocks": []
+        }
+      ]
+    }
   ],
   "locations": [
     {
@@ -27,8 +120,30 @@
       "gameplayUse": "dialogue, inspection, incident start",
       "scene": "assets/locations/cafe.png",
       "hotspots": [
-        { "id": "cafe_delivery_crate", "label": "Delivery crate", "command": "inspect cafe", "inspectFocus": "cafe_delivery_crate", "preview": "Inspect missing delivery crate", "description": "A sealed crate with missing shipment tags — Sara's supply gap started here.", "risk": 1, "possibleEvidence": ["cafe_delivery_gap"], "icon": "assets/items/delivery-crate/icon.png" },
-        { "id": "cafe_stock_shelf", "label": "Stock shelf", "command": "inspect cafe", "inspectFocus": "cafe_stock_shelf", "preview": "Inspect low stock indicators", "description": "Nearly empty shelves show how the missing delivery hurt the café.", "risk": 1, "possibleEvidence": [], "icon": "assets/items/coffee-supply/icon.png" }
+        {
+          "id": "cafe_delivery_crate",
+          "label": "Delivery crate",
+          "command": "inspect cafe",
+          "inspectFocus": "cafe_delivery_crate",
+          "preview": "Inspect missing delivery crate",
+          "description": "A sealed crate with missing shipment tags — Sara's supply gap started here.",
+          "risk": 1,
+          "possibleEvidence": [
+            "cafe_delivery_gap"
+          ],
+          "icon": "assets/items/delivery-crate/icon.png"
+        },
+        {
+          "id": "cafe_stock_shelf",
+          "label": "Stock shelf",
+          "command": "inspect cafe",
+          "inspectFocus": "cafe_stock_shelf",
+          "preview": "Inspect low stock indicators",
+          "description": "Nearly empty shelves show how the missing delivery hurt the café.",
+          "risk": 1,
+          "possibleEvidence": [],
+          "icon": "assets/items/coffee-supply/icon.png"
+        }
       ]
     },
     {
@@ -37,7 +152,18 @@
       "gameplayUse": "listen for rumors and trace source",
       "scene": "assets/locations/market.png",
       "hotspots": [
-        { "id": "market_rumor_corner", "label": "Rumor corner", "command": "listen_rumors market", "preview": "Hear local rumor trail", "description": "Traders whisper about Sara and the failed delivery.", "risk": 2, "possibleEvidence": ["market_rumor_chain"], "icon": "assets/items/community-notes/icon.png" }
+        {
+          "id": "market_rumor_corner",
+          "label": "Rumor corner",
+          "command": "listen_rumors market",
+          "preview": "Hear local rumor trail",
+          "description": "Traders whisper about Sara and the failed delivery.",
+          "risk": 2,
+          "possibleEvidence": [
+            "market_rumor_chain"
+          ],
+          "icon": "assets/items/community-notes/icon.png"
+        }
       ]
     },
     {
@@ -46,8 +172,26 @@
       "gameplayUse": "founder/business route",
       "scene": "assets/locations/workshop.png",
       "hotspots": [
-        { "id": "workshop_repair_bench", "label": "Repair bench", "command": "inspect workshop", "preview": "Inspect repair flow and costs", "description": "Malik's bench — alternative delivery routes and repair costs.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/tool-kit/icon.png" },
-        { "id": "courier_route_marker", "label": "Courier route marker", "command": "inspect workshop", "preview": "Inspect route bottlenecks", "description": "Route map showing where deliveries stall.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/courier-bag/icon.png" }
+        {
+          "id": "workshop_repair_bench",
+          "label": "Repair bench",
+          "command": "inspect workshop",
+          "preview": "Inspect repair flow and costs",
+          "description": "Malik's bench — alternative delivery routes and repair costs.",
+          "risk": 2,
+          "possibleEvidence": [],
+          "icon": "assets/items/tool-kit/icon.png"
+        },
+        {
+          "id": "courier_route_marker",
+          "label": "Courier route marker",
+          "command": "inspect workshop",
+          "preview": "Inspect route bottlenecks",
+          "description": "Route map showing where deliveries stall.",
+          "risk": 2,
+          "possibleEvidence": [],
+          "icon": "assets/items/courier-bag/icon.png"
+        }
       ]
     },
     {
@@ -56,7 +200,16 @@
       "gameplayUse": "safe hub",
       "scene": "assets/locations/apartment.png",
       "hotspots": [
-        { "id": "registry_kiosk", "label": "Registry kiosk feed", "command": "inspect apartment", "preview": "Inspect registry pressure", "description": "Registry pressure feed — selling information is risky.", "risk": 2, "possibleEvidence": [], "icon": "assets/items/leno-core/icon.png" }
+        {
+          "id": "registry_kiosk",
+          "label": "Registry kiosk feed",
+          "command": "inspect apartment",
+          "preview": "Inspect registry pressure",
+          "description": "Registry pressure feed — selling information is risky.",
+          "risk": 2,
+          "possibleEvidence": [],
+          "icon": "assets/items/leno-core/icon.png"
+        }
       ]
     },
     {
@@ -65,7 +218,16 @@
       "gameplayUse": "peaceful route",
       "scene": "assets/locations/district-square.png",
       "hotspots": [
-        { "id": "district_square_mediator_spot", "label": "Mediator spot", "command": "ask amina mediation", "preview": "Open peaceful resolution path", "description": "Amina mediates conflicts here without escalating rumors.", "risk": 1, "possibleEvidence": [], "icon": "assets/items/community-notes/icon.png" }
+        {
+          "id": "district_square_mediator_spot",
+          "label": "Mediator spot",
+          "command": "ask amina mediation",
+          "preview": "Open peaceful resolution path",
+          "description": "Amina mediates conflicts here without escalating rumors.",
+          "risk": 1,
+          "possibleEvidence": [],
+          "icon": "assets/items/community-notes/icon.png"
+        }
       ]
     }
   ],
@@ -78,25 +240,100 @@
     }
   ],
   "evidence": [
-    { "id": "cafe_delivery_gap", "type": "observation", "label": "Delivery gap at the cafe", "locationId": "cafe" },
-    { "id": "market_rumor_chain", "type": "rumor_trace", "label": "Rumor chain points away from Sara", "locationId": "market" },
-    { "id": "rumor_source_nadia", "type": "source_evidence", "label": "Evidence identifying Nadia as source", "locationId": "market", "hiddenTruth": true }
+    {
+      "id": "cafe_delivery_gap",
+      "type": "observation",
+      "label": "Delivery gap at the cafe",
+      "locationId": "cafe"
+    },
+    {
+      "id": "market_rumor_chain",
+      "type": "rumor_trace",
+      "label": "Rumor chain points away from Sara",
+      "locationId": "market"
+    },
+    {
+      "id": "rumor_source_nadia",
+      "type": "source_evidence",
+      "label": "Evidence identifying Nadia as source",
+      "locationId": "market",
+      "hiddenTruth": true
+    }
   ],
   "suspectCards": [
-    { "characterId": "sara", "label": "Sara", "role": "café owner" },
-    { "characterId": "malik", "label": "Malik", "role": "delivery worker" },
-    { "characterId": "rune", "label": "Rune", "role": "rumor broker", "requiredEvidence": ["market_rumor_chain"] },
-    { "characterId": "nadia", "label": "Nadia", "role": "hidden rumor source", "requiredEvidence": ["rumor_source_nadia"] }
+    {
+      "characterId": "sara",
+      "label": "Sara",
+      "role": "café owner"
+    },
+    {
+      "characterId": "malik",
+      "label": "Malik",
+      "role": "delivery worker"
+    },
+    {
+      "characterId": "rune",
+      "label": "Rune",
+      "role": "rumor broker",
+      "requiredEvidence": [
+        "market_rumor_chain"
+      ]
+    },
+    {
+      "characterId": "nadia",
+      "label": "Nadia",
+      "role": "hidden rumor source",
+      "requiredEvidence": [
+        "rumor_source_nadia"
+      ]
+    }
   ],
   "caseLinks": [
-    { "from": "cafe_delivery_gap", "to": "rumor_missing_delivery_blame", "relation": "contradicts" },
-    { "from": "market_rumor_chain", "to": "rumor_missing_delivery_blame", "relation": "traces" },
-    { "from": "rumor_source_nadia", "to": "rumor_missing_delivery_blame", "relation": "reveals_source" }
+    {
+      "from": "cafe_delivery_gap",
+      "to": "rumor_missing_delivery_blame",
+      "relation": "contradicts"
+    },
+    {
+      "from": "market_rumor_chain",
+      "to": "rumor_missing_delivery_blame",
+      "relation": "traces"
+    },
+    {
+      "from": "rumor_source_nadia",
+      "to": "rumor_missing_delivery_blame",
+      "relation": "reveals_source"
+    }
   ],
   "dialogue": [
-    { "id": "dialogue_sara_help", "agentId": "sara", "topic": "delivery", "tone": "worried", "unlocks": ["cafe_delivery_gap"] },
-    { "id": "dialogue_rune_nadia", "agentId": "rune", "topic": "nadia", "tone": "cautious", "requiredRelationship": { "trust": 2 }, "unlocks": ["market_rumor_chain"] },
-    { "id": "dialogue_amina_mediation", "agentId": "amina", "topic": "mediation", "tone": "calm", "unlocks": [] }
+    {
+      "id": "dialogue_sara_help",
+      "agentId": "sara",
+      "topic": "delivery",
+      "tone": "worried",
+      "unlocks": [
+        "cafe_delivery_gap"
+      ]
+    },
+    {
+      "id": "dialogue_rune_nadia",
+      "agentId": "rune",
+      "topic": "nadia",
+      "tone": "cautious",
+      "requiredRelationship": {
+        "trust": 2
+      },
+      "unlocks": [
+        "market_rumor_chain"
+      ]
+    },
+    {
+      "id": "dialogue_amina_mediation",
+      "agentId": "amina",
+      "topic": "mediation",
+      "tone": "calm",
+      "unlocks": []
+    }
   ],
   "quests": [
     {
@@ -108,43 +345,168 @@
         {
           "id": "peaceful_mediation",
           "label": "Peaceful mediation",
-          "steps": ["inspect cafe", "talk sara", "ask amina mediation", "pay malik 5"],
-          "reward": { "xp": 40, "districtInfluence": 8, "badge": "mediator" }
+          "steps": [
+            "inspect cafe",
+            "talk sara",
+            "ask amina mediation",
+            "pay malik 5"
+          ],
+          "reward": {
+            "xp": 40,
+            "districtInfluence": 8,
+            "badge": "mediator"
+          },
+          "consequenceSummary": "Sara gets a quieter resolution. Malik's trust recovers. The rumor remains active but undistorted.",
+          "requiredEvidence": []
         },
         {
           "id": "investigation_and_counter_rumor",
           "label": "Investigation and counter-rumor",
-          "steps": ["inspect cafe", "listen_rumors market", "ask rune nadia", "trace_rumor", "counter_rumor"],
-          "reward": { "xp": 60, "districtInfluence": 10, "badge": "truth-tracer" }
+          "steps": [
+            "inspect cafe",
+            "listen_rumors market",
+            "ask rune nadia",
+            "trace_rumor",
+            "counter_rumor"
+          ],
+          "reward": {
+            "xp": 60,
+            "districtInfluence": 10,
+            "badge": "truth-tracer"
+          },
+          "consequenceSummary": "The rumor is traced and countered with evidence. Sara is vindicated publicly.",
+          "requiredEvidence": [
+            "market_rumor_chain"
+          ]
         },
         {
           "id": "founder_negotiation",
           "label": "Founder/business negotiation",
-          "steps": ["inspect workshop", "pay malik 15", "talk sara"],
+          "steps": [
+            "inspect workshop",
+            "pay malik 15",
+            "talk sara"
+          ],
           "decisionCommand": "pay malik 15",
-          "reward": { "xp": 45, "districtInfluence": 6, "badge": "district-investor" }
+          "reward": {
+            "xp": 45,
+            "districtInfluence": 6,
+            "badge": "district-investor"
+          },
+          "consequenceSummary": "Malik agrees to a business deal. The district infrastructure is reinforced.",
+          "requiredEvidence": []
         }
       ],
       "majorDecisions": [
-        { "id": "peaceful_mediation", "label": "Peaceful mediation", "command": "pay malik 5", "branchSuggested": true },
-        { "id": "investigation_and_counter_rumor", "label": "Investigation and counter-rumor", "command": "ask rune nadia", "branchSuggested": true },
-        { "id": "founder_negotiation", "label": "Founder/business negotiation", "command": "pay malik 15", "branchSuggested": true },
-        { "id": "expose_nadia", "label": "Expose Nadia", "command": "counter_rumor", "branchSuggested": true, "requiredEvidence": ["rumor_source_nadia"] },
-        { "id": "protect_sara_privately", "label": "Protect Sara privately", "command": "talk sara", "branchSuggested": true },
-        { "id": "sell_info_registry", "label": "Sell info to Registry", "command": "inspect apartment", "branchSuggested": true },
-        { "id": "negotiate_malik", "label": "Negotiate with Malik", "command": "pay malik 15", "branchSuggested": true },
-        { "id": "start_delivery_workflow", "label": "Start delivery workflow", "command": "start_delivery_workflow", "branchSuggested": true }
+        {
+          "id": "peaceful_mediation",
+          "label": "Peaceful mediation",
+          "command": "pay malik 5",
+          "branchSuggested": true
+        },
+        {
+          "id": "investigation_and_counter_rumor",
+          "label": "Investigation and counter-rumor",
+          "command": "ask rune nadia",
+          "branchSuggested": true
+        },
+        {
+          "id": "founder_negotiation",
+          "label": "Founder/business negotiation",
+          "command": "pay malik 15",
+          "branchSuggested": true
+        },
+        {
+          "id": "expose_nadia",
+          "label": "Expose Nadia",
+          "command": "counter_rumor",
+          "branchSuggested": true,
+          "requiredEvidence": [
+            "rumor_source_nadia"
+          ]
+        },
+        {
+          "id": "protect_sara_privately",
+          "label": "Protect Sara privately",
+          "command": "talk sara",
+          "branchSuggested": true
+        },
+        {
+          "id": "sell_info_registry",
+          "label": "Sell info to Registry",
+          "command": "inspect apartment",
+          "branchSuggested": true
+        },
+        {
+          "id": "negotiate_malik",
+          "label": "Negotiate with Malik",
+          "command": "pay malik 15",
+          "branchSuggested": true
+        },
+        {
+          "id": "start_delivery_workflow",
+          "label": "Start delivery workflow",
+          "command": "start_delivery_workflow",
+          "branchSuggested": true
+        }
+      ],
+      "founderUnlockConditions": [
+        {
+          "kind": "incident",
+          "incidentId": "missing_delivery",
+          "status": "resolved",
+          "description": "Resolve The Missing Delivery."
+        },
+        {
+          "kind": "evidence",
+          "evidenceIds": [
+            "rumor_source_nadia"
+          ],
+          "description": "Have the rumor source evidence."
+        }
       ]
     }
   ],
   "assetBindings": [
-    { "entityType": "world", "entityId": "new_aarhus_district_01", "assetPath": "assets/showcase/worldmind-v2-showcase.png" },
-    { "entityType": "location", "entityId": "cafe", "assetPath": "assets/locations/cafe.png" },
-    { "entityType": "location", "entityId": "market", "assetPath": "assets/locations/market.png" },
-    { "entityType": "location", "entityId": "workshop", "assetPath": "assets/locations/workshop.png" },
-    { "entityType": "character", "entityId": "sara", "assetPath": "assets/characters/sara/portrait.png" },
-    { "entityType": "character", "entityId": "malik", "assetPath": "assets/characters/malik/portrait.png" },
-    { "entityType": "character", "entityId": "rune", "assetPath": "assets/characters/rune/portrait.png" },
-    { "entityType": "ui", "entityId": "memory_permissions_hud", "assetPath": "assets/ui/hud-memory-permissions.png" }
+    {
+      "entityType": "world",
+      "entityId": "new_aarhus_district_01",
+      "assetPath": "assets/showcase/worldmind-v2-showcase.png"
+    },
+    {
+      "entityType": "location",
+      "entityId": "cafe",
+      "assetPath": "assets/locations/cafe.png"
+    },
+    {
+      "entityType": "location",
+      "entityId": "market",
+      "assetPath": "assets/locations/market.png"
+    },
+    {
+      "entityType": "location",
+      "entityId": "workshop",
+      "assetPath": "assets/locations/workshop.png"
+    },
+    {
+      "entityType": "character",
+      "entityId": "sara",
+      "assetPath": "assets/characters/sara/portrait.png"
+    },
+    {
+      "entityType": "character",
+      "entityId": "malik",
+      "assetPath": "assets/characters/malik/portrait.png"
+    },
+    {
+      "entityType": "character",
+      "entityId": "rune",
+      "assetPath": "assets/characters/rune/portrait.png"
+    },
+    {
+      "entityType": "ui",
+      "entityId": "memory_permissions_hud",
+      "assetPath": "assets/ui/hud-memory-permissions.png"
+    }
   ]
 }

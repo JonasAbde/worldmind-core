@@ -51,7 +51,8 @@
 - `45_INTERACTIVE_WEB_PLAY_UI.md` — v1.0-rc5 static web-play UI (`npm run play:web` genererer `static-play/index.html` + `state.json`); shared `src/play/play-engine.js`; web-renderer med Leno evidence-guard; `npm run validate:web-play` CI-gate. 171/171 tests grønne, 15-trins `ci:gate`.
 - `47_SAVE_BROWSER_BRANCH_RESTORE.md` — v1.0-rc7 live save browser + branch timeline restore. `npm run play:server`, `/api/saves`, `/api/saves/:id/restore`, `/api/branches`, `/api/saves/diff`; `npm run validate:saves-ui`; private memory redaction; 188/188 tests grønne.
 - `48_2D_DISTRICT_VIEW.md` — v1.0-rc8 SVG district view over New Aarhus District 01; 4 locations; agent markers; click-to-move; `npm run validate:district-ui`.
-- `49_PHONE_AND_LENO_UI.md` — v1.0-rc8 Phone panel med 8 tabs; Event Feed; Leno overlay med suggestions; hidden-truth guard; `npm run validate:district-ui` checker UI.
+- `55_V1_0_RELEASE_CHECKLIST.md` — v1.0 release pre-flight checklist.
+- `56_CONTENT_PACK_AUTHORING.md` — v1.0-rc11 content pack extensions: `npcDialogueTopics[]` on characters, `founderUnlockConditions[]` on quests, `consequenceSummary` + `requiredEvidence[]` on resolution paths. Plan 54 short-term targets shipped. 387/387 tests grønne, 21-trins ci:gate.
 
 ## Roadmap
 
