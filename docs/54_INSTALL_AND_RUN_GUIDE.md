@@ -4,12 +4,12 @@
 
 ```bash
 git clone <repo>
-cd "Project Worldmind"
+cd worldmind-core
 npm install
 npm start
 ```
 
-That's it. No API keys. No external services.
+That's it. No API keys. No external services for the basic simulation.
 
 ## Requirements
 
@@ -17,8 +17,10 @@ That's it. No API keys. No external services.
 - **Git**
 - **~50MB disk space**
 
-Optional (for live server):
-- **A browser** (to open `static-play/index.html`)
+Optional (for the procedural asset builder, rc15-rc17):
+- **Python 3.11+** with `numpy`, `Pillow`, `trimesh`, `pygltflib`, `scipy`
+  (pre-installed in the Hermes venv; for production CI add a
+  `requirements.txt` and `pip install -r requirements.txt`)
 
 ## Commands
 

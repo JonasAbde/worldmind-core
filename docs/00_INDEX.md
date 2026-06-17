@@ -62,6 +62,7 @@
 - `63_RC17_ANIMATIONS.md` — v1.0-rc17 animation tracks. 4 glTF animation tracks (idle/talk/examine/walk) baked into every character GLB via `_add_animation_tracks()` in build-glb-pbr.py. Targets canonical body+head nodes. Linear interpolation. 412/412 tests grønne. Runtime wire-up to THREE.AnimationMixer deferred to rc17.5/rc18.
 - `64_RC19_PER_EPISODE_CONTENT.md` — v1.0-rc19 per-episode content. Dialogue-pack.json extended 5→16 entries (omar, lina, elias, freja, yasin). Episodes 2+3 (noise-along-the-quay, ownership-dispute) have full NPC coverage + GLB models + dialogue trees. Each dialogue entry unlocks an evidence gate. 432/432 tests grønne.
 - `65_RC20_AUTHOR_PANEL.md` — v1.0-rc20 browser authoring panel. `/author.html` UI for editing content-pack-v1.json (5 tabs: dialogue/paths/incidents/rumors/evidence). `/api/content` GET+POST endpoints with WM_AUTHOR_KEY auth gate + schema validation + atomic writes + hot-reload via `clearContentPackCache()`. 438/438 tests grønne.
+- `66_RC21_SHIP_READY.md` — v1.0-rc21 ship-ready infra. `release:verify` extended to 19 steps (added rc11-rc20 validators + assets:validate + textures:build). README rewritten to v1.0. Install guide documents Python 3.11+ asset pipeline. 446 tests. Pre-tag checklist documented.
 
 ## Roadmap
 

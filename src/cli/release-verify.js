@@ -30,6 +30,13 @@ const STEPS = [
   { name: 'validate:district-ui', cmd: 'npm run validate:district-ui' },
   { name: 'validate:creator',    cmd: 'npm run creator -- validate scenarios/creator-example-district.json' },
   { name: 'validate:leno',       cmd: 'npm run validate:leno' },
+  // v1.0-rc21 ship-ready infra: content pack + asset + authoring checks
+  { name: 'validate:scenario-loader',  cmd: 'node src/cli/validate-scenario-loader.js' },
+  { name: 'validate:scenario-schema',  cmd: 'node src/cli/validate-scenario-schema.js' },
+  { name: 'validate:episode-loader',   cmd: 'node src/cli/validate-episode-loader.js' },
+  { name: 'validate:content-pack-authoring', cmd: 'node src/cli/validate-content-pack-authoring.js' },
+  { name: 'assets:validate',   cmd: 'node tools/wm-assets.js validate --out=assets/models' },
+  { name: 'textures:build',    cmd: 'node tools/wm-textures.js --material=wood --out=assets/textures/wood.png' },
   { name: 'demo:play',           cmd: 'npm run demo:play' },
   { name: 'demo:guided-play',    cmd: 'npm run demo:guided-play' },
   { name: 'audit:worldmind',     cmd: 'npm run audit:worldmind' },

@@ -1,4 +1,4 @@
-# WorldMind v1.0-rc8 2D district view + phone/Leno UI
+# WorldMind v1.0 — Living AI-World Simulation
 
 WorldMind er en living AI-world simulation prototype. Projektet modellerer en lille near-future bydel, hvor agents har mål, memory, relationer, permissions, actions, rygter, økonomi og emergent incidents.
 
@@ -13,21 +13,82 @@ Kernen er ikke "NPC chatbot". Kernen er en simulation-first engine, hvor Event L
 
 ## Hvad der er inkluderet
 
-- 10 NPC-agents + player.
-- 4 locations.
-- Action/tool system med validation.
-- Memory system.
-- Relationship math.
-- Rumor propagation rules v0.1.
-- Economy rules v0.1.
-- Incident detector / emergent quest logic.
-- Dialogue system v0.1.
-- Leno prompt/model policy.
-- Static dashboard generator.
-- Optional SQLite persistence foundation.
-- World snapshots + timeline branches.
-- Canonical JSON scenario loader.
-- Deterministic regression tests.
+- **3 playable episodes**: The Missing Delivery, Noise Along the Quay, Ownership Dispute.
+- **9 resolution paths** with end-to-end execution (peaceful_mediation, investigation_and_counter_rumor, founder_negotiation, community_arbitration, community_repair, executive_leverage, policy_pressure, quiet_investigation, silent_investigation).
+- **11 NPC-agents** + player (procedural GLB models, animation tracks, unique silhouettes).
+- **5 location scenes** (procedural GLB models with PBR materials, named mesh-nodes).
+- **Save/branch/timeline system** with SQLite persistence.
+- **Leno** evidence-guarded UI brain.
+- **Browser authoring panel** at `/author.html` for designers to edit the content pack without code.
+- **Static dashboard + interactive 3D play** (Three.js client).
+- **Procedural asset pipeline** (Python + trimesh + pygltflib, deterministic).
+- **Deterministic regression tests** (438+ tests, 25-step ci:gate, 19-step release:verify).
+- **Audit pipeline** (security + secret-leakage scanner).
+
+## Quick Start
+
+```bash
+git clone <repo>
+cd worldmind-core
+npm install
+npm start
+```
+
+For live play: `npm run play:server` (in one terminal) + open `http://127.0.0.1:8770/3d.html` (in browser).
+For authoring: open `http://127.0.0.1:8770/author.html` (set `WM_AUTHOR_KEY` env var to enable auth).
+
+## Documentation
+
+See `docs/00_INDEX.md` for the full index of design + ship docs. Key entries:
+
+- `docs/61_V1_ROADMAP.md` — Roadmap from rc15 to v1.0
+- `docs/54_INSTALL_AND_RUN_GUIDE.md` — Install and run guide
+- `docs/65_RC20_AUTHOR_PANEL.md` — Browser authoring panel
+- `docs/64_RC19_PER_EPISODE_CONTENT.md` — Per-episode content
+- `docs/63_RC17_ANIMATIONS.md` — glTF animation tracks
+- `docs/62_RC16_TEXTURES_MATERIALS.md` — PBR materials + procedural textures
+- `docs/60_PROCEDURAL_GLB_PIPELINE.md` — Procedural GLB builder
+- `docs/59_PREMIUM_3D_ASSET_STRATEGY.md` — Asset strategy
+
+## Architecture
+
+```
+src/
+  simulation/      Pure simulation engine (no I/O)
+  play/            Play API + renderers + 3D client + dialogue
+  persistence/     Save/branch/timeline (SQLite)
+  cli/             CLI entry points + validators + audit
+  audit/           Security audit + secret-leakage
+scenarios/         Canonical scenario JSON
+content/          Authored content (episodes, dialogue, evidence, ...)
+  worldmind/       Content pack v1 (editable via /author.html)
+assets/
+  models/          Procedural GLB files (locations + characters)
+  characters/      Character portraits/avatars/expressions
+  badges/          Achievement badges
+  locations/       Location scenes (PNG/WebP)
+static-play/       Static web shell (index.html, 3d.html, author.html)
+tools/             Build tools (Python + Node wrappers)
+```
+
+## Sprints shipped
+
+rc1-rc14: gameplay shell, 3D client, investigation loop, audio cues, scenarios
+rc11: content-pack authoring extensions
+rc12: scenario loader + JSON schema
+rc13: multi-episode play (3 episodes)
+rc14: premium 3D asset strategy (plan)
+rc15: procedural GLB pipeline (17 deterministic GLB files)
+rc16: procedural textures + PBR materials via pygltflib
+rc17: glTF animation tracks (4 per character)
+rc18: 9 resolution paths wired end-to-end
+rc19: per-episode content (16 dialogue entries for 11 NPCs)
+rc20: browser authoring panel (designer workflow)
+rc21: ship-ready infra (release:verify extended)
+
+## License
+
+This project is private. All rights reserved.
 - Eval/test suite.
 - Dokumentation til Hermes.
 - **v0.4** data contracts + scenario/snapshot/diff/branch validators.
