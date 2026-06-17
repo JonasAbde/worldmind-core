@@ -64,6 +64,7 @@
 - `65_RC20_AUTHOR_PANEL.md` — v1.0-rc20 browser authoring panel. `/author.html` UI for editing content-pack-v1.json (5 tabs: dialogue/paths/incidents/rumors/evidence). `/api/content` GET+POST endpoints with WM_AUTHOR_KEY auth gate + schema validation + atomic writes + hot-reload via `clearContentPackCache()`. 438/438 tests grønne.
 - `66_RC21_SHIP_READY.md` — v1.0-rc21 ship-ready infra. `release:verify` extended to 19 steps (added rc11-rc20 validators + assets:validate + textures:build). README rewritten to v1.0. Install guide documents Python 3.11+ asset pipeline. 446 tests. Pre-tag checklist documented.
 - `67_V1_0_RELEASE.md` — WorldMind v1.0.0 release notes. Tag v1.0.0 (commit 6ca50c0) ships 3 episodes, 9 paths, 11 NPCs, browser authoring panel, procedural 3D world. 21 sprints (rc1-rc21). Deferred-to-v1.1 list documented. License: private, all rights reserved.
+- `68_FINAL_STATUS_HANDOFF.md` — Leno's handoff to Codex. Documents current git state (HEAD 772b445, tag v1.0.0 pushed, working tree clean), the 3 pre-existing test-isolation issues (not blockers), and the v1.1 backlog (founder contracts, consequence beats, AnimationMixer integration, dialogue unlock gates). Includes verification steps for next session + sprint cadence + communication pattern.
 
 ## Roadmap
 
