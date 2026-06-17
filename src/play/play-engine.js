@@ -180,7 +180,7 @@ function seedPlayableMissingDelivery(world) {
   });
 }
 
-export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, playStart = true } = {}) {
+export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, playStart = true, episode = null } = {}) {
   const world = runSimulation({
     days,
     scenarioPath,
@@ -195,7 +195,12 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, play
       unresolvedQuestions: []
     };
   }
-  if (playStart && days === 0) seedPlayableMissingDelivery(world);
+  if (playStart && days === 0) {
+    // Pick the right seed by episode, fall back to default.
+    const seedFn = EPISODE_SEEDS[episode] || seedPlayableMissingDelivery;
+    seedFn(world);
+    world._episode = EPISODE_SEEDS[episode] ? episode : 'the-missing-delivery';
+  }
 
   // Tag the player with a stable locationId so move/inspect/talk work.
   if (world.agents.player && !world.agents.player.locationId) {
@@ -217,6 +222,152 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, play
   }
 
   return world;
+}
+
+// --- Episode seeds ---
+
+const EPISODE_SEEDS = {
+  'the-missing-delivery': seedPlayableMissingDelivery,
+  'noise-along-the-quay': seedPlayableNoiseComplaint,
+  'ownership-dispute': seedPlayableOwnershipDispute
+};
+
+function seedPlayableNoiseComplaint(world) {
+  placeAgentAtLocation(world, 'player', 'district_square');
+
+  world.playerKnowledge = {
+    evidenceIds: [],
+    knownRumorIds: [],
+    suspectedCauses: [],
+    unresolvedQuestions: [
+      'What is causing the noise at the quay?',
+      'Is there signal interference?'
+    ]
+  };
+
+  world.incidents.noise_complaint_5561 = {
+    id: 'noise_complaint_5561',
+    title: 'Noise Complaint #5561',
+    status: 'active',
+    locationId: 'district_square',
+    visibleProblem: 'A persistent noise at the quay is disrupting harbour activity and raising complaints.',
+    hiddenCause: 'Audio anomaly captures point to an unregistered signal source masking equipment noise.',
+    resolutionState: 'unresolved',
+    knownFacts: [
+      'Noise levels exceeded safety thresholds at the quay.',
+      'Signal interference logged near the south docks.'
+    ],
+    involvedAgentIds: ['elias', 'omar', 'freja'],
+    linkedEvidence: ['audio_anomaly_capture', 'signal_interference_log'],
+    createdAtTick: world.tick ?? 0
+  };
+
+  if (!Object.values(world.rumors || {}).some((r) => r.sourceAgentId === 'omar')) {
+    executeAction(world, {
+      actorId: 'omar',
+      actionId: 'spread_rumor',
+      claim: 'The quay noise is linked to a cover-up after the missing delivery.',
+      targetAgentIds: ['elias', 'freja'],
+      truthLevel: 45,
+      emotionalTone: 'concern'
+    });
+  }
+
+  world.questProgress = {
+    questId: 'quest_noise_complaint',
+    completedSteps: [],
+    resolvedPathId: null
+  };
+
+  world.founder = {
+    unlocked: false,
+    baseLevel: 0,
+    reputation: world.agents?.player?.stats?.reputation ?? 0,
+    contractsCompleted: 0,
+    activeContract: null
+  };
+
+  world.progression = createInitialProgression();
+
+  world.addEvent({
+    type: 'incident_detected',
+    locationId: 'district_square',
+    actorIds: ['player', 'elias'],
+    description: 'Noise Complaint #5561 is active: the quay is loud, signal interference logged, a cover-up rumor is spreading.',
+    public: true,
+    visibleToAgentIds: ['player', 'elias', 'omar', 'freja'],
+    importance: 4,
+    payload: { incidentId: 'noise_complaint_5561' }
+  });
+}
+
+function seedPlayableOwnershipDispute(world) {
+  placeAgentAtLocation(world, 'player', 'workshop');
+
+  world.playerKnowledge = {
+    evidenceIds: [],
+    knownRumorIds: [],
+    suspectedCauses: [],
+    unresolvedQuestions: [
+      'Who actually owns the workshop?',
+      'Is the 2019 charter still valid?'
+    ]
+  };
+
+  world.incidents.ownership_dispute_5562 = {
+    id: 'ownership_dispute_5562',
+    title: 'Ownership Dispute #5562',
+    status: 'active',
+    locationId: 'workshop',
+    visibleProblem: 'A contested ownership claim on the workshop threatens the current operation.',
+    hiddenCause: 'A corporate deed supersedes the 2019 charter, but Malik has not been notified.',
+    resolutionState: 'unresolved',
+    knownFacts: [
+      'The workshop has operated under the same charter since 2019.',
+      'A corporate ownership deed was filed recently.'
+    ],
+    involvedAgentIds: ['yasin', 'lina'],
+    linkedEvidence: ['workshop_charter_2019', 'corporate_ownership_deed'],
+    createdAtTick: world.tick ?? 0
+  };
+
+  if (!Object.values(world.rumors || {}).some((r) => r.sourceAgentId === 'yasin')) {
+      executeAction(world, {
+        actorId: 'yasin',
+        actionId: 'spread_rumor',
+        claim: 'The old workshop was sold to a private sponsor.',
+        targetAgentIds: ['lina'],
+        truthLevel: 55,
+        emotionalTone: 'concern'
+      });
+    }
+
+  world.questProgress = {
+    questId: 'quest_ownership_dispute',
+    completedSteps: [],
+    resolvedPathId: null
+  };
+
+  world.founder = {
+    unlocked: false,
+    baseLevel: 0,
+    reputation: world.agents?.player?.stats?.reputation ?? 0,
+    contractsCompleted: 0,
+    activeContract: null
+  };
+
+  world.progression = createInitialProgression();
+
+  world.addEvent({
+    type: 'incident_detected',
+    locationId: 'workshop',
+    actorIds: ['player', 'yasin'],
+    description: 'Ownership Dispute #5562 is active: a contested deed threatens the workshop, a sale rumor is spreading.',
+    public: true,
+    visibleToAgentIds: ['player', 'yasin', 'lina'],
+    importance: 4,
+    payload: { incidentId: 'ownership_dispute_5562' }
+  });
 }
 
 function isFounderUnlockedFromIncidents(world) {

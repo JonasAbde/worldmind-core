@@ -36,6 +36,7 @@ import {
 } from '../play/play-engine.js';
 import { renderWebPage } from '../play/web-renderer.js';
 import { buildGameplayShellModel } from '../play/game-shell-model.js';
+import { injectEpisodeSelectorInto } from '../play/episode-selector.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -760,7 +761,7 @@ function main() {
     appJs: APP_JS
   };
 
-  const html = renderWebPage(payload);
+  const html = injectEpisodeSelectorInto(renderWebPage(payload), 'topbar-after');
   const htmlPath = path.join(outDir, 'index.html');
   fs.writeFileSync(htmlPath, html, 'utf8');
 

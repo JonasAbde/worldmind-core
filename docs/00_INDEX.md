@@ -54,6 +54,8 @@
 - `55_V1_0_RELEASE_CHECKLIST.md` — v1.0 release pre-flight checklist.
 - `56_CONTENT_PACK_AUTHORING.md` — v1.0-rc11 content pack extensions: `npcDialogueTopics[]` on characters, `founderUnlockConditions[]` on quests, `consequenceSummary` + `requiredEvidence[]` on resolution paths. Plan 54 short-term targets shipped. 387/387 tests grønne, 21-trins ci:gate.
 - `57_SCENARIO_LOADER.md` — v1.0-rc12 scenario loader + JSON schema. Reads content/{episodes,dialogue,evidence,incidents,quests,rumors,resolution-paths}/ with typed accessors. Lightweight dependency-free JSON Schema validator. 419/419 tests grønne, 23-trins ci:gate. Plan 54 medium-term targets shipped.
+- `58_MULTI_EPISODE_PLAY.md` — v1.0-rc13 multi-episode play. All 3 authored episodes (the-missing-delivery, noise-along-the-quay, ownership-dispute) are now bootstrappable via `bootstrapWorld({ episode })`. New `/api/episodes` + `/api/episode/switch` endpoints + in-page episode selector UI. 445/445 tests grønne, 24-trins ci:gate.
+- `59_PREMIUM_3D_ASSET_STRATEGY.md` — v1.0-rc14 plan only, no code. Research into Disco Elysium / Citizen Sleeper / Norco / Paradise Killer art direction; GLTF 2.0 pipeline analysis; asset taxonomy (locations, NPCs, props, audio, atmosphere); technical specs (poly budget, texture budget, JSON sidecar contract); execution roadmap (60→61→62→63 sprints); decision matrix A/B/C/D with cost/quality/speed/risk. Recommends Path D (programmatic base + AI polish).
 
 ## Roadmap
 

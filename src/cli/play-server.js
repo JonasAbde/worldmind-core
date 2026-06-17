@@ -41,6 +41,12 @@ import {
   resolveMajorDecisionPrompt
 } from '../play/game-shell-model.js';
 import {
+  listPlayableEpisodes,
+  episodeMetadata,
+  isEpisodePlayable,
+  getEpisodeScenarioPath
+} from '../play/episode-loader.js';
+import {
   PLAY_API_VERSION,
   buildPlayStatePayload,
   buildCommandResultPayload
@@ -109,6 +115,10 @@ Endpoints:
 let world = null;
 let store = null;
 let eventLog = []; // in-memory tail of events emitted by resolveCommand
+
+function setWorld(next) {
+  world = next;
+}
 
 function ensureBoot() {
   if (world && store) return;
@@ -337,7 +347,39 @@ async function handleHealth(req, res) {
 
 async function handleState(req, res) {
   ensureBoot();
-  jsonResponse(req, res, 200, buildPlayStatePayload(world));
+  jsonResponse(req, res, 200, { ...buildPlayStatePayload(world), currentEpisode: world._episode || 'the-missing-delivery' });
+}
+
+async function handleEpisodesList(req, res) {
+  const eps = listPlayableEpisodes().map(episodeMetadata);
+  jsonResponse(req, res, 200, {
+    ok: true,
+    kind: 'episodes-list',
+    episodes: eps,
+    currentEpisode: world?._episode || 'the-missing-delivery'
+  });
+}
+
+async function handleEpisodeSwitch(req, res) {
+  let body;
+  try { body = await readBody(req); }
+  catch (err) { return jsonResponse(req, res, 400, { ok: false, error: err.message }); }
+  const episodeId = body?.episode;
+  if (!episodeId || !isEpisodePlayable(episodeId)) {
+    return jsonResponse(req, res, 400, { ok: false, error: `unknown episode: ${episodeId}` });
+  }
+  // Bootstrap a fresh world with the chosen episode and switch.
+  const scenarioPath = path.join(REPO, getEpisodeScenarioPath(episodeId));
+  const fresh = bootstrapWorld({ scenarioPath, episode: episodeId });
+  setWorld(fresh);
+  recordEvents([{ type: 'episode.switched', message: `Switched to episode: ${episodeId}` }]);
+  jsonResponse(req, res, 200, {
+    ok: true,
+    kind: 'episode-switched',
+    episode: episodeId,
+    metadata: episodeMetadata(episodeId),
+    world: buildPlayStatePayload(fresh)
+  });
 }
 
 async function handleCommand(req, res) {
@@ -536,8 +578,10 @@ async function route(req, res, urlPath, urlObj) {
       return;
     }
     if (urlPath === '/api/health') return handleHealth(req, res);
-    if (urlPath === '/api/state') return handleState(req, res);
-    if (urlPath === '/api/command' && req.method === 'POST') return handleCommand(req, res);
+        if (urlPath === '/api/state') return handleState(req, res);
+        if (urlPath === '/api/episodes' && req.method === 'GET') return handleEpisodesList(req, res);
+        if (urlPath === '/api/episode/switch' && req.method === 'POST') return handleEpisodeSwitch(req, res);
+        if (urlPath === '/api/command' && req.method === 'POST') return handleCommand(req, res);
     if (urlPath === '/api/save' && req.method === 'POST') return handleSave(req, res);
     if (urlPath === '/api/branch' && req.method === 'POST') return handleBranchCreate(req, res);
     if (urlPath === '/api/branches' && req.method === 'POST') return handleBranchCreate(req, res);
