@@ -123,6 +123,10 @@ test('v41: static 3D client wires embodied controls, collision, quest HUD, decis
   assert.match(src, /updateLocalLocomotion/);
   assert.match(src, /collidesWithDistrictBuilding/);
   assert.match(src, /renderQuestHud/);
+  assert.match(src, /renderIntelHud/);
+  assert.match(src, /renderLenoActions/);
+  assert.match(src, /addCommandLog/);
   assert.match(src, /findMajorDecision/);
   assert.match(src, /playAudioCues/);
+  assert.match(src, /ambient-new-aarhus/);
 });

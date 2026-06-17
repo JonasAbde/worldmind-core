@@ -19,6 +19,14 @@ const locEl = document.getElementById('wm-3d-loc');
 const hintEl = document.getElementById('wm-3d-hint');
 const questTitleEl = document.getElementById('wm-3d-quest-title');
 const questStepsEl = document.getElementById('wm-3d-quest-steps');
+const routeTabsEl = document.getElementById('wm-3d-route-tabs');
+const evidenceEl = document.getElementById('wm-3d-evidence');
+const rumorsEl = document.getElementById('wm-3d-rumors');
+const lenoActionsEl = document.getElementById('wm-3d-leno-actions');
+const introEl = document.getElementById('wm-3d-intro');
+const startButton = document.getElementById('wm-3d-start');
+const audioButton = document.getElementById('wm-3d-audio');
+const logEl = document.getElementById('wm-3d-log');
 
 const LOCOMOTION = Object.freeze({
   walkSpeed: 5.8,
@@ -46,6 +54,7 @@ let liveMode = false;
 let visualCues = null;
 let gameShell = null;
 let playerSnapshot = null;
+let playerKnowledge = { evidenceIds: [], knownRumorIds: [], unresolvedQuestions: [] };
 const pickables = new Map();
 /** Agent meshes with idle bob/turn animation (base pose in userData.idleBase). */
 const idleAgentMeshes = [];
@@ -61,7 +70,10 @@ let localVelocity = new THREE.Vector3();
 let localFacing = 0;
 let activeProximityMeta = null;
 let audioUnlocked = false;
+let ambientAudio = null;
 let lastFrameMs = performance.now();
+let selectedPathId = 'investigation_and_counter_rumor';
+let commandHistory = [];
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -100,6 +112,13 @@ function setHud() {
   locEl.textContent = `@ ${gameShell?.location?.name ?? gameShell?.location?.id ?? '-'}`;
 }
 
+function humanizeId(value) {
+  return String(value || '')
+    .replace(/^rumor_/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
 function escapeText(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
     '&': '&amp;',
@@ -116,6 +135,7 @@ function renderQuestHud() {
   if (!quest) {
     questTitleEl.textContent = 'No active case.';
     questStepsEl.innerHTML = '';
+    if (routeTabsEl) routeTabsEl.innerHTML = '';
     return;
   }
 
@@ -123,23 +143,42 @@ function renderQuestHud() {
     ? `${quest.title || 'Case'} resolved: ${quest.resolvedPathId}`
     : `${quest.title || 'The Missing Delivery'} - ${quest.incidentStatus || 'active'}`;
 
-  const rows = [];
-  for (const path of quest.paths || []) {
-    const steps = path.steps || [];
-    const next = steps.find((step) => !step.done);
-    const done = steps.length > 0 && steps.every((step) => step.done);
-    rows.push({
-      label: path.label || path.id,
-      step: next?.step || (done ? 'complete' : 'waiting'),
-      command: next?.step || null,
-      done,
-      progress: Math.max(0, Math.min(100, Math.round(path.progress ?? 0)))
+  const paths = quest.paths || [];
+  if (!paths.some((path) => path.id === selectedPathId)) {
+    selectedPathId = quest.resolvedPathId || paths.find((path) => !path.complete)?.id || paths[0]?.id || null;
+  }
+  const activePath = paths.find((path) => path.id === selectedPathId) || paths[0];
+
+  if (routeTabsEl) {
+    routeTabsEl.innerHTML = paths.map((path) => `
+      <button type="button" class="${path.id === activePath?.id ? 'active' : ''}" data-route-id="${escapeText(path.id)}">
+        ${escapeText(path.label || path.id)} - ${Math.round(path.progress ?? 0)}%
+      </button>
+    `).join('');
+    routeTabsEl.querySelectorAll('[data-route-id]').forEach((button) => {
+      button.addEventListener('click', () => {
+        selectedPathId = button.getAttribute('data-route-id');
+        renderQuestHud();
+      });
     });
   }
 
+  const steps = activePath?.steps || [];
+  const nextIndex = steps.findIndex((step) => !step.done);
+  const rows = steps.map((step, index) => ({
+    label: step.done ? 'Done' : (index === nextIndex ? 'Next' : 'Later'),
+    step: step.step,
+    command: !step.done && index === nextIndex ? step.step : null,
+    done: step.done,
+    current: !step.done && index === nextIndex,
+    progress: Math.max(0, Math.min(100, Math.round(activePath?.progress ?? 0)))
+  }));
+
+  if (!rows.length) rows.push({ label: 'Waiting', step: 'No route selected', command: null, done: false, current: true, progress: 0 });
+
   questStepsEl.innerHTML = rows.map((row) => `
-    <li class="${row.done ? 'done' : ''}">
-      <span>${row.done ? 'OK' : `${row.progress}%`}</span>
+    <li class="${row.done ? 'done' : ''} ${row.current ? 'current' : ''}">
+      <span>${row.done ? 'OK' : row.label}</span>
       <span><strong>${escapeText(row.label)}</strong><br>${escapeText(row.step)}</span>
       ${row.command && !row.done ? `<button type="button" data-quest-command="${escapeText(row.command)}">Run</button>` : '<span></span>'}
     </li>
@@ -148,6 +187,52 @@ function renderQuestHud() {
   questStepsEl.querySelectorAll('[data-quest-command]').forEach((button) => {
     button.addEventListener('click', () => runCommand(button.getAttribute('data-quest-command')));
   });
+
+  const next = rows.find((row) => row.command)?.command;
+  if (next && !commandInput.value) commandInput.placeholder = next;
+}
+
+function renderChipRow(el, values, emptyText) {
+  if (!el) return;
+  const ids = Array.isArray(values) ? values : [];
+  if (!ids.length) {
+    el.innerHTML = `<span class="wm-chip empty">${escapeText(emptyText)}</span>`;
+    return;
+  }
+  el.innerHTML = ids.map((id) => `<span class="wm-chip">${escapeText(humanizeId(id))}</span>`).join('');
+}
+
+function renderLenoActions() {
+  if (!lenoActionsEl) return;
+  const suggestions = gameShell?.leno?.suggestions || [];
+  if (!suggestions.length) {
+    lenoActionsEl.innerHTML = '<span class="wm-chip empty">Ask Leno when stuck</span>';
+    return;
+  }
+  lenoActionsEl.innerHTML = suggestions.slice(0, 4).map((cmd) =>
+    `<button type="button" data-leno-command="${escapeText(cmd)}">${escapeText(cmd)}</button>`
+  ).join('');
+  lenoActionsEl.querySelectorAll('[data-leno-command]').forEach((button) => {
+    button.addEventListener('click', () => runCommand(button.getAttribute('data-leno-command')));
+  });
+}
+
+function renderIntelHud() {
+  renderChipRow(evidenceEl, playerKnowledge?.evidenceIds, 'No evidence yet');
+  renderChipRow(rumorsEl, playerKnowledge?.knownRumorIds, 'No rumors heard');
+  renderLenoActions();
+}
+
+function addCommandLog(command, result) {
+  commandHistory.unshift({
+    command,
+    text: result?.consequenceBeat?.summary || result?.text || 'Done'
+  });
+  commandHistory = commandHistory.slice(0, 5);
+  if (!logEl) return;
+  logEl.innerHTML = commandHistory
+    .map((item) => `<div><strong>${escapeText(item.command)}</strong><br>${escapeText(item.text)}</div>`)
+    .join('');
 }
 
 function clearWorldMeshes() {
@@ -795,7 +880,9 @@ function renderActions(meta) {
 
 function selectMeta(meta) {
   selectionTitle.textContent = meta?.label || 'Selection';
-  selectionDesc.textContent = meta?.description || 'Choose an action';
+  selectionDesc.textContent = meta?.description
+    ? `${meta.description}${meta.command || meta.commands ? ' | Press E nearby' : ''}`
+    : 'Choose an action';
   renderActions(meta);
 }
 
@@ -804,9 +891,11 @@ async function refreshState() {
   if (res.status !== 200 || !res.body.ok) throw new Error('state fetch failed');
   gameShell = res.body.gameShell;
   playerSnapshot = res.body.playerSnapshot;
+  playerKnowledge = res.body.playerKnowledge || playerKnowledge;
   if (res.body.visualCues) applyVisualCues(res.body.visualCues);
   setHud();
   renderQuestHud();
+  renderIntelHud();
 }
 
 function findMajorDecision(commandText) {
@@ -837,6 +926,13 @@ async function maybeBranchBefore(commandText) {
 
 function unlockAudio() {
   audioUnlocked = true;
+  if (audioButton) audioButton.textContent = 'Audio on';
+  if (!ambientAudio) {
+    ambientAudio = new Audio('/assets/audio/ambient-new-aarhus.mp3');
+    ambientAudio.loop = true;
+    ambientAudio.volume = 0.16;
+  }
+  ambientAudio.play().catch(() => {});
 }
 
 function playAudioCues(cues = []) {
@@ -868,8 +964,10 @@ async function runCommand(text) {
   const result = res.body.result || {};
   if (result.gameShell) gameShell = result.gameShell;
   if (result.playerSnapshot) playerSnapshot = result.playerSnapshot;
+  if (result.playerKnowledge) playerKnowledge = result.playerKnowledge;
   setHud();
   renderQuestHud();
+  renderIntelHud();
   playAudioCues(result.audioCues);
 
   const lines = [result.text || res.body.text || 'Done'];
@@ -878,18 +976,29 @@ async function runCommand(text) {
   if (result.leno?.summary) lines.push(`Leno: ${result.leno.summary}`);
   if (result.majorDecisionPrompt?.label) lines.push(`Major decision: ${result.majorDecisionPrompt.label}`);
   outputEl.textContent = lines.join('\n\n');
+  addCommandLog(cmd, result);
   commandInput.value = '';
   showBanner(`OK ${cmd}`);
 
   if (result.walkAnimation?.waypoints?.length) {
     const stateRes = await api('GET', '/api/state');
+    if (stateRes.body.playerKnowledge) playerKnowledge = stateRes.body.playerKnowledge;
+    if (stateRes.body.gameShell) gameShell = stateRes.body.gameShell;
     if (stateRes.body.visualCues) startWalkAnimation(result.walkAnimation, stateRes.body.visualCues);
+    renderQuestHud();
+    renderIntelHud();
     return;
   }
 
   if (result.gameShell && visualCues) {
     const stateRes = await api('GET', '/api/state');
+    if (stateRes.body.playerKnowledge) playerKnowledge = stateRes.body.playerKnowledge;
+    if (stateRes.body.gameShell) gameShell = stateRes.body.gameShell;
+    if (stateRes.body.playerSnapshot) playerSnapshot = stateRes.body.playerSnapshot;
     if (stateRes.body.visualCues) applyVisualCues(stateRes.body.visualCues);
+    setHud();
+    renderQuestHud();
+    renderIntelHud();
   }
 }
 
@@ -905,6 +1014,18 @@ function onPointerDown(event) {
   });
   const hits = raycaster.intersectObjects(allMeshes, false);
   if (hits.length) selectMeta(hits[0].object.userData.pickMeta);
+}
+
+function onPointerMove(event) {
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const allMeshes = [];
+  worldGroup.traverse((obj) => {
+    if (obj.isMesh && obj.userData.pickMeta) allMeshes.push(obj);
+  });
+  canvas.style.cursor = raycaster.intersectObjects(allMeshes, false).length ? 'pointer' : 'default';
 }
 
 form.addEventListener('submit', (e) => {
@@ -945,6 +1066,26 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+audioButton?.addEventListener('click', () => {
+  if (!audioUnlocked) {
+    unlockAudio();
+    return;
+  }
+  if (ambientAudio?.paused) {
+    ambientAudio.play().catch(() => {});
+    audioButton.textContent = 'Audio on';
+  } else {
+    ambientAudio?.pause();
+    audioButton.textContent = 'Audio off';
+  }
+});
+
+startButton?.addEventListener('click', () => {
+  introEl?.classList.add('hidden');
+  unlockAudio();
+  localStorage.setItem('worldmind.3d.introSeen', '1');
+});
+
 window.addEventListener('keyup', (event) => {
   if (setMovementKey(event.code, false)) event.preventDefault();
 });
@@ -955,6 +1096,7 @@ window.addEventListener('blur', () => {
 });
 
 canvas.addEventListener('pointerdown', onPointerDown);
+canvas.addEventListener('pointermove', onPointerMove);
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -993,6 +1135,9 @@ function animate(now) {
 }
 
 async function boot() {
+  if (localStorage.getItem('worldmind.3d.introSeen') === '1') {
+    introEl?.classList.add('hidden');
+  }
   try {
     const health = await api('GET', '/api/health');
     if (health.status === 200 && health.body.ok) {

@@ -9,36 +9,48 @@
     html, body { height: 100%; overflow: hidden; background: #0a0e14; color: #e6edf3; font-family: ui-monospace, monospace; }
     #wm-3d-canvas { display: block; width: 100%; height: 100%; }
     #wm-3d-hud {
-      position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column;
-      justify-content: space-between; padding: 12px 16px;
+      position: fixed; inset: 0; pointer-events: none; display: grid;
+      grid-template-columns: minmax(280px, 370px) 1fr minmax(320px, 440px);
+      grid-template-rows: auto 1fr auto; gap: 12px; padding: 12px 16px;
     }
     #wm-3d-topbar {
-      pointer-events: auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      pointer-events: auto; grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
       background: rgba(13,17,23,0.85); border: 1px solid #30363d; border-radius: 8px; padding: 8px 12px;
-      backdrop-filter: blur(8px); max-width: 900px;
+      backdrop-filter: blur(8px);
     }
     #wm-3d-topbar a { color: #58a6ff; text-decoration: none; font-size: 0.75rem; }
     #wm-3d-topbar .stat { font-size: 0.72rem; color: #8b949e; }
     #wm-3d-topbar .stat strong { color: #f59e0b; }
+    #wm-3d-topbar button {
+      margin-left: auto; font: inherit; font-size: 0.68rem; padding: 5px 8px; border-radius: 4px;
+      border: 1px solid #30363d; color: #c9d1d9; background: #161b22; cursor: pointer;
+    }
     #wm-3d-panel {
-      pointer-events: auto; align-self: flex-end; width: min(420px, 100%);
+      pointer-events: auto; grid-column: 3; grid-row: 2 / 4; align-self: end;
       background: rgba(13,17,23,0.92); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
       backdrop-filter: blur(10px);
     }
     #wm-3d-side {
-      pointer-events: auto; width: min(360px, 100%); align-self: flex-start;
+      pointer-events: auto; grid-column: 1; grid-row: 2; align-self: start;
       background: rgba(13,17,23,0.88); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
       backdrop-filter: blur(10px);
     }
     #wm-3d-side h2 { font-size: 0.78rem; color: #f59e0b; margin-bottom: 6px; }
-    #wm-3d-quest-title { font-size: 0.78rem; color: #e6edf3; margin-bottom: 8px; }
-    #wm-3d-quest-steps { list-style: none; display: grid; gap: 5px; max-height: 220px; overflow: auto; }
+    #wm-3d-quest-title { font-size: 0.8rem; color: #e6edf3; margin-bottom: 8px; line-height: 1.35; }
+    #wm-3d-route-tabs { display: grid; gap: 5px; margin-bottom: 8px; }
+    #wm-3d-route-tabs button {
+      font: inherit; text-align: left; font-size: 0.63rem; padding: 6px 7px; border-radius: 4px;
+      border: 1px solid #30363d; background: rgba(22,27,34,0.72); color: #8b949e; cursor: pointer;
+    }
+    #wm-3d-route-tabs button.active { color: #fbbf24; border-color: #f59e0b77; background: rgba(45,33,17,0.78); }
+    #wm-3d-quest-steps { list-style: none; display: grid; gap: 5px; max-height: 290px; overflow: auto; }
     #wm-3d-quest-steps li {
       display: grid; grid-template-columns: auto 1fr auto; gap: 7px; align-items: center;
       font-size: 0.66rem; color: #8b949e; border: 1px solid #30363d99; border-radius: 5px; padding: 5px 6px;
       background: rgba(22,27,34,0.78);
     }
     #wm-3d-quest-steps li.done { color: #7ee787; border-color: #23863666; }
+    #wm-3d-quest-steps li.current { color: #fbbf24; border-color: #f59e0b99; }
     #wm-3d-quest-steps button {
       font: inherit; font-size: 0.6rem; padding: 3px 6px; border-radius: 4px; cursor: pointer;
       border: 1px solid #f59e0b55; background: #2d2111; color: #fbbf24;
@@ -60,7 +72,44 @@
       font: inherit; font-size: 0.72rem; padding: 6px 10px; border-radius: 4px; cursor: pointer;
       border: none; background: linear-gradient(90deg, #d97706, #f59e0b); color: #0d1117; font-weight: 600;
     }
-    #wm-3d-output { margin-top: 8px; font-size: 0.68rem; color: #c9d1d9; white-space: pre-wrap; max-height: 120px; overflow: auto; }
+    #wm-3d-output { margin-top: 8px; font-size: 0.68rem; color: #c9d1d9; white-space: pre-wrap; max-height: 180px; overflow: auto; }
+    #wm-3d-log { display: grid; gap: 5px; margin-top: 8px; max-height: 150px; overflow: auto; }
+    #wm-3d-log div {
+      font-size: 0.62rem; color: #8b949e; border-left: 2px solid #30363d; padding-left: 7px;
+    }
+    #wm-3d-intel {
+      pointer-events: auto; grid-column: 1; grid-row: 3; align-self: end;
+      background: rgba(13,17,23,0.88); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+    #wm-3d-intel h2 { font-size: 0.78rem; color: #58a6ff; margin-bottom: 7px; }
+    #wm-3d-intel h3 { font-size: 0.64rem; color: #8b949e; margin: 8px 0 5px; }
+    .wm-chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .wm-chip {
+      font-size: 0.6rem; color: #c9d1d9; border: 1px solid #30363d; border-radius: 999px;
+      padding: 4px 7px; background: rgba(22,27,34,0.82);
+    }
+    .wm-chip.empty { color: #6e7681; }
+    #wm-3d-leno-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+    #wm-3d-leno-actions button {
+      font: inherit; font-size: 0.6rem; padding: 4px 7px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #388bfd55; background: #0d2038; color: #79c0ff;
+    }
+    #wm-3d-intro {
+      pointer-events: auto; position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+      background: radial-gradient(circle at center, rgba(13,17,23,0.64), rgba(10,14,20,0.92));
+    }
+    #wm-3d-intro-card {
+      width: min(560px, calc(100% - 32px)); border: 1px solid #30363d; border-radius: 8px;
+      background: rgba(13,17,23,0.96); padding: 18px; box-shadow: 0 20px 80px rgba(0,0,0,0.45);
+    }
+    #wm-3d-intro-card h1 { font-size: 1.05rem; color: #f59e0b; margin-bottom: 8px; }
+    #wm-3d-intro-card p { color: #c9d1d9; font-size: 0.74rem; line-height: 1.55; margin-bottom: 10px; }
+    #wm-3d-intro-card ul { margin: 0 0 12px 18px; color: #8b949e; font-size: 0.68rem; line-height: 1.65; }
+    #wm-3d-start {
+      font: inherit; font-size: 0.76rem; padding: 8px 12px; border: none; border-radius: 5px;
+      background: #f59e0b; color: #0d1117; font-weight: 700; cursor: pointer;
+    }
     #wm-3d-banner {
       position: fixed; top: 12px; left: 50%; transform: translateX(-50%); font-size: 0.68rem;
       padding: 4px 10px; border-radius: 4px; background: #1f6feb; color: white; z-index: 20;
@@ -73,8 +122,9 @@
     }
     #wm-3d-hint.visible { opacity: 1; }
     @media (max-width: 720px) {
-      #wm-3d-hud { padding: 8px; gap: 8px; }
+      #wm-3d-hud { padding: 8px; gap: 8px; display: flex; flex-direction: column; justify-content: space-between; }
       #wm-3d-side { width: 100%; max-height: 34vh; overflow: auto; }
+      #wm-3d-intel { display: none; }
       #wm-3d-panel { width: 100%; }
       #wm-3d-hint { bottom: 9px; width: calc(100% - 24px); text-align: center; }
     }
@@ -92,11 +142,22 @@
       <span class="stat" id="wm-3d-day">Day -</span>
       <span class="stat" id="wm-3d-money">Credits 0</span>
       <span class="stat" id="wm-3d-loc">@ -</span>
+      <button id="wm-3d-audio" type="button">Audio off</button>
     </div>
     <div id="wm-3d-side">
       <h2>Objective</h2>
       <p id="wm-3d-quest-title">Loading case...</p>
+      <div id="wm-3d-route-tabs"></div>
       <ol id="wm-3d-quest-steps"></ol>
+    </div>
+    <div id="wm-3d-intel">
+      <h2>Case Intel</h2>
+      <h3>Evidence</h3>
+      <div id="wm-3d-evidence" class="wm-chip-row"></div>
+      <h3>Rumors</h3>
+      <div id="wm-3d-rumors" class="wm-chip-row"></div>
+      <h3>Leno</h3>
+      <div id="wm-3d-leno-actions"></div>
     </div>
     <div id="wm-3d-panel">
       <h2 id="wm-3d-selection-title">Click a building or agent</h2>
@@ -107,6 +168,19 @@
         <button id="wm-3d-run" type="submit">Run</button>
       </form>
       <div id="wm-3d-output"></div>
+      <div id="wm-3d-log"></div>
+    </div>
+  </div>
+  <div id="wm-3d-intro">
+    <div id="wm-3d-intro-card">
+      <h1>The Missing Delivery</h1>
+      <p>Sara's cafe is missing a delivery. Someone is pushing a rumor, and Leno cannot name the hidden source until you earn evidence.</p>
+      <ul>
+        <li>Move with WASD or click locations.</li>
+        <li>Press E near buildings, clues, and NPCs.</li>
+        <li>Follow one route, gather evidence, then resolve the case.</li>
+      </ul>
+      <button id="wm-3d-start" type="button">Start playing</button>
     </div>
   </div>
   <script type="importmap">
