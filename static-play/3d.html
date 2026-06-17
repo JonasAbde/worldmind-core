@@ -30,6 +30,10 @@
       background: rgba(13,17,23,0.92); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
       backdrop-filter: blur(10px);
     }
+    #wm-3d-selection-media {
+      width: 100%; aspect-ratio: 16 / 8; object-fit: cover; border-radius: 6px; margin-bottom: 8px;
+      border: 1px solid #30363d; background: #0d1117;
+    }
     #wm-3d-side {
       pointer-events: auto; grid-column: 1; grid-row: 2; align-self: start;
       background: rgba(13,17,23,0.88); border: 1px solid #30363d; border-radius: 8px; padding: 12px;
@@ -87,8 +91,13 @@
     .wm-chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
     .wm-chip {
       font-size: 0.6rem; color: #c9d1d9; border: 1px solid #30363d; border-radius: 999px;
-      padding: 4px 7px; background: rgba(22,27,34,0.82);
+      padding: 4px 7px; background: rgba(22,27,34,0.82); display: inline-flex; align-items: center; gap: 5px;
     }
+    .wm-chip::before {
+      content: ""; width: 14px; height: 14px; background: var(--chip-icon, url('/assets/ui/icons/evidence.webp')) center/contain no-repeat;
+      opacity: 0.9; flex: 0 0 auto;
+    }
+    #wm-3d-rumors .wm-chip::before { --chip-icon: url('/assets/ui/icons/rumor.webp'); }
     .wm-chip.empty { color: #6e7681; }
     #wm-3d-leno-actions { display: flex; flex-wrap: wrap; gap: 5px; }
     #wm-3d-leno-actions button {
@@ -160,6 +169,7 @@
       <div id="wm-3d-leno-actions"></div>
     </div>
     <div id="wm-3d-panel">
+      <img id="wm-3d-selection-media" class="hidden" alt="" />
       <h2 id="wm-3d-selection-title">Click a building or agent</h2>
       <p id="wm-3d-selection-desc">WASD / drag to orbit | click location to move | agents for talk/ask</p>
       <div id="wm-3d-actions"></div>

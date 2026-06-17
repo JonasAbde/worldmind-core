@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const canvas = document.getElementById('wm-3d-canvas');
 const banner = document.getElementById('wm-3d-banner');
+const selectionMedia = document.getElementById('wm-3d-selection-media');
 const selectionTitle = document.getElementById('wm-3d-selection-title');
 const selectionDesc = document.getElementById('wm-3d-selection-desc');
 const actionsEl = document.getElementById('wm-3d-actions');
@@ -431,6 +432,42 @@ function buildGround(env) {
   const grid = new THREE.GridHelper(48, 48, env?.gridColor ?? '#1f2937', env?.gridColor ?? '#111827');
   grid.position.y = 0.02;
   worldGroup.add(grid);
+
+  const mapMat = makeTextureMaterial('/assets/maps/new-aarhus-district-map.webp', { opacity: 0.3 });
+  if (mapMat) {
+    const map = new THREE.Mesh(new THREE.PlaneGeometry(34, 22), mapMat);
+    map.rotation.x = -Math.PI / 2;
+    map.position.y = 0.035;
+    worldGroup.add(map);
+  }
+}
+
+function buildBackdrop() {
+  const mat = makeTextureMaterial('/assets/concept/new-aarhus-district-01.webp', { opacity: 0.44 });
+  if (!mat) return;
+  const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(42, 22), mat);
+  backdrop.position.set(0, 8.5, -22);
+  backdrop.rotation.x = -0.04;
+  worldGroup.add(backdrop);
+}
+
+function buildRainField() {
+  const group = new THREE.Group();
+  const mat = new THREE.LineBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.24 });
+  for (let i = 0; i < 90; i += 1) {
+    const x = -18 + ((i * 7) % 36);
+    const z = -18 + ((i * 13) % 36);
+    const y = 3 + ((i * 5) % 12);
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x, y, z),
+      new THREE.Vector3(x - 0.18, y - 1.15, z + 0.08)
+    ]);
+    const line = new THREE.Line(geo, mat);
+    line.userData.rainBaseY = y;
+    group.add(line);
+  }
+  group.userData.kind = 'rain';
+  worldGroup.add(group);
 }
 
 function buildEdges(edges) {
@@ -465,6 +502,24 @@ function resolveAssetUrl(url) {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
   return `/${url.replace(/^\//, '')}`;
+}
+
+function preferredWebp(path) {
+  if (!path) return path;
+  return path.endsWith('.png') ? path.replace(/\.png$/, '.webp') : path;
+}
+
+function makeTextureMaterial(path, options = {}) {
+  const tex = loadSceneTexture(preferredWebp(path));
+  if (!tex) return null;
+  return new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true,
+    opacity: options.opacity ?? 1,
+    depthWrite: options.depthWrite ?? false,
+    side: options.side ?? THREE.DoubleSide,
+    toneMapped: false
+  });
 }
 
 function loadGltfScene(url) {
@@ -609,8 +664,25 @@ function buildLocations(locations) {
       id: loc.id,
       label: loc.label,
       command: loc.command,
-      description: `${loc.zone} | ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`
+      description: `${loc.zone} | ${loc.isPlayerHere ? 'you are here' : 'click to travel'}`,
+      image: loc.sceneTexture
     });
+
+    const sceneMat = makeTextureMaterial(loc.sceneTexture, { opacity: loc.isPlayerHere ? 0.92 : 0.68 });
+    if (sceneMat) {
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 2.7), sceneMat);
+      plate.position.set(px, 2.25, pz - 1.95);
+      plate.rotation.y = Math.PI;
+      plate.userData.pickMeta = {
+        kind: 'location',
+        id: loc.id,
+        label: loc.label,
+        command: loc.command,
+        description: `${loc.zone} scene | ${loc.isPlayerHere ? 'current location' : 'click to travel'}`,
+        image: loc.sceneTexture
+      };
+      worldGroup.add(plate);
+    }
 
     const labelHeight = shouldUseGltfBuilding(loc.modelUrl)
       ? (loc.footprint?.[1] ?? BILLBOARD_H) + 0.8
@@ -644,8 +716,26 @@ function buildLocations(locations) {
         id: agent.id,
         label: agent.name,
         commands: agent.commands,
-        description: agent.role || 'district agent'
+        description: agent.role || 'district agent',
+        image: agent.figureTexture || agent.portrait,
+        role: agent.role
       });
+
+      const portraitMat = makeTextureMaterial(agent.figureTexture || agent.portrait, { opacity: 0.95 });
+      if (portraitMat) {
+        const card = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.35), portraitMat);
+        card.position.set(agent.position[0], agent.position[1] + 1.95, agent.position[2] - 0.28);
+        card.userData.pickMeta = {
+          kind: 'agent',
+          id: agent.id,
+          label: agent.name,
+          commands: agent.commands,
+          description: agent.role || 'district agent',
+          image: agent.figureTexture || agent.portrait,
+          role: agent.role
+        };
+        worldGroup.add(card);
+      }
     }
   }
 }
@@ -795,18 +885,31 @@ function buildPlayer(player) {
 
 function buildHotspots(hotspots) {
   for (const hs of hotspots || []) {
-    const mesh = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.35, 0),
-      new THREE.MeshStandardMaterial({ color: '#f59e0b', emissive: '#b45309', emissiveIntensity: 0.6 })
-    );
+    const iconMat = makeTextureMaterial(hs.icon || '/assets/ui/icons/inspect.webp', { opacity: 0.98 });
+    const mesh = iconMat
+      ? new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.88), iconMat)
+      : new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.35, 0),
+        new THREE.MeshStandardMaterial({ color: '#f59e0b', emissive: '#b45309', emissiveIntensity: 0.6 })
+      );
     mesh.position.set(hs.position[0], hs.position[1], hs.position[2]);
+    mesh.rotation.y = Math.PI;
     addPickable(mesh, {
       kind: 'hotspot',
       id: hs.id,
       label: hs.label,
       command: hs.command,
-      description: `Risk ${hs.risk ?? 1}`
+      description: hs.preview || hs.description || `Risk ${hs.risk ?? 1}`,
+      image: hs.icon || '/assets/ui/icons/inspect.webp',
+      risk: hs.risk ?? 1
     });
+    const glow = new THREE.Mesh(
+      new THREE.RingGeometry(0.55, 0.72, 28),
+      new THREE.MeshBasicMaterial({ color: '#f59e0b', transparent: true, opacity: 0.55, side: THREE.DoubleSide })
+    );
+    glow.position.set(hs.position[0], 0.08, hs.position[2]);
+    glow.rotation.x = -Math.PI / 2;
+    worldGroup.add(glow);
   }
 }
 
@@ -843,6 +946,8 @@ function applyVisualCues(cues) {
   worldGroup.add(amb, sun);
 
   buildGround(env);
+  buildBackdrop();
+  buildRainField();
   buildEdges(cues.edges);
   buildLocations(cues.locations);
   buildHotspots(cues.hotspots);
@@ -879,6 +984,18 @@ function renderActions(meta) {
 }
 
 function selectMeta(meta) {
+  if (selectionMedia) {
+    const image = resolveAssetUrl(preferredWebp(meta?.image));
+    if (image) {
+      selectionMedia.src = image;
+      selectionMedia.alt = meta?.label || '';
+      selectionMedia.classList.remove('hidden');
+    } else {
+      selectionMedia.removeAttribute('src');
+      selectionMedia.alt = '';
+      selectionMedia.classList.add('hidden');
+    }
+  }
   selectionTitle.textContent = meta?.label || 'Selection';
   selectionDesc.textContent = meta?.description
     ? `${meta.description}${meta.command || meta.commands ? ' | Press E nearby' : ''}`
@@ -1117,6 +1234,14 @@ function tickIdleAgentAnimations(now) {
       mesh.rotation.y = 0;
     }
   }
+  worldGroup.traverse((obj) => {
+    if (obj.userData?.kind !== 'rain') return;
+    for (const child of obj.children) {
+      const baseY = child.userData.rainBaseY ?? 8;
+      child.position.y = -((t * 3.2 + baseY) % 12);
+      if (child.position.y < -3) child.position.y += 12;
+    }
+  });
 }
 
 function animate(now) {
