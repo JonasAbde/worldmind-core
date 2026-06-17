@@ -16,3 +16,6 @@ data/*.sqlite*
 .idea/
 *.swp
 
+*.png
+# Test fixtures that may be regenerated
+assets/textures/_test_*.png

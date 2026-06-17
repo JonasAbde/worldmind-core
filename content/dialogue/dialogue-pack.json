@@ -1,6 +1,6 @@
 {
   "kind": "dialogue_pack",
-  "version": 1,
+  "version": 2,
   "dialogue": [
     {
       "id": "dialogue_sara_help",
@@ -45,6 +45,116 @@
       "tone": "guarded",
       "line": "Everyone in the market edits the truth a little. Prove something before you make accusations.",
       "unlocks": []
+    },
+    {
+      "id": "dialogue_omar_noise",
+      "agentId": "omar",
+      "topic": "noise",
+      "tone": "investigative",
+      "line": "Ex-Registry habit: I log every complaint with timestamps. The dock noise started three weeks ago, peaks at 4 AM. That is cargo machinery, not traffic.",
+      "unlocks": [
+        "omar_quay_log"
+      ]
+    },
+    {
+      "id": "dialogue_omar_dock_authority",
+      "agentId": "omar",
+      "topic": "harbor",
+      "tone": "measured",
+      "line": "The harbor master owes me a favor from the registry days. Tell me what you need and I can ask quietly.",
+      "unlocks": [
+        "harbor_master_access"
+      ]
+    },
+    {
+      "id": "dialogue_lina_cargo",
+      "agentId": "lina",
+      "topic": "cargo",
+      "tone": "guarded",
+      "line": "I do not sign for late crates. If the quay noise is delaying my runs, I want proof before I raise a tariff complaint.",
+      "unlocks": [
+        "lina_cargo_manifest"
+      ]
+    },
+    {
+      "id": "dialogue_lina_harbor_rumor",
+      "agentId": "lina",
+      "topic": "rumor",
+      "tone": "practical",
+      "line": "Freja at the mediation kiosk told me the harbor is fine. I do not trust anyone who profits from the silence.",
+      "unlocks": [
+        "freja_silence_pattern"
+      ]
+    },
+    {
+      "id": "dialogue_elias_recording",
+      "agentId": "elias",
+      "topic": "recording",
+      "tone": "focused",
+      "line": "I have a 14-second audio clip of the quay noise. It is not random traffic — it has a 4 Hz rumble underneath. That is a dock crane or a cargo press.",
+      "unlocks": [
+        "elias_audio_clip"
+      ]
+    },
+    {
+      "id": "dialogue_elias_proof_request",
+      "agentId": "elias",
+      "topic": "evidence",
+      "tone": "rigorous",
+      "line": "If you bring me omar's timestamp log and lina's manifest, I can correlate the noise to a specific cargo window. That is hard evidence.",
+      "unlocks": [
+        "correlated_noise_evidence"
+      ]
+    },
+    {
+      "id": "dialogue_freja_mediation",
+      "agentId": "freja",
+      "topic": "ownership",
+      "tone": "neutral",
+      "line": "Both parties have claims. I have not seen the registry original, only the duplicate copy. That alone is suspicious.",
+      "unlocks": [
+        "freja_registry_observation"
+      ]
+    },
+    {
+      "id": "dialogue_freja_policy",
+      "agentId": "freja",
+      "topic": "policy",
+      "tone": "diplomatic",
+      "line": "If we go to policy pressure, the registry will defend its duplicate. If we trace the original quietly, we have a stronger case.",
+      "unlocks": [
+        "quiet_investigation_path"
+      ]
+    },
+    {
+      "id": "dialogue_yasin_workshop",
+      "agentId": "yasin",
+      "topic": "workshop",
+      "tone": "focused",
+      "line": "I do the repairs for the workshop. I have seen the original deed in 2009. It is the same as what I keep in my archive. The duplicate does not match.",
+      "unlocks": [
+        "yasin_deed_archive"
+      ]
+    },
+    {
+      "id": "dialogue_yasin_evidence",
+      "agentId": "yasin",
+      "topic": "evidence",
+      "tone": "careful",
+      "line": "Freja can mediate, but the registry will not change its position without a paper trail. I can digitize the deed copy if you want to cross-check.",
+      "unlocks": [
+        "yasin_digitized_deed"
+      ]
+    },
+    {
+      "id": "dialogue_lina_quiet",
+      "agentId": "lina",
+      "topic": "quiet",
+      "tone": "brief",
+      "line": "If you want this kept quiet, I am happy to. But if the noise really is mine, I want to know first. I do not pay for lies.",
+      "unlocks": [
+        "lina_truth_compact"
+      ]
     }
   ]
 }

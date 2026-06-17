@@ -60,6 +60,7 @@
 - `61_V1_ROADMAP.md` — Master roadmap from rc15 → v1.0. Six sprints: rc16 materials/textures, rc17 animations+post-process, rc18 founder contracts+9 resolution paths end-to-end, rc19 multi-episode content, rc20 browser authoring panel, rc21 ship-ready infra. Each sprint has explicit tasks + "done when" criteria. Risks + parallelizable side-quests documented.
 - `62_RC16_TEXTURES_MATERIALS.md` — v1.0-rc16 procedural textures + PBR materials. `tools/build-textures.py` generates 6 material types (wood/brick/concrete/metal/neon/fabric) via Pillow. `tools/build-glb-pbr.py` writes GLBs via pygltflib (per-mesh PBR materials + named nodes). ci:gate fix: split `npm test` (fast, skips smoke tests) and `test:all` (full). 407/407 fast tests + 461/461 full. 25-step ci:gate green.
 - `63_RC17_ANIMATIONS.md` — v1.0-rc17 animation tracks. 4 glTF animation tracks (idle/talk/examine/walk) baked into every character GLB via `_add_animation_tracks()` in build-glb-pbr.py. Targets canonical body+head nodes. Linear interpolation. 412/412 tests grønne. Runtime wire-up to THREE.AnimationMixer deferred to rc17.5/rc18.
+- `64_RC19_PER_EPISODE_CONTENT.md` — v1.0-rc19 per-episode content. Dialogue-pack.json extended 5→16 entries (omar, lina, elias, freja, yasin). Episodes 2+3 (noise-along-the-quay, ownership-dispute) have full NPC coverage + GLB models + dialogue trees. Each dialogue entry unlocks an evidence gate. 432/432 tests grønne.
 
 ## Roadmap
 
