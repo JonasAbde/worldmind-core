@@ -5,3 +5,14 @@ coverage/
 *.log
 static-dashboard/*.json
 data/
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+# Test artifacts
+data/*.sqlite*
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
