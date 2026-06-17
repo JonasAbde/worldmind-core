@@ -53,6 +53,7 @@
 - `48_2D_DISTRICT_VIEW.md` — v1.0-rc8 SVG district view over New Aarhus District 01; 4 locations; agent markers; click-to-move; `npm run validate:district-ui`.
 - `55_V1_0_RELEASE_CHECKLIST.md` — v1.0 release pre-flight checklist.
 - `56_CONTENT_PACK_AUTHORING.md` — v1.0-rc11 content pack extensions: `npcDialogueTopics[]` on characters, `founderUnlockConditions[]` on quests, `consequenceSummary` + `requiredEvidence[]` on resolution paths. Plan 54 short-term targets shipped. 387/387 tests grønne, 21-trins ci:gate.
+- `57_SCENARIO_LOADER.md` — v1.0-rc12 scenario loader + JSON schema. Reads content/{episodes,dialogue,evidence,incidents,quests,rumors,resolution-paths}/ with typed accessors. Lightweight dependency-free JSON Schema validator. 419/419 tests grønne, 23-trins ci:gate. Plan 54 medium-term targets shipped.
 
 ## Roadmap
 

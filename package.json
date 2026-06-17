@@ -2,7 +2,7 @@
   "name": "worldmind",
   "version": "0.1.0",
   "private": true,
-  "description": "WorldMind v1.0-rc11 — content pack authoring extensions (plan 54 short-term targets)",
+  "description": "WorldMind v1.0-rc12 \u2014 scenario loader + content-pack JSON schema (plan 54 medium-term)",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -47,9 +47,11 @@
     "validate:district-ui": "node src/cli/validate-district-ui.js",
     "validate:creator": "node src/cli/creator.js validate",
     "validate:content-pack-authoring": "node src/cli/validate-content-pack-authoring.js",
+    "validate:scenario-loader": "node src/cli/validate-scenario-loader.js",
+    "validate:scenario-schema": "node src/cli/validate-scenario-schema.js",
     "creator": "node src/cli/creator.js",
     "creator:scenario": "node src/cli/creator.js scenario",
-    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json && node src/cli/validate.js branch scenarios/branch-v06-canonical.json && node src/cli/validate.js dashboard static-dashboard && node src/cli/validate.js action && node src/cli/validate.js risk --strict && node src/cli/validate.js state && node src/cli/validate-event-log.js && node src/cli/validate-leno.js && node src/cli/diff-checker.js canonical --scenario scenarios/new-aarhus-district-01.json && node src/cli/diff-checker.js event-log && node src/cli/demo-play.js && node src/cli/validate-game-foundation.js && node src/cli/play-web.js && node src/cli/validate-web-play.js && node src/cli/validate-saves-ui.js --skip-server && node src/cli/validate-district-ui.js --skip-server && node src/cli/creator.js validate scenarios/creator-example-district.json && node src/cli/validate-content-pack-authoring.js",
+    "ci:gate": "npm run typecheck && npm test && npm run check && node src/cli/validate.js scenario scenarios/new-aarhus-district-01.json && node src/cli/validate.js branch scenarios/branch-v06-canonical.json && node src/cli/validate.js dashboard static-dashboard && node src/cli/validate.js action && node src/cli/validate.js risk --strict && node src/cli/validate.js state && node src/cli/validate-event-log.js && node src/cli/validate-leno.js && node src/cli/diff-checker.js canonical --scenario scenarios/new-aarhus-district-01.json && node src/cli/diff-checker.js event-log && node src/cli/demo-play.js && node src/cli/validate-game-foundation.js && node src/cli/play-web.js && node src/cli/validate-web-play.js && node src/cli/validate-saves-ui.js --skip-server && node src/cli/validate-district-ui.js --skip-server && node src/cli/creator.js validate scenarios/creator-example-district.json && node src/cli/validate-content-pack-authoring.js && node src/cli/validate-scenario-loader.js && node src/cli/validate-scenario-schema.js",
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check": "npm run typecheck && node src/cli/simulate.js --days 7 --assert",
