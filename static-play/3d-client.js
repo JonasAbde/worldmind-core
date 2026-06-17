@@ -24,6 +24,15 @@ const routeTabsEl = document.getElementById('wm-3d-route-tabs');
 const evidenceEl = document.getElementById('wm-3d-evidence');
 const rumorsEl = document.getElementById('wm-3d-rumors');
 const lenoActionsEl = document.getElementById('wm-3d-leno-actions');
+const episodeKickerEl = document.getElementById('wm-3d-episode-kicker');
+const episodeTitleEl = document.getElementById('wm-3d-episode-title');
+const episodeNextEl = document.getElementById('wm-3d-episode-next');
+const episodeActionsEl = document.getElementById('wm-3d-episode-actions');
+const completeEl = document.getElementById('wm-3d-complete');
+const completeBadgeEl = document.getElementById('wm-3d-complete-badge');
+const completeTitleEl = document.getElementById('wm-3d-complete-title');
+const completeCopyEl = document.getElementById('wm-3d-complete-copy');
+const completeCloseButton = document.getElementById('wm-3d-complete-close');
 const introEl = document.getElementById('wm-3d-intro');
 const startButton = document.getElementById('wm-3d-start');
 const audioButton = document.getElementById('wm-3d-audio');
@@ -222,6 +231,62 @@ function renderIntelHud() {
   renderChipRow(evidenceEl, playerKnowledge?.evidenceIds, 'No evidence yet');
   renderChipRow(rumorsEl, playerKnowledge?.knownRumorIds, 'No rumors heard');
   renderLenoActions();
+}
+
+function currentQuestPath() {
+  const paths = gameShell?.questProgress?.paths || [];
+  return paths.find((path) => path.id === selectedPathId)
+    || paths.find((path) => !path.complete)
+    || paths[0]
+    || null;
+}
+
+function nextQuestCommand() {
+  const path = currentQuestPath();
+  return (path?.steps || []).find((step) => !step.done)?.step || null;
+}
+
+function renderEpisodeHud() {
+  const quest = gameShell?.questProgress;
+  if (!episodeKickerEl || !episodeTitleEl || !episodeNextEl || !episodeActionsEl || !quest) return;
+  const resolved = Boolean(quest.resolvedPathId);
+  const path = currentQuestPath();
+  const next = resolved ? null : nextQuestCommand();
+  episodeKickerEl.textContent = resolved ? 'Incident resolved' : `${quest.incidentStatus || 'active'} incident`;
+  episodeTitleEl.textContent = resolved
+    ? `${quest.title || 'The Missing Delivery'}: ${humanizeId(quest.resolvedPathId)}`
+    : quest.title || 'The Missing Delivery';
+  episodeNextEl.textContent = resolved
+    ? 'Founder delivery contracts are unlocked. The district will remember this resolution.'
+    : `${path?.label || 'Investigation'} - next: ${next || 'choose a route'}`;
+  const actions = [];
+  if (next) actions.push({ label: 'Run next beat', command: next });
+  if (!resolved) actions.push({ label: 'Ask Leno', command: 'ask_leno' });
+  if (resolved) actions.push({ label: 'Start founder work', command: 'start_delivery_workflow delivery_sara_emergency' });
+  episodeActionsEl.innerHTML = actions.map((action) =>
+    `<button type="button" data-episode-command="${escapeText(action.command)}">${escapeText(action.label)}</button>`
+  ).join('');
+  episodeActionsEl.querySelectorAll('[data-episode-command]').forEach((button) => {
+    button.addEventListener('click', () => runCommand(button.getAttribute('data-episode-command')));
+  });
+}
+
+function badgeForResolution(pathId) {
+  if (pathId === 'peaceful_mediation') return '/assets/badges/mediator.webp';
+  if (pathId === 'founder_negotiation') return '/assets/badges/founder.webp';
+  if (pathId === 'investigation_and_counter_rumor') return '/assets/badges/truth-seeker.webp';
+  return '/assets/badges/district-savior.webp';
+}
+
+function showResolutionOverlay(result) {
+  const pathId = result?.questResolution?.id || gameShell?.questProgress?.resolvedPathId;
+  if (!pathId || !completeEl) return;
+  completeBadgeEl.src = badgeForResolution(pathId);
+  completeTitleEl.textContent = `Resolved: ${humanizeId(pathId)}`;
+  completeCopyEl.textContent = result?.questResolution?.label
+    ? `${result.questResolution.label} is now part of the event log. Founder work is unlocked, and New Aarhus has a new branch point.`
+    : 'The district has recorded this outcome. Founder work is unlocked, and New Aarhus has a new branch point.';
+  completeEl.classList.remove('hidden');
 }
 
 function addCommandLog(command, result) {
@@ -1013,6 +1078,7 @@ async function refreshState() {
   setHud();
   renderQuestHud();
   renderIntelHud();
+  renderEpisodeHud();
 }
 
 function findMajorDecision(commandText) {
@@ -1085,6 +1151,7 @@ async function runCommand(text) {
   setHud();
   renderQuestHud();
   renderIntelHud();
+  renderEpisodeHud();
   playAudioCues(result.audioCues);
 
   const lines = [result.text || res.body.text || 'Done'];
@@ -1094,6 +1161,7 @@ async function runCommand(text) {
   if (result.majorDecisionPrompt?.label) lines.push(`Major decision: ${result.majorDecisionPrompt.label}`);
   outputEl.textContent = lines.join('\n\n');
   addCommandLog(cmd, result);
+  if (result.questResolution || result.gameShell?.questProgress?.resolvedPathId) showResolutionOverlay(result);
   commandInput.value = '';
   showBanner(`OK ${cmd}`);
 
@@ -1104,6 +1172,7 @@ async function runCommand(text) {
     if (stateRes.body.visualCues) startWalkAnimation(result.walkAnimation, stateRes.body.visualCues);
     renderQuestHud();
     renderIntelHud();
+    renderEpisodeHud();
     return;
   }
 
@@ -1116,6 +1185,7 @@ async function runCommand(text) {
     setHud();
     renderQuestHud();
     renderIntelHud();
+    renderEpisodeHud();
   }
 }
 
@@ -1201,6 +1271,10 @@ startButton?.addEventListener('click', () => {
   introEl?.classList.add('hidden');
   unlockAudio();
   localStorage.setItem('worldmind.3d.introSeen', '1');
+});
+
+completeCloseButton?.addEventListener('click', () => {
+  completeEl?.classList.add('hidden');
 });
 
 window.addEventListener('keyup', (event) => {

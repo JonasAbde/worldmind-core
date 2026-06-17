@@ -104,6 +104,38 @@
       font: inherit; font-size: 0.6rem; padding: 4px 7px; border-radius: 4px; cursor: pointer;
       border: 1px solid #388bfd55; background: #0d2038; color: #79c0ff;
     }
+    #wm-3d-episode {
+      pointer-events: auto; grid-column: 2; grid-row: 3; align-self: end; justify-self: center;
+      width: min(520px, 100%); border: 1px solid #30363d; border-radius: 8px; overflow: hidden;
+      background: rgba(13,17,23,0.9); backdrop-filter: blur(10px);
+    }
+    #wm-3d-episode-art {
+      min-height: 104px; padding: 12px; display: grid; align-content: end; gap: 5px;
+      background: linear-gradient(180deg, rgba(10,14,20,0.1), rgba(10,14,20,0.92)), url('/assets/loading/district-alert.webp') center/cover;
+    }
+    #wm-3d-episode-kicker { font-size: 0.58rem; color: #f97316; letter-spacing: 0.06em; text-transform: uppercase; }
+    #wm-3d-episode-title { font-size: 0.86rem; color: #e6edf3; }
+    #wm-3d-episode-next { font-size: 0.66rem; color: #c9d1d9; line-height: 1.35; }
+    #wm-3d-episode-actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-top: 1px solid #30363d; }
+    #wm-3d-episode-actions button {
+      font: inherit; font-size: 0.62rem; padding: 5px 8px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #f59e0b66; background: rgba(45,33,17,0.82); color: #fbbf24;
+    }
+    #wm-3d-complete {
+      pointer-events: auto; position: fixed; inset: 0; z-index: 45; display: grid; place-items: center;
+      background: rgba(10,14,20,0.78);
+    }
+    #wm-3d-complete-card {
+      width: min(520px, calc(100% - 32px)); border: 1px solid #23863688; border-radius: 8px;
+      background: rgba(13,17,23,0.96); padding: 18px; box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+    }
+    #wm-3d-complete-card img { width: 72px; height: 72px; object-fit: contain; float: right; margin-left: 12px; }
+    #wm-3d-complete-card h2 { color: #7ee787; font-size: 1rem; margin-bottom: 8px; }
+    #wm-3d-complete-card p { color: #c9d1d9; font-size: 0.74rem; line-height: 1.55; margin-bottom: 12px; }
+    #wm-3d-complete-card button {
+      font: inherit; font-size: 0.72rem; padding: 7px 10px; border-radius: 5px; border: 1px solid #238636;
+      background: #12341f; color: #7ee787; cursor: pointer;
+    }
     #wm-3d-intro {
       pointer-events: auto; position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
       background: radial-gradient(circle at center, rgba(13,17,23,0.64), rgba(10,14,20,0.92));
@@ -134,6 +166,7 @@
       #wm-3d-hud { padding: 8px; gap: 8px; display: flex; flex-direction: column; justify-content: space-between; }
       #wm-3d-side { width: 100%; max-height: 34vh; overflow: auto; }
       #wm-3d-intel { display: none; }
+      #wm-3d-episode { display: none; }
       #wm-3d-panel { width: 100%; }
       #wm-3d-hint { bottom: 9px; width: calc(100% - 24px); text-align: center; }
     }
@@ -168,6 +201,14 @@
       <h3>Leno</h3>
       <div id="wm-3d-leno-actions"></div>
     </div>
+    <div id="wm-3d-episode">
+      <div id="wm-3d-episode-art">
+        <div id="wm-3d-episode-kicker">Incident active</div>
+        <div id="wm-3d-episode-title">The Missing Delivery</div>
+        <div id="wm-3d-episode-next">Find your first clue at Sara's cafe.</div>
+      </div>
+      <div id="wm-3d-episode-actions"></div>
+    </div>
     <div id="wm-3d-panel">
       <img id="wm-3d-selection-media" class="hidden" alt="" />
       <h2 id="wm-3d-selection-title">Click a building or agent</h2>
@@ -191,6 +232,14 @@
         <li>Follow one route, gather evidence, then resolve the case.</li>
       </ul>
       <button id="wm-3d-start" type="button">Start playing</button>
+    </div>
+  </div>
+  <div id="wm-3d-complete" class="hidden">
+    <div id="wm-3d-complete-card">
+      <img id="wm-3d-complete-badge" src="/assets/badges/truth-seeker.webp" alt="" />
+      <h2 id="wm-3d-complete-title">Case resolved</h2>
+      <p id="wm-3d-complete-copy">The district reacts to your decision.</p>
+      <button id="wm-3d-complete-close" type="button">Continue in New Aarhus</button>
     </div>
   </div>
   <script type="importmap">
