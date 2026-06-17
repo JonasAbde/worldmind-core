@@ -2,7 +2,7 @@
   "name": "worldmind",
   "version": "0.1.0",
   "private": true,
-  "description": "WorldMind v1.0-rc16 \u2014 procedural textures (6 materials) + PBR GLB assembler + ci:gate recursion fix",
+  "description": "WorldMind v1.0-rc17 \u2014 glTF animation tracks (idle/talk/examine/walk) baked into character GLBs",
   "type": "module",
   "engines": {
     "node": ">=20"
