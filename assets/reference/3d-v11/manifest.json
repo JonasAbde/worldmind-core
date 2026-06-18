@@ -1,0 +1,276 @@
+{
+  "kind": "worldmind_3d_reference_manifest",
+  "version": 2,
+  "sourceFolder": "assets/higgfield and gemini",
+  "policy": "Reference sheets inform authored meshes; only normalized derivatives ship at runtime.",
+  "references": [
+    {
+      "id": "materials",
+      "sourceFile": "Gemini_Generated_Image_2f61tb2f61tb2f61.png",
+      "sourceSha256": "9e18697feb4b190efb71bf742b59f9f869f4833edd0796a1833205ed8fa9c4a4",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/materials.webp"
+    },
+    {
+      "id": "apartment-elevation",
+      "sourceFile": "Gemini_Generated_Image_3zgu213zgu213zgu.png",
+      "sourceSha256": "334ae11215287707f81f4e834ff22d595b4dae013ce6f0f5bad240157180452e",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/apartment-elevation.webp"
+    },
+    {
+      "id": "security-agent-turnaround",
+      "sourceFile": "Gemini_Generated_Image_4gd5q54gd5q54gd5.png",
+      "sourceSha256": "6f5b9c7e4d26dee27cf32dcffcb6a77cdb878e919adb3c323d23043976cb08a2",
+      "sourceSize": [
+        2752,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/security-agent-turnaround.webp"
+    },
+    {
+      "id": "interior-module",
+      "sourceFile": "Gemini_Generated_Image_4wr8fm4wr8fm4wr8.png",
+      "sourceSha256": "83ced13bd3b01d0a750d77a09dec40e1ea221886fadbabd9e4c4515936676f60",
+      "sourceSize": [
+        2752,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/interior-module.webp"
+    },
+    {
+      "id": "interactive-props",
+      "sourceFile": "Gemini_Generated_Image_7wci6o7wci6o7wci.png",
+      "sourceSha256": "c8148cdfb98f21085b37abdaefdc78dc9e24c4aa5220c694f71d7fa98d3bab16",
+      "sourceSize": [
+        1408,
+        768
+      ],
+      "derivedAsset": "assets/reference/3d-v11/interactive-props.webp"
+    },
+    {
+      "id": "autonomous-pod",
+      "sourceFile": "Gemini_Generated_Image_eakwtxeakwtxeakw.png",
+      "sourceSha256": "a05e1e4c814edb9914181ce084bbd5a7eccc5fdd9572f6e7178440b9191f1208",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/autonomous-pod.webp"
+    },
+    {
+      "id": "delivery-drone",
+      "sourceFile": "Gemini_Generated_Image_f953hvf953hvf953.png",
+      "sourceSha256": "8ff81f8cd362705e56caf6fe5f5e165a0bd469bf98ed9ed4ce604b12eb3e9c33",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/delivery-drone.webp"
+    },
+    {
+      "id": "cafe-elevation",
+      "sourceFile": "Gemini_Generated_Image_gnjcwfgnjcwfgnjc.png",
+      "sourceSha256": "f85d24547df685e04730eb11d523119b261c5c3019cc0559e04eca4a63e6e0f0",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/cafe-elevation.webp"
+    },
+    {
+      "id": "residential-elevation",
+      "sourceFile": "Gemini_Generated_Image_jivu7ujivu7ujivu.png",
+      "sourceSha256": "74daecdae651f56918467b5d74b50228d8a9a4ee99eca6adf021c9fe64a8cbba",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/residential-elevation.webp"
+    },
+    {
+      "id": "district-monument",
+      "sourceFile": "Gemini_Generated_Image_q4ju72q4ju72q4ju.png",
+      "sourceSha256": "fbd9a6da5db0ef7826788fe48d3bd31517865c3b0b0988e2b42590260b920143",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/district-monument.webp"
+    },
+    {
+      "id": "wearable-materials",
+      "sourceFile": "Gemini_Generated_Image_sacmy9sacmy9sacm.png",
+      "sourceSha256": "ad1968f5bd403bf198390ca6b6bd10dbfdaf501a68a580d0c1f3302202b92cf2",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/wearable-materials.webp"
+    },
+    {
+      "id": "wearable-props",
+      "sourceFile": "Gemini_Generated_Image_vgdyuvvgdyuvvgdy.png",
+      "sourceSha256": "a287e96121caffe8182ec497e36612322d17caec95703cfaadafa58cf12bf975",
+      "sourceSize": [
+        1408,
+        768
+      ],
+      "derivedAsset": "assets/reference/3d-v11/wearable-props.webp"
+    },
+    {
+      "id": "interior-furniture",
+      "sourceFile": "Gemini_Generated_Image_wpc5f4wpc5f4wpc5.png",
+      "sourceSha256": "0932389e316bc1e221e550ece18ae4c9ec862dcaf68bb8e73c3580f497b3c4f4",
+      "sourceSize": [
+        2816,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/interior-furniture.webp"
+    },
+    {
+      "id": "civilian-turnaround",
+      "sourceFile": "Gemini_Generated_Image_xhqz11xhqz11xhqz.png",
+      "sourceSha256": "2c5ca5e60542f6f1c877ebb0024c2d1671efbb6007111765f449ff9e2fc9013c",
+      "sourceSize": [
+        2752,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/civilian-turnaround.webp"
+    },
+    {
+      "id": "field-agent-turnaround",
+      "sourceFile": "Gemini_Generated_Image_yscej9yscej9ysce.png",
+      "sourceSha256": "df36b08bcd3ef6145cb73a55b1551d91ec25353f01b51cf1ccb3b405ce467326",
+      "sourceSize": [
+        2752,
+        1536
+      ],
+      "derivedAsset": "assets/reference/3d-v11/field-agent-turnaround.webp"
+    },
+    {
+      "id": "legacy-system-interface-concepts",
+      "sourceFile": "hf_20260617_211408_869335f3-df97-4c62-aaf6-22c436faa2ed.png",
+      "sourceSha256": "c8fb108e6496867b16dd0431716c089ce943fc846c2d31deb1c2628a994c1b61",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/legacy-system-interface-concepts.webp"
+    },
+    {
+      "id": "street-prop-render",
+      "sourceFile": "hf_20260617_211459_bb532a00-15aa-464f-a44f-7eaef55a5d88.png",
+      "sourceSha256": "a597e5653e465e6fff543148cc5e8035eb55b5175c8ce7a0ad7fc24e8b687077",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/street-prop-render.webp"
+    },
+    {
+      "id": "civic-building-massing-a",
+      "sourceFile": "hf_20260617_211525_b3f30bda-ecb3-4933-b0b3-b93f82ead33c.png",
+      "sourceSha256": "18b97624c277a20ce25e3190af42c8aac0c3c43c335b380e1f5ef78be510c75a",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/civic-building-massing-a.webp"
+    },
+    {
+      "id": "civic-building-massing-b",
+      "sourceFile": "hf_20260617_211525_b3f30bda-ecb3-4933-b0b3-b93f82ead33c (1).png",
+      "sourceSha256": "f1e23df8f9684c2d1c764433d475f59e7543cfaf4a04f58cf88a70af98e2fc2c",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/civic-building-massing-b.webp"
+    },
+    {
+      "id": "security-character-render",
+      "sourceFile": "hf_20260617_211551_c22062e1-2ba2-444a-89d8-06f3f9ee5340.png",
+      "sourceSha256": "5e08f968c43e8268ab7db39ba21cb53b0b73ec01ce7f64cf43100cf6894ab9a5",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/security-character-render.webp"
+    },
+    {
+      "id": "transit-vehicle-render",
+      "sourceFile": "hf_20260617_211954_079282af-1fe7-4153-92f8-61e876c1ca43.png",
+      "sourceSha256": "95dba4cd58c80cf9cff3641dd8dc15d8e78e6cf17b857999516a787f217d56e1",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/transit-vehicle-render.webp"
+    },
+    {
+      "id": "green-shelter-environment",
+      "sourceFile": "hf_20260617_211954_bd2d05ed-5d1f-48c8-86a9-f7376578db35.png",
+      "sourceSha256": "94aea82c16493781ff4d15952bea8513f5a02ffdd8f358ff4d88970ae67de8af",
+      "sourceSize": [
+        2048,
+        1152
+      ],
+      "derivedAsset": "assets/reference/3d-v11/green-shelter-environment.webp"
+    }
+  ],
+  "duplicateSources": [
+    {
+      "sourceFile": "hf_20260617_211408_869335f3-df97-4c62-aaf6-22c436faa2ed (1).png",
+      "sourceSha256": "c8fb108e6496867b16dd0431716c089ce943fc846c2d31deb1c2628a994c1b61",
+      "duplicateOf": "hf_20260617_211408_869335f3-df97-4c62-aaf6-22c436faa2ed.png"
+    },
+    {
+      "sourceFile": "hf_20260617_211459_bb532a00-15aa-464f-a44f-7eaef55a5d88 (1).png",
+      "sourceSha256": "a597e5653e465e6fff543148cc5e8035eb55b5175c8ce7a0ad7fc24e8b687077",
+      "duplicateOf": "hf_20260617_211459_bb532a00-15aa-464f-a44f-7eaef55a5d88.png"
+    },
+    {
+      "sourceFile": "hf_20260617_211954_079282af-1fe7-4153-92f8-61e876c1ca43 (1).png",
+      "sourceSha256": "95dba4cd58c80cf9cff3641dd8dc15d8e78e6cf17b857999516a787f217d56e1",
+      "duplicateOf": "hf_20260617_211954_079282af-1fe7-4153-92f8-61e876c1ca43.png"
+    },
+    {
+      "sourceFile": "hf_20260617_211954_bd2d05ed-5d1f-48c8-86a9-f7376578db35 (1).png",
+      "sourceSha256": "94aea82c16493781ff4d15952bea8513f5a02ffdd8f358ff4d88970ae67de8af",
+      "duplicateOf": "hf_20260617_211954_bd2d05ed-5d1f-48c8-86a9-f7376578db35.png"
+    }
+  ],
+  "materials": [
+    {
+      "id": "worn-concrete",
+      "asset": "assets/materials/worldmind-v11/worn-concrete.webp"
+    },
+    {
+      "id": "brushed-aluminum",
+      "asset": "assets/materials/worldmind-v11/brushed-aluminum.webp"
+    },
+    {
+      "id": "tempered-glass",
+      "asset": "assets/materials/worldmind-v11/tempered-glass.webp"
+    },
+    {
+      "id": "neon-acrylic",
+      "asset": "assets/materials/worldmind-v11/neon-acrylic.webp"
+    },
+    {
+      "id": "rusted-grating",
+      "asset": "assets/materials/worldmind-v11/rusted-grating.webp"
+    },
+    {
+      "id": "holographic-film",
+      "asset": "assets/materials/worldmind-v11/holographic-film.webp"
+    }
+  ]
+}
