@@ -36,7 +36,7 @@ const STEPS = [
   { name: 'validate:episode-loader',   cmd: 'node src/cli/validate-episode-loader.js' },
   { name: 'validate:content-pack-authoring', cmd: 'node src/cli/validate-content-pack-authoring.js' },
   { name: 'assets:validate',   cmd: 'node tools/wm-assets.js validate --out=assets/models' },
-  { name: 'textures:build',    cmd: 'node tools/wm-textures.js --material=wood --out=assets/textures/wood.png' },
+  { name: 'textures:build',    cmd: 'node tools/build-textures.js --material=wood --out=assets/textures/wood.png' },
   { name: 'demo:play',           cmd: 'npm run demo:play' },
   { name: 'demo:guided-play',    cmd: 'npm run demo:guided-play' },
   { name: 'audit:worldmind',     cmd: 'npm run audit:worldmind' },
