@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyPlayApiOnHost } from '../src/cli/validate-play-api.js';
 import {
-  assertVisualCuesV4,
+  assertVisualCuesV5,
   assertVisualCuesCollision,
   assertWalkAnimation,
   pickMoveTarget
@@ -46,11 +46,11 @@ async function startServer(port = 0) {
 test('v33.1 — play-api-verify helpers accept visualCues v4 payload', () => {
   const world = bootstrapWorld();
   const payload = buildPlayStatePayload(world);
-  const check = assertVisualCuesV4(payload.visualCues);
+  const check = assertVisualCuesV5(payload.visualCues);
   assert.equal(check.ok, true, check.problems?.join('; '));
   const collision = assertVisualCuesCollision(payload.visualCues);
   assert.equal(collision.ok, true, collision.problems?.join('; '));
-  assert.equal(payload.visualCues.version, 4);
+  assert.equal(payload.visualCues.version, 5);
   assert.ok(payload.visualCues.walkGraph?.nodes?.cafe);
   assert.ok(payload.visualCues.interior?.locationId);
   assert.ok(Array.isArray(payload.visualCues.interior.hotspots));
@@ -71,7 +71,7 @@ describe('v33: play-server production API checks', () => {
   test('v33.2 — GET /api/state includes visualCues v4 with walkGraph and interior', async () => {
     const r = await fetchJson(port, '/api/state');
     assert.equal(r.status, 200);
-    const check = assertVisualCuesV4(r.json.visualCues);
+    const check = assertVisualCuesV5(r.json.visualCues);
     assert.equal(check.ok, true, check.problems?.join('; '));
     assert.ok(r.json.visualCues.interior.sceneTexture?.includes('assets/locations'));
   });
@@ -94,7 +94,7 @@ describe('v33: play-server production API checks', () => {
 
   test('v33.4 — verifyPlayApiOnHost passes full gate', async () => {
     const summary = await verifyPlayApiOnHost('127.0.0.1', port);
-    assert.equal(summary.visualCuesVersion, 4);
+    assert.equal(summary.visualCuesVersion, 5);
     assert.ok(summary.waypointCount >= 2);
     assert.ok(summary.walkGraphNodes >= 4);
   });

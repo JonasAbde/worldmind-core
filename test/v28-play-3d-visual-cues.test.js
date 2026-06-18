@@ -12,7 +12,7 @@ test('v28: build3DVisualCues includes district buildings and agents', () => {
   const cues = build3DVisualCues(world);
   const check = validate3DVisualCues(cues);
   assert.equal(check.ok, true, check.errors?.join('; '));
-  assert.equal(cues.version, 4);
+  assert.equal(cues.version, 5);
   assert.ok(cues.walkGraph?.nodes);
   assert.ok(cues.walkGraph?.edges?.length >= 3);
   assert.ok(cues.interior?.sceneTexture?.includes('assets/locations'));

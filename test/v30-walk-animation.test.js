@@ -41,7 +41,7 @@ test('v30.2 — move command returns walkAnimation with waypoints', () => {
 test('v30.3 — visualCues v4 includes walkGraph', () => {
   const world = bootstrapWorld();
   const cues = build3DVisualCues(world);
-  assert.equal(cues.version, 4);
+  assert.equal(cues.version, 5);
   assert.ok(cues.walkGraph?.nodes);
   assert.ok(Object.keys(cues.walkGraph.nodes).length >= 4);
   assert.ok((cues.walkGraph?.edges?.length ?? 0) >= 3);

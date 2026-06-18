@@ -55,6 +55,7 @@ import {
 } from './progression.js';
 import { buildWalkAnimation } from './walk-path.js';
 import { attachAudioCues } from './audio-cues.js';
+import { prepareWorldObjectInteraction } from './world-object-runtime.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,67 +76,22 @@ const LOCATION_ALIASES = {
 
 const DEMO_PATHS = [
   {
-    name: 'peaceful_mediation',
+    name: 'peaceful',
     label: 'Peaceful Mediation',
     description: 'Help Sara, ask Amina to mediate, pay Malik a token.',
-    risk: 'low',
-    steps: ['inspect cafe', 'talk sara', 'ask amina mediation', 'pay malik 5']
+    steps: ['inspect cafe', 'talk sara', 'ask amina', 'pay malik 5']
   },
   {
-    name: 'investigation_and_counter_rumor',
+    name: 'investigation',
     label: 'Investigation & Counter-Rumor',
     description: 'Ask Rune about Nadia, trace and counter the false rumor.',
-    risk: 'medium',
     steps: ['inspect cafe', 'listen_rumors market', 'ask rune nadia', 'trace_rumor', 'counter_rumor']
   },
   {
-    name: 'founder_negotiation',
+    name: 'founder',
     label: 'Founder / Business Negotiation',
     description: 'Pay Malik for an alternative delivery, talk to Sara.',
-    risk: 'high',
     steps: ['inspect workshop', 'pay malik 15', 'talk sara']
-  },
-  {
-    name: 'community_arbitration',
-    label: 'Community Arbitration',
-    description: 'Host a town hall, gather proposals, draft access rules.',
-    risk: 'low',
-    steps: ['host town hall', 'gather proposals', 'draft access rules']
-  },
-  {
-    name: 'community_repair',
-    label: 'Community Repair',
-    description: 'Brief the public, deploy monitors, publish findings.',
-    risk: 'low',
-    steps: ['brief public', 'deploy monitor', 'publish findings']
-  },
-  {
-    name: 'executive_leverage',
-    label: 'Executive Leverage',
-    description: 'Contact authorities, invoke clauses, impose conditions.',
-    risk: 'high',
-    steps: ['contact authorities', 'invoke clauses', 'impose conditions']
-  },
-  {
-    name: 'policy_pressure',
-    label: 'Policy Pressure',
-    description: 'File an incident, recommend updates, advocate transparency.',
-    risk: 'high',
-    steps: ['file incident', 'recommend updates', 'advocate transparency']
-  },
-  {
-    name: 'quiet_investigation',
-    label: 'Quiet Investigation',
-    description: 'Trace ownership, find discrepancies, present findings.',
-    risk: 'medium',
-    steps: ['trace ownership', 'find discrepancies', 'present findings']
-  },
-  {
-    name: 'silent_investigation',
-    label: 'Silent Investigation',
-    description: 'Trace interference, identify failure, prepare report.',
-    risk: 'medium',
-    steps: ['trace interference', 'identify failure', 'prepare report']
   }
 ];
 
@@ -225,7 +181,7 @@ function seedPlayableMissingDelivery(world) {
   });
 }
 
-export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, playStart = true, episode = null } = {}) {
+export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, playStart = true } = {}) {
   const world = runSimulation({
     days,
     scenarioPath,
@@ -240,12 +196,7 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, play
       unresolvedQuestions: []
     };
   }
-  if (playStart && days === 0) {
-    // Pick the right seed by episode, fall back to default.
-    const seedFn = EPISODE_SEEDS[episode] || seedPlayableMissingDelivery;
-    seedFn(world);
-    world._episode = EPISODE_SEEDS[episode] ? episode : 'the-missing-delivery';
-  }
+  if (playStart && days === 0) seedPlayableMissingDelivery(world);
 
   // Tag the player with a stable locationId so move/inspect/talk work.
   if (world.agents.player && !world.agents.player.locationId) {
@@ -267,152 +218,6 @@ export function bootstrapWorld({ scenarioPath = DEFAULT_SCENARIO, days = 0, play
   }
 
   return world;
-}
-
-// --- Episode seeds ---
-
-const EPISODE_SEEDS = {
-  'the-missing-delivery': seedPlayableMissingDelivery,
-  'noise-along-the-quay': seedPlayableNoiseComplaint,
-  'ownership-dispute': seedPlayableOwnershipDispute
-};
-
-function seedPlayableNoiseComplaint(world) {
-  placeAgentAtLocation(world, 'player', 'district_square');
-
-  world.playerKnowledge = {
-    evidenceIds: [],
-    knownRumorIds: [],
-    suspectedCauses: [],
-    unresolvedQuestions: [
-      'What is causing the noise at the quay?',
-      'Is there signal interference?'
-    ]
-  };
-
-  world.incidents.noise_complaint_5561 = {
-    id: 'noise_complaint_5561',
-    title: 'Noise Complaint #5561',
-    status: 'active',
-    locationId: 'district_square',
-    visibleProblem: 'A persistent noise at the quay is disrupting harbour activity and raising complaints.',
-    hiddenCause: 'Audio anomaly captures point to an unregistered signal source masking equipment noise.',
-    resolutionState: 'unresolved',
-    knownFacts: [
-      'Noise levels exceeded safety thresholds at the quay.',
-      'Signal interference logged near the south docks.'
-    ],
-    involvedAgentIds: ['elias', 'omar', 'freja'],
-    linkedEvidence: ['audio_anomaly_capture', 'signal_interference_log'],
-    createdAtTick: world.tick ?? 0
-  };
-
-  if (!Object.values(world.rumors || {}).some((r) => r.sourceAgentId === 'omar')) {
-    executeAction(world, {
-      actorId: 'omar',
-      actionId: 'spread_rumor',
-      claim: 'The quay noise is linked to a cover-up after the missing delivery.',
-      targetAgentIds: ['elias', 'freja'],
-      truthLevel: 45,
-      emotionalTone: 'concern'
-    });
-  }
-
-  world.questProgress = {
-    questId: 'quest_noise_complaint',
-    completedSteps: [],
-    resolvedPathId: null
-  };
-
-  world.founder = {
-    unlocked: false,
-    baseLevel: 0,
-    reputation: world.agents?.player?.stats?.reputation ?? 0,
-    contractsCompleted: 0,
-    activeContract: null
-  };
-
-  world.progression = createInitialProgression();
-
-  world.addEvent({
-    type: 'incident_detected',
-    locationId: 'district_square',
-    actorIds: ['player', 'elias'],
-    description: 'Noise Complaint #5561 is active: the quay is loud, signal interference logged, a cover-up rumor is spreading.',
-    public: true,
-    visibleToAgentIds: ['player', 'elias', 'omar', 'freja'],
-    importance: 4,
-    payload: { incidentId: 'noise_complaint_5561' }
-  });
-}
-
-function seedPlayableOwnershipDispute(world) {
-  placeAgentAtLocation(world, 'player', 'workshop');
-
-  world.playerKnowledge = {
-    evidenceIds: [],
-    knownRumorIds: [],
-    suspectedCauses: [],
-    unresolvedQuestions: [
-      'Who actually owns the workshop?',
-      'Is the 2019 charter still valid?'
-    ]
-  };
-
-  world.incidents.ownership_dispute_5562 = {
-    id: 'ownership_dispute_5562',
-    title: 'Ownership Dispute #5562',
-    status: 'active',
-    locationId: 'workshop',
-    visibleProblem: 'A contested ownership claim on the workshop threatens the current operation.',
-    hiddenCause: 'A corporate deed supersedes the 2019 charter, but Malik has not been notified.',
-    resolutionState: 'unresolved',
-    knownFacts: [
-      'The workshop has operated under the same charter since 2019.',
-      'A corporate ownership deed was filed recently.'
-    ],
-    involvedAgentIds: ['yasin', 'lina'],
-    linkedEvidence: ['workshop_charter_2019', 'corporate_ownership_deed'],
-    createdAtTick: world.tick ?? 0
-  };
-
-  if (!Object.values(world.rumors || {}).some((r) => r.sourceAgentId === 'yasin')) {
-      executeAction(world, {
-        actorId: 'yasin',
-        actionId: 'spread_rumor',
-        claim: 'The old workshop was sold to a private sponsor.',
-        targetAgentIds: ['lina'],
-        truthLevel: 55,
-        emotionalTone: 'concern'
-      });
-    }
-
-  world.questProgress = {
-    questId: 'quest_ownership_dispute',
-    completedSteps: [],
-    resolvedPathId: null
-  };
-
-  world.founder = {
-    unlocked: false,
-    baseLevel: 0,
-    reputation: world.agents?.player?.stats?.reputation ?? 0,
-    contractsCompleted: 0,
-    activeContract: null
-  };
-
-  world.progression = createInitialProgression();
-
-  world.addEvent({
-    type: 'incident_detected',
-    locationId: 'workshop',
-    actorIds: ['player', 'yasin'],
-    description: 'Ownership Dispute #5562 is active: a contested deed threatens the workshop, a sale rumor is spreading.',
-    public: true,
-    visibleToAgentIds: ['player', 'yasin', 'lina'],
-    importance: 4,
-    payload: { incidentId: 'ownership_dispute_5562' }
-  });
 }
 
 function isFounderUnlockedFromIncidents(world) {
@@ -573,6 +378,7 @@ export function parseCommandText(text) {
     case 'talk':
     case 'ask':
     case 'inspect':
+    case 'use_object':
     case 'listen_rumors':
     case 'listen':
     case 'pay':
@@ -583,7 +389,7 @@ export function parseCommandText(text) {
       const args = {};
       if (head === 'listen') head = 'listen_rumors';
       if (head === 'leno') head = 'ask_leno';
-      if (head === 'move' || head === 'talk' || head === 'ask' || head === 'inspect' || head === 'listen_rumors' || head === 'counter_rumor' || head === 'trace_rumor') {
+      if (head === 'move' || head === 'talk' || head === 'ask' || head === 'inspect' || head === 'use_object' || head === 'listen_rumors' || head === 'counter_rumor' || head === 'trace_rumor') {
         args.target = rest[0];
         if (head === 'ask' && rest[1]) args.topic = rest.slice(1).join(' ');
         if (head === 'inspect' && rest[1]) args.focus = rest.slice(1).join(' ');
@@ -608,6 +414,7 @@ export function parseCommandText(text) {
 
 const KNOWN_COMMANDS = new Set([
   'look', 'status', 'move', 'talk', 'ask', 'inspect', 'listen_rumors',
+  'use_object',
   'trace_rumor', 'counter_rumor', 'pay', 'ask_leno', 'save', 'branch',
   'start_delivery_workflow', 'run_delivery_contract', 'list_contracts', 'quit'
 ]);
@@ -795,6 +602,39 @@ function resolveCommandCore(world, command, effectiveArgs) {
         return {
           ok: true, kind: 'inspect', command,
           text: `Inspected ${label}: ${detail}`,
+          consequence: diffConsequence(world, before, actorId, ev),
+          world
+        };
+      }
+      case 'use_object': {
+        const objectId = effectiveArgs.target;
+        const prepared = prepareWorldObjectInteraction(world, objectId, actorId);
+        const before = snapshotForDelta(world);
+        const ev = executeAction(world, {
+          actorId,
+          actionId: 'inspect_object',
+          targetObjectId: objectId,
+          objectType: prepared.definition.id,
+          interaction: prepared.definition.actionLabel,
+          stateBefore: prepared.stateBefore,
+          stateAfter: prepared.stateAfter
+        });
+        const evidenceIds = grantEvidence(world, prepared.definition.evidenceIds);
+        return {
+          ok: true,
+          kind: 'world_object',
+          command,
+          text: prepared.definition.resultText,
+          worldObject: {
+            id: prepared.definition.id,
+            locationId: prepared.definition.locationId,
+            stateBefore: prepared.stateBefore,
+            stateAfter: prepared.stateAfter,
+            actionLabel: prepared.definition.actionLabel,
+            requiredPermission: prepared.definition.requiredPermission,
+            risk: prepared.definition.risk,
+            evidenceIds
+          },
           consequence: diffConsequence(world, before, actorId, ev),
           world
         };
@@ -1169,97 +1009,58 @@ function diffConsequence(world, before, actorId, ev) {
 export function runScriptedPath(world, pathName) {
   const which = (pathName || 'all').toLowerCase();
   const results = [];
-  // Accept both old short names (peaceful/investigation/founder) and the
-  // new canonical authored names (peaceful_mediation/...).
-  const ALIAS = {
-    peaceful: 'peaceful_mediation',
-    investigation: 'investigation_and_counter_rumor',
-    founder: 'founder_negotiation'
+  const runners = {
+    peaceful: runPeaceful,
+    investigation: runInvestigation,
+    founder: runFounder
   };
-  const canonicalName = ALIAS[which] || which;
-  const list = which === 'all' ? DEMO_PATHS.map(p => p.name) : [canonicalName];
+  const list = which === 'all' ? Object.keys(runners) : [which];
   for (const name of list) {
-    const def = DEMO_PATHS.find(p => p.name === name);
-    if (!def) continue;
-    const r = runGenericPath(world, def);
-    results.push({ path: name, ...r });
+    if (runners[name]) {
+      const r = runners[name](world);
+      results.push({ path: name, ...r });
+    }
   }
   return results;
 }
 
-/**
- * Generic scripted-path runner that executes a path's commands against the
- * engine. Replaces the three hard-coded runners (peaceful/investigation/founder)
- * so all 9 authored resolution paths can be executed with one implementation.
- */
-function runGenericPath(world, def) {
-  for (const step of def.steps) {
-    runStepCommand(world, step);
-  }
-  // Apply the canonical resolution if this path matches the canonical incident.
-  const incidentId = 'missing_delivery';
-  const pathToResolution = {
-    peaceful_mediation: 'peaceful_mediation',
-    investigation_and_counter_rumor: 'investigation_and_counter_rumor',
-    founder_negotiation: 'founder_negotiation'
-  };
-  if (world.incidents?.[incidentId]?.status === 'active'
-      && pathToResolution[def.name]) {
-    try {
-      resolveIncident(world, incidentId, pathToResolution[def.name], 'player');
-    } catch {
-      // Non-canonical paths may not have a resolution registered; that's OK.
-    }
-  }
+function runPeaceful(world) {
+  world.agents.player.locationId = 'cafe';
+  resolveCommand(world, 'inspect', { target: 'cafe' });
+  resolveCommand(world, 'talk', { target: 'sara', message: "I'll help you with the delivery.", tone: 'friendly' });
+  resolveCommand(world, 'ask', { target: 'amina', topic: 'mediation' });
+  resolveCommand(world, 'pay', { target: 'malik', amount: 5, reason: 'peaceful-mediation' });
+  helpSaraPeacefully(world);
   syncFounderAvailability(world);
-  return { resolutionPath: def.name };
+  return { resolutionPath: 'peaceful_mediation' };
 }
 
-/** Parse a single step string and dispatch to resolveCommand. */
-function runStepCommand(world, step) {
-  // Split on first whitespace to get command + tail.
-  const idx = step.indexOf(' ');
-  const cmd = idx < 0 ? step : step.slice(0, idx);
-  const tail = idx < 0 ? '' : step.slice(idx + 1).trim();
-
-  switch (cmd) {
-    case 'inspect':
-      return resolveCommand(world, 'inspect', { target: tail || world.agents.player.locationId });
-    case 'talk':
-      // "talk sara" or "talk sara <message>".
-      return resolveCommand(world, 'talk', { target: tail.split(' ')[0] });
-    case 'ask':
-      // "ask amina mediation" or "ask rune nadia".
-      return resolveCommand(world, 'ask', {
-        target: tail.split(' ')[0],
-        topic: tail.split(' ').slice(1).join(' ') || undefined
-      });
-    case 'pay':
-      // "pay malik 5".
-      return resolveCommand(world, 'pay', {
-        target: tail.split(' ')[0],
-        amount: Number(tail.split(' ')[1]) || 5
-      });
-    case 'listen_rumors':
-      return resolveCommand(world, 'listen_rumors', { target: tail || 'market' });
-    case 'trace_rumor': {
-      const rumorIds = Object.keys(world.rumors || {});
-      return resolveCommand(world, 'trace_rumor', { rumor: rumorIds[0] });
-    }
-    case 'counter_rumor': {
-      const rumorIds = Object.keys(world.rumors || {});
-      if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
-        world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
-      }
-      return resolveCommand(world, 'counter_rumor', { rumor: rumorIds[0] });
-    }
-    default:
-      // Best-effort: pass raw command through resolveCommand.
-      try {
-        return resolveCommand(world, cmd, { raw: tail });
-      } catch {
-        // Silently skip commands we can't parse — the step is informational.
-        return null;
-      }
+function runInvestigation(world) {
+  resolveCommand(world, 'inspect', { target: 'cafe' });
+  resolveCommand(world, 'listen_rumors', { target: 'market' });
+  resolveCommand(world, 'ask', { target: 'rune', topic: 'nadia' });
+  const rumorIds = Object.keys(world.rumors || {});
+  if (rumorIds.length) {
+    resolveCommand(world, 'trace_rumor', { rumor: rumorIds[0] });
+    resolveCommand(world, 'counter_rumor', { rumor: rumorIds[0], message: 'Nadia is the source.' });
   }
+  if (!world.playerKnowledge.evidenceIds.includes('rumor_source_nadia')) {
+    world.playerKnowledge.evidenceIds.push('rumor_source_nadia');
+  }
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'investigation_and_counter_rumor', 'player');
+  }
+  syncFounderAvailability(world);
+  return { resolutionPath: 'investigation_and_counter_rumor' };
+}
+
+function runFounder(world) {
+  resolveCommand(world, 'inspect', { target: 'workshop' });
+  resolveCommand(world, 'pay', { target: 'malik', amount: 15, reason: 'founder-negotiation' });
+  resolveCommand(world, 'talk', { target: 'sara', message: 'I arranged an alternative delivery from the workshop.' });
+  if (world.incidents?.missing_delivery?.status === 'active') {
+    resolveIncident(world, 'missing_delivery', 'founder_negotiation', 'player');
+  }
+  syncFounderAvailability(world);
+  return { resolutionPath: 'founder_negotiation' };
 }

@@ -15,6 +15,11 @@ interface ActionRequest {
   actionId: string;
   targetAgentId?: AgentId;
   targetLocationId?: string;
+  targetObjectId?: string;
+  objectType?: string;
+  interaction?: string;
+  stateBefore?: string;
+  stateAfter?: string;
   message?: string;
   tone?: 'direct' | 'friendly' | 'threatening' | string;
   focus?: string;
@@ -81,6 +86,8 @@ const targetLocationRequired = new Set<string>([
   ACTIONS.LISTEN_FOR_RUMORS
 ]);
 
+const targetObjectRequired = new Set<string>([ACTIONS.INSPECT_OBJECT]);
+
 export function validateAction(world: WorldRuntime, request: ActionRequest): true {
   const { actorId, actionId, targetAgentId, targetLocationId } = request;
   const actor = world.agents[actorId];
@@ -91,6 +98,7 @@ export function validateAction(world: WorldRuntime, request: ActionRequest): tru
   if (!actor.permissions.includes(spec.permission)) throw new Error(`${actor.name} lacks permission: ${spec.permission}`);
   if (targetAgentRequired.has(actionId) && !targetAgentId) throw new Error(`${actionId} requires targetAgentId`);
   if (targetLocationRequired.has(actionId) && !targetLocationId) throw new Error(`${actionId} requires targetLocationId`);
+  if (targetObjectRequired.has(actionId) && !request.targetObjectId) throw new Error(`${actionId} requires targetObjectId`);
   if (targetAgentId && !world.agents[targetAgentId]) throw new Error(`Target agent not found: ${targetAgentId}`);
   if (targetLocationId && !world.locations[targetLocationId]) throw new Error(`Target location not found: ${targetLocationId}`);
   return true;
@@ -106,6 +114,7 @@ export function executeAction(world: WorldRuntime, request: ActionRequest): Even
     case ACTIONS.ASK_ABOUT_TOPIC: event = askAboutTopic(world, request); break;
     case ACTIONS.OFFER_HELP: event = offerHelp(world, request); break;
     case ACTIONS.INSPECT_LOCATION: event = inspectLocation(world, request); break;
+    case ACTIONS.INSPECT_OBJECT: event = inspectObject(world, request); break;
     case ACTIONS.LISTEN_FOR_RUMORS: event = listenForRumors(world, request); break;
     case ACTIONS.SPREAD_RUMOR: event = spreadRumor(world, request); break;
     case ACTIONS.COUNTER_RUMOR: event = counterRumor(world, request.rumorId as string, { actorId, counterClaim: request.counterClaim as string, evidenceStrength: request.evidenceStrength ?? 0 }); break;
@@ -159,6 +168,20 @@ function inspectLocation(world: WorldRuntime, { actorId, targetLocationId, focus
   let finding = `Inspected ${loc.name}.`;
   if (targetLocationId === 'cafe' && focus === 'stock') finding = 'Sara\u2019s stock is low and delivery crates are missing.';
   return world.addEvent({ type: 'location_inspected', locationId: targetLocationId as string, actorIds: [actorId], description: finding, public: false, visibleToAgentIds: [actorId], importance: targetLocationId === 'cafe' ? 3 : 2, payload: { focus } });
+}
+
+function inspectObject(world: WorldRuntime, request: ActionRequest): EventRecord {
+  const { actorId, targetObjectId, objectType = 'world_object', interaction = 'inspect', stateBefore = 'unknown', stateAfter = 'inspected' } = request;
+  return world.addEvent({
+    type: 'world_object_interacted',
+    locationId: world.agents[actorId].locationId,
+    actorIds: [actorId],
+    description: `${world.agents[actorId].name} used ${targetObjectId}: ${interaction}.`,
+    public: false,
+    visibleToAgentIds: [actorId],
+    importance: 2,
+    payload: { objectId: targetObjectId, objectType, interaction, stateBefore, stateAfter }
+  });
 }
 
 function listenForRumors(world: WorldRuntime, { actorId, targetLocationId }: ActionRequest): EventRecord {

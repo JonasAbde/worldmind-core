@@ -1,14 +1,14 @@
 /**
- * Shared assertions for Play API production verification (visualCues v4, walkAnimation).
+ * Shared assertions for Play API production verification (visualCues v5, walkAnimation).
  */
 
-export function assertVisualCuesV4(visualCues) {
+export function assertVisualCuesV5(visualCues) {
   const problems = [];
   if (!visualCues || visualCues.kind !== 'worldmind_3d_visual_cues') {
     problems.push('visualCues missing or wrong kind');
   }
-  if (visualCues?.version !== 4) {
-    problems.push(`visualCues.version expected 4, got ${visualCues?.version}`);
+  if (visualCues?.version !== 5) {
+    problems.push(`visualCues.version expected 5, got ${visualCues?.version}`);
   }
   const nodeCount = Object.keys(visualCues?.walkGraph?.nodes ?? {}).length;
   if (nodeCount < 4) {
@@ -27,8 +27,13 @@ export function assertVisualCuesV4(visualCues) {
   if (!Array.isArray(visualCues?.hotspots)) {
     problems.push('visualCues.hotspots missing');
   }
+  if (!Array.isArray(visualCues?.props) || visualCues.props.length < 4) {
+    problems.push(`visualCues.props expected >= 4, got ${visualCues?.props?.length ?? 0}`);
+  }
   return { ok: problems.length === 0, problems };
 }
+
+export const assertVisualCuesV4 = assertVisualCuesV5;
 
 /** Assert mesh3d + modelUrl when baked GLB pipeline is active (v39+). */
 export function assertVisualCuesMesh3d(visualCues) {
@@ -63,6 +68,12 @@ export function assertVisualCuesMesh3d(visualCues) {
   const withModels = (visualCues.locations ?? []).filter((l) => l.modelUrl);
   if (withModels.length > 0 && withModels.length < 4) {
     problems.push(`expected modelUrl on all district locations, got ${withModels.length}`);
+  }
+  for (const prop of visualCues.props ?? []) {
+    if (prop.renderMode && prop.renderMode !== 'mesh3d') problems.push(`prop ${prop.id} renderMode expected mesh3d`);
+    if (!String(prop.modelUrl ?? '').endsWith('.glb')) problems.push(`prop ${prop.id} modelUrl should be .glb`);
+    if (!String(prop.command ?? '').startsWith('use_object ')) problems.push(`prop ${prop.id} command should be use_object`);
+    if (!prop.requiredPermission || typeof prop.risk !== 'number' || !prop.state) problems.push(`prop ${prop.id} interaction contract incomplete`);
   }
   return { ok: problems.length === 0, problems };
 }
