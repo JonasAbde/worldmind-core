@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PLAY_API_VERSION } from '../play/play-api-payload.js';
 import {
-  assertVisualCuesV4,
+  assertVisualCuesV5,
   assertVisualCuesMesh3d,
   assertVisualCuesCollision,
   assertWalkAnimation,
@@ -131,7 +131,7 @@ export async function verifyPlayApiOnHost(host, port) {
   if (!state.json.playerSnapshot) throw new Error('playerSnapshot missing');
   if (!state.json.districtView?.nodes) throw new Error('districtView missing');
 
-  const visualCheck = assertVisualCuesV4(state.json.visualCues);
+  const visualCheck = assertVisualCuesV5(state.json.visualCues);
   if (!visualCheck.ok) {
     throw new Error(`visualCues v4 check failed: ${visualCheck.problems.join(', ')}`);
   }
